@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.example.mechaclient.HomeScreenController">
+    <ScrollPane fitToWidth="true" prefWidth="200" style="-fx-background-color: #f0f0f0;">
+        <VBox fx:id="friendListContainer" style="-fx-background-color: #f0f0f0;">
+            
+
+            <HBox alignment="CENTER_LEFT" style="-fx-background-color: lightgrey; -fx-border-radius: 10px;">
+                <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10 0 10 10;" text="Friends" />
+                <Region prefHeight="47.0" prefWidth="89.0" HBox.hgrow="ALWAYS" />
+                <ImageView fx:id="settings" fitHeight="44.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@img/option-icon.png" />
+                    </image>
+                    <HBox.margin>
+                        <Insets right="5.0" />
+                    </HBox.margin>
+                </ImageView>
+            </HBox>
+            <TextField fx:id="searchField" promptText="Search Friends" style="-fx-padding: 5;" />
+            <VBox fx:id="friendListVBox" style="-fx-background-color: white;" VBox.vgrow="ALWAYS" />
+        </VBox>
+    </ScrollPane>
+    
+    <VBox HBox.hgrow="ALWAYS">
+        <Label fx:id="chatHeader" prefHeight="47.0" prefWidth="247.0" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10;" />
+        <ListView fx:id="chatListView" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+        </ListView>
+        <HBox alignment="CENTER" spacing="10" style="-fx-padding: 10; -fx-background-color: white;">
+            <TextField fx:id="messageField" HBox.hgrow="ALWAYS" />
+            <Button onAction="#handleSendMessage" text="Send" />
+        </HBox>
+    </VBox>
+</HBox>
