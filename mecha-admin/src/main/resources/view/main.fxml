@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--<?import com.gluonhq.charm.glisten.control.Icon?>-->
+<!--<?import com.gluonhq.charm.glisten.control.ToggleButtonGroup?>-->
+
+<?import javafx.scene.Group?>
+<?import javafx.scene.chart.AreaChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <content>
+      <AnchorPane maxHeight="-Infinity" prefHeight="1410.0" prefWidth="1250.0">
+         <children>
+            <Label layoutX="140.0" layoutY="85.0" minHeight="28.0" minWidth="28.0" prefHeight="40.0" prefWidth="119.0" text="Mecha" AnchorPane.leftAnchor="80.0" AnchorPane.topAnchor="22.0">
+               <font>
+                  <Font name="Inter 24pt Medium" size="36.0" />
+               </font>
+            </Label>
+            <SplitPane dividerPositions="0.5" layoutX="80.0" layoutY="196.0" prefHeight="376.0" prefWidth="1080.0">
+               <items>
+                  <Group>
+                     <children>
+                        <Group>
+                           <children>
+                              <MenuButton layoutX="378.0" layoutY="20.0" mnemonicParsing="false" text="Online">
+                                <items>
+                                  <MenuItem mnemonicParsing="false" text="Action 1" />
+                                  <MenuItem mnemonicParsing="false" text="Action 2" />
+                                </items>
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </MenuButton>
+                              <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" />
+                              <Label text="Search for a user">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <Label layoutX="330.0" layoutY="26.0" text="Status: ">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </Group>
+                        <Button layoutX="508.0" layoutY="21.0" mnemonicParsing="false" text="Add new user">
+                           <font>
+                              <Font name="Inter Regular" size="14.0" />
+                           </font>
+                        </Button>
+                        <TableView layoutY="89.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="569.0">
+                          <columns>
+                            <TableColumn prefWidth="112.79998779296875" text="Full name" />
+                            <TableColumn prefWidth="105.60002136230469" text="Username" />
+                              <TableColumn minWidth="8.0" prefWidth="84.79998779296875" text="Status" />
+                              <TableColumn prefWidth="86.4000244140625" text="Ngày tạo" />
+                              <TableColumn prefWidth="132.79998779296875" text="Đăng nhập gần nhất" />
+                          </columns>
+                        </TableView>
+                        <Pagination layoutX="185.0" layoutY="312.0" prefHeight="62.0" prefWidth="200.0" />
+                     </children>
+                  </Group>
+                  <Pane prefHeight="200.0" prefWidth="200.0">
+                     <children>
+                        <VBox layoutX="22.0" layoutY="34.0" prefHeight="263.0" prefWidth="117.0">
+                           <children>
+                              <Text fill="#64748b" strokeType="OUTSIDE" strokeWidth="0.0" text="Make changes to the account here. Click save when you're done." />
+                              <Label text="Full name">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField />
+                              <Label text="Username">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField />
+                              <HBox prefHeight="46.0" prefWidth="342.0">
+                                 <children>
+                                    <VBox prefHeight="46.0" prefWidth="166.0">
+                                       <children>
+                                          <Label text="Full name">
+                                             <font>
+                                                <Font name="Inter Regular" size="14.0" />
+                                             </font>
+                                          </Label>
+                                          <TextField />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Giới tính">
+                                             <font>
+                                                <Font name="Inter Regular" size="14.0" />
+                                             </font>
+                                          </Label>
+                                          <TextField />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Label text="Địa chỉ">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField />
+                              <HBox prefHeight="46.0" prefWidth="342.0">
+                                 <children>
+                                    <VBox prefHeight="46.0" prefWidth="166.0">
+                                       <children>
+                                          <Label text="Ngày sinh">
+                                             <font>
+                                                <Font name="Inter Regular" size="14.0" />
+                                             </font>
+                                          </Label>
+                                          <TextField />
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Password">
+                                             <font>
+                                                <Font name="Inter Regular" size="14.0" />
+                                             </font>
+                                          </Label>
+                                          <Button mnemonicParsing="false" prefHeight="26.0" prefWidth="146.0" text="Gửi mật khẩu mới" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <Label text="Email">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField />
+                           </children>
+                        </VBox>
+                     </children>
+                  </Pane>
+               </items>
+            </SplitPane>
+            <Text layoutX="80.0" layoutY="170.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Overview">
+               <font>
+                  <Font name="Inter 28pt Regular" size="30.0" />
+               </font>
+            </Text>
+            <Text layoutX="94.0" layoutY="659.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Statistic" AnchorPane.leftAnchor="80.0">
+               <font>
+                  <Font name="Inter 28pt Regular" size="30.0" />
+               </font>
+            </Text>
+            <ToggleButton layoutX="93.0" layoutY="673.0" mnemonicParsing="false" text="New accont" AnchorPane.leftAnchor="80.0" />
+            <ToggleButton layoutX="167.0" layoutY="673.0" mnemonicParsing="false" text="Active count" />
+            <AreaChart layoutX="80.0" layoutY="720.0">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </AreaChart>
+            <DatePicker layoutX="186.0" layoutY="1136.0" promptText="Starting date" />
+            <Label layoutX="80.0" layoutY="1140.0" text="Stats between">
+               <font>
+                  <Font name="Inter Regular" size="14.0" />
+               </font>
+            </Label>
+            <Label layoutX="364.0" layoutY="1139.0" text="-">
+               <font>
+                  <Font name="Inter 18pt Regular" size="14.0" />
+               </font>
+            </Label>
+            <DatePicker layoutX="374.0" layoutY="1135.0" promptText="Ending date" />
+            <Group layoutX="80.0" layoutY="1178.0">
+               <children>
+                  <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Full name or username" />
+                  <Label text="Search for a user in the above range">
+                     <font>
+                        <Font name="Inter Regular" size="14.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Group>
+         </children>
+      </AnchorPane>
+   </content>
+</ScrollPane>
