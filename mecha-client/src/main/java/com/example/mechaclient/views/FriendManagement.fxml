@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.mechaclient.controllers.FriendManagementController"
+      stylesheets="@../styles/FriendManagementStyle.css">
+    
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header">
+        <padding>
+            <Insets top="10" right="10" bottom="10" left="10"/>
+        </padding>
+        <Button text="←" styleClass="back-button"  onAction="#returnToHomeScreen"/>
+        <Label text="Friend Management" styleClass="header-title"/>
+    </HBox>
+    
+    <!-- Main Content -->
+    <HBox VBox.vgrow="ALWAYS">
+        <!-- Left Sidebar -->
+        <VBox spacing="10" styleClass="sidebar">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <Button text="Friend Request" fx:id="friendRequestTab" styleClass="tab-button" onAction="#showFriendRequests"/>
+            <Button text="Find Friend" fx:id="findFriendTab" styleClass="tab-button" onAction="#showFindFriend"/>
+            <Button text="Blocked list" fx:id="blockedListTab" styleClass="tab-button" onAction="#showBlockedList"/>
+            <Button text="Reported list" fx:id="reportedListTab" styleClass="tab-button" onAction="#showReportedList"/>
+        </VBox>
+        
+        <!-- Right Content Area -->
+        <StackPane HBox.hgrow="ALWAYS" styleClass="content-area">
+            <!-- Friend Requests Content -->
+            <VBox fx:id="friendRequestContent" visible="false" spacing="10">
+                <Label text="2 friend requests" styleClass="section-header"/>
+                <ListView fx:id="friendRequestList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
+            </VBox>
+            
+            <!-- Find Friend Content -->
+            <VBox fx:id="findFriendContent" visible="false" spacing="10">
+                <TextField promptText="search for friend here..." styleClass="search-field"/>
+                <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
+            </VBox>
+            
+            <!-- Blocked List Content -->
+            <VBox fx:id="blockedListContent" visible="false" spacing="10">
+                <Label text="1 User blocked" styleClass="section-header"/>
+                <ListView fx:id="blockedList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
+            </VBox>
+            
+            <!-- Reported List Content -->
+            <VBox fx:id="reportedListContent" visible="false" spacing="10">
+                <Label text="2 Users reported" styleClass="section-header"/>
+                <ListView fx:id="reportedList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
+            </VBox>
+        </StackPane>
+    </HBox>
+</VBox>

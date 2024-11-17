@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.example.mechaclient.HomeScreenController">
+<HBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.example.mechaclient.controllers.HomeScreenController">
     <ScrollPane fitToWidth="true" prefWidth="200" style="-fx-background-color: #f0f0f0;">
         <VBox fx:id="friendListContainer" style="-fx-background-color: #f0f0f0;">
             
@@ -22,7 +22,7 @@
                 <Region prefHeight="47.0" prefWidth="89.0" HBox.hgrow="ALWAYS" />
                 <ImageView fx:id="settings" fitHeight="44.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
                     <image>
-                        <Image url="@img/option-icon.png" />
+                        <Image url="@../images/option-icon.png" />
                     </image>
                     <HBox.margin>
                         <Insets right="5.0" />

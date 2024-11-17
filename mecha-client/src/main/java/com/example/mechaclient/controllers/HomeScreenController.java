@@ -1,4 +1,4 @@
-package com.example.mechaclient;
+package com.example.mechaclient.controllers;
 
 import java.io.IOException;
 
@@ -18,6 +18,9 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
+import java.net.URL;
+
+import com.example.mechaclient.ChatApplication;
 
 public class HomeScreenController {
 
@@ -72,7 +75,7 @@ public class HomeScreenController {
 
         ContextMenu contextMenu = new ContextMenu();
         
-        MenuItem option1Item = new MenuItem("Option 1");
+        MenuItem option1Item = new MenuItem("Friend Management");
         MenuItem option2Item = new MenuItem("Option 2");
         MenuItem option3Item = new MenuItem("Log out");
 
@@ -138,8 +141,19 @@ public class HomeScreenController {
         }
     }
     private void handleOption1(ActionEvent event) {
-        System.out.println("Option 1 selected");
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/FriendManagement.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 600, 400);
+    
+            // Get the current stage (window)
+            Stage stage = (Stage) settings.getScene().getWindow(); // Use the current stage
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+    
 
     private void handleOption2(ActionEvent event) {
         System.out.println("Option 2 selected");
@@ -147,7 +161,7 @@ public class HomeScreenController {
 
     private void handleLogout(ActionEvent event) {
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("LoginScreen.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 600, 400);
     
             // Get the current stage (window)
