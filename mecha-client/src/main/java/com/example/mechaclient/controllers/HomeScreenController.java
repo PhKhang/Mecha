@@ -12,6 +12,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -25,8 +26,11 @@ import com.example.mechaclient.ChatApplication;
 public class HomeScreenController {
 
     @FXML
-    private Label chatHeader;
-
+    private HBox chatHeader;
+    @FXML
+    private ImageView curUserAva;
+    @FXML
+    private Label curUserName;
     @FXML
     private Label chatOption;
     
@@ -37,10 +41,10 @@ public class HomeScreenController {
     private TextField messageField;
 
     private ObservableList<String> friends = FXCollections.observableArrayList(
-            "Alice Doe",
-            "Bob Smith",
-            "Charlie Brown",   
-            "Charlie C"  
+            "Alice Doe (online)",
+            "Bob Smith (3 hours ago)",
+            "Charlie Brown (1 day ago)",   
+            "Charlie C (online)"  
     );
     
     private HBox selectedFriendEntry = null;
@@ -151,10 +155,18 @@ public class HomeScreenController {
         friendListVBox.getChildren().clear(); // Clear existing friend list
         for (String friend : friendsList) {
             String name = friend;
-
             Label nameLabel = new Label(name);
 
-            HBox friendEntry = new HBox(5, nameLabel);
+            ImageView avatar = new ImageView();
+            avatar.setFitHeight(40.0);
+            avatar.setFitWidth(40.0);
+            avatar.setPreserveRatio(true);
+            avatar.setPickOnBounds(true);
+            Image avatarImage = new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png"));
+            avatar.setImage(avatarImage);
+
+            HBox friendEntry = new HBox(5, avatar, nameLabel);
+
             friendEntry.setPadding(new Insets(5));
             friendEntry.setAlignment(Pos.CENTER_LEFT);
 
@@ -205,7 +217,7 @@ public class HomeScreenController {
     private void handleLogout(ActionEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 600, 400);
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
     
             // Get the current stage (window)
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
@@ -217,8 +229,9 @@ public class HomeScreenController {
         }
     }
     private void updateChat(String friend) {
-        String friendName = friend.split(" \\(")[0]; 
-        chatHeader.setText("Chat with " + friendName);
+        Image avatarImage = new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png"));
+        curUserAva.setImage(avatarImage);
+        curUserName.setText(friend);
         chatListView.getItems().clear();
         // Simulating chat history
         addMessage("Hello", false);

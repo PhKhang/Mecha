@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
@@ -7,22 +8,61 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.example.mechaclient.controllers.SignupScreenController">
+<AnchorPane prefHeight="544.0" prefWidth="541.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaclient.controllers.SignupScreenController">
     
     <!-- Login link at top right -->
-    <Button fx:id="loginButton" style="-fx-background-color: transparent;" text="Login" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0" />
+    <Button fx:id="loginButton" style="-fx-background-color: grey; -fx-font-weight: bold;" text="Login" textAlignment="CENTER" textFill="WHITE" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0" />
     
     <!-- Main content -->
-    <VBox alignment="CENTER" maxWidth="400" spacing="20" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="100.0">
+    <VBox alignment="CENTER" maxWidth="570.0" prefHeight="391.0" prefWidth="570.0" spacing="5.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="100.0">
         
         <Label style="-fx-font-size: 24px; -fx-font-weight: bold;" text="Create an account" />
         
-        <Label style="-fx-text-fill: #666666;" text="Enter your email below to create your account" />
+        <Label style="-fx-text-fill: #666666;" text="Enter nessessary infomation to create your account" />
+      <Label style="-fx-font-weight: bold;" text="Username">
+         <VBox.margin>
+            <Insets right="450.0" top="10.0" />
+         </VBox.margin>
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
         
-        <TextField fx:id="emailField" promptText="name@example.com" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" maxWidth="500"/>
+        <TextField fx:id="emailField" maxWidth="500" prefWidth="367.0" promptText="username" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <Label prefHeight="20.0" prefWidth="68.0" style="-fx-font-weight: bold;" text="Email">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets right="445.0" top="10.0" />
+         </VBox.margin>
+      </Label>
+      <TextField fx:id="emailField1" maxWidth="500" prefWidth="367.0" promptText="name@example.com" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <Label style="-fx-font-weight: bold;" text="Password">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets right="450.0" top="10.0" />
+         </VBox.margin>
+      </Label>
+      <TextField fx:id="emailField11" maxWidth="500" prefWidth="367.0" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <Label prefHeight="20.0" prefWidth="140.0" style="-fx-font-weight: bold;" text="Confirm Password">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets right="370.0" top="10.0" />
+         </VBox.margin>
+      </Label>
+      <TextField fx:id="emailField111" maxWidth="500" prefWidth="367.0" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
         
-        <Button fx:id="signInEmailButton" style="-fx-background-color: #000000; -fx-text-fill: white; -fx-pref-width: 400px; -fx-pref-height: 40px; -fx-background-radius: 6px;" text="Sign In with Email" />
+        <Button fx:id="signInEmailButton" prefHeight="36.0" prefWidth="0.0" style="-fx-background-color: #000000; -fx-text-fill: white; -fx-pref-width: 400px; -fx-pref-height: 40px; -fx-background-radius: 6px;" text="Sign In">
+         <VBox.margin>
+            <Insets top="30.0" />
+         </VBox.margin></Button>
         
         <HBox alignment="CENTER" spacing="5">
             <Label style="-fx-text-fill: #666666;" text="By clicking continue, you agree to our" />
