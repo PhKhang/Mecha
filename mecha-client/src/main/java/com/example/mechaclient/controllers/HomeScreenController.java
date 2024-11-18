@@ -48,6 +48,7 @@ public class HomeScreenController {
         setupChatListView();
         setupSearchField();
         initializeChatData();
+        updateSelectedButton(allButton);
         displayChats(filteredChats);
     }
 
