@@ -1,0 +1,60 @@
+/* Existing styles */
+.chat-filter-button, .create-group-button {
+    -fx-background-color: lightgrey;
+    -fx-background-radius: 20;
+    -fx-padding: 5 10;
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+.chat-filter-button:hover, .create-group-button:hover {
+    -fx-background-color: #d0d0d0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 1);
+}
+
+.chat-filter-button:pressed, .create-group-button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+.chat-filter-button.selected {
+    -fx-background-color: #7AB2D3;
+    -fx-text-fill: white;
+}
+
+.create-group-button {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+}
+
+.create-group-button:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+.chat-list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.chat-list-view .list-cell {
+    -fx-background-color: transparent;
+}
+
+.chat-list-view .list-cell:filled:selected, .chat-list-view .list-cell:filled:focused {
+    -fx-background-color: transparent;
+}
+
+.friend-entry {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+    -fx-cursor: hand;
+}
+
+.friend-entry:hover {
+    -fx-background-color: #b7b7b7;
+}
+
+.friend-entry.selected {
+    -fx-background-color: #7bd1e0;
+}

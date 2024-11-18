@@ -1,13 +1,10 @@
 package com.example.mechaclient.controllers;
 
-import java.io.IOException;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,223 +16,143 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
+import javafx.stage.Modality;
+
+import java.io.IOException;
 
 import com.example.mechaclient.ChatApplication;
 
 public class HomeScreenController {
 
-    @FXML
-    private HBox chatHeader;
-    @FXML
-    private ImageView curUserAva;
-    @FXML
-    private Label curUserName;
-    @FXML
-    private Label chatOption;
-    
-    @FXML
-    private ListView<HBox> chatListView;
+    @FXML private HBox chatHeader;
+    @FXML private ImageView curUserAva;
+    @FXML private Label curUserName;
+    @FXML private Label chatOption;
+    @FXML private ListView<HBox> chatListView;
+    @FXML private TextField messageField;
+    @FXML private ImageView settings;
+    @FXML private VBox friendListVBox;
+    @FXML private TextField searchField;
 
-    @FXML
-    private TextField messageField;
+    @FXML private Button allButton;
+    @FXML private Button privateButton;
+    @FXML private Button groupsButton;
 
-    private ObservableList<String> friends = FXCollections.observableArrayList(
-            "Alice Doe (online)",
-            "Bob Smith (3 hours ago)",
-            "Charlie Brown (1 day ago)",   
-            "Charlie C (online)"  
-    );
-    
-    private HBox selectedFriendEntry = null;
-
-    @FXML
-    private ImageView settings;  // ImageView for settings icon
-
-    @FXML
-    private Button option1;
-    @FXML
-    private Button option2; 
-    @FXML
-    private Button option3;  
-
-    @FXML
-    private VBox friendListVBox; // VBox to hold friend entries
-    @FXML
-    private TextField searchField; // Search bar
-    private FilteredList<String> filteredFriends;
-
+    private ObservableList<Chat> allChats = FXCollections.observableArrayList();
+    private FilteredList<Chat> filteredChats;
+    private HBox selectedFriendEntry;
 
     public void initialize() {
-        chatOption.setVisible(false); // Hide the chat option initially
-        // Create the ContextMenu
-        ContextMenu contextMenuOption = new ContextMenu();
+        setupContextMenus();
+        setupChatListView();
+        setupSearchField();
+        initializeChatData();
+        displayChats(filteredChats);
+    }
 
-        // Create the menu items
+    private void setupContextMenus() {
+        ContextMenu chatOptionMenu = new ContextMenu();
         MenuItem blockUserItem = new MenuItem("Block User");
-        blockUserItem.setOnAction(e -> {
-            // Handle block user action
-            System.out.println("User Blocked");
-        });
-
         MenuItem reportUserItem = new MenuItem("Report User");
-        reportUserItem.setOnAction(e -> {
-            // Handle report user action
-            System.out.println("User Reported");
+        chatOptionMenu.getItems().addAll(blockUserItem, reportUserItem);
+
+        chatOption.setOnMouseClicked(event -> chatOptionMenu.show(chatOption, event.getScreenX(), event.getScreenY()));
+
+        ContextMenu settingsMenu = new ContextMenu();
+        MenuItem friendManagementItem = new MenuItem("Friend Management");
+        MenuItem profileItem = new MenuItem("My Profile");
+        MenuItem logoutItem = new MenuItem("Log out");
+        settingsMenu.getItems().addAll(friendManagementItem, profileItem, logoutItem);
+
+        settings.setOnMouseClicked(event -> settingsMenu.show(settings, event.getScreenX(), event.getScreenY()));
+
+        friendManagementItem.setOnAction(this::handleFriendManagement);
+        profileItem.setOnAction(this::handleProfile);
+        logoutItem.setOnAction(this::handleLogout);
+    }
+
+    private void setupChatListView() {
+        chatListView.setCellFactory(param -> new ListCell<HBox>() {
+            @Override
+            protected void updateItem(HBox item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setGraphic(item);
+                    setBackground(null);
+                }
+            }
         });
+    }
 
-        // Add items to the context menu
-        contextMenuOption.getItems().addAll(blockUserItem, reportUserItem);
-
-        // Show the context menu when right-clicking on the chatOption label
-        chatOption.setOnMouseClicked(event -> {
-            contextMenuOption.show(chatOption, chatOption.getScene().getWindow().getX() + chatOption.localToScene(0, 0).getX() + chatOption.getHeight(), 
-            chatOption.getScene().getWindow().getY() + chatOption.localToScene(0, 0).getY() + chatOption.getWidth() );
-        });
-
-        filteredFriends = new FilteredList<>(friends, p -> true);
-
-        displayFriends(filteredFriends);
-
-        // Add a listener to the search bar to filter the list based on the text input
+    private void setupSearchField() {
+        filteredChats = new FilteredList<>(allChats, p -> true);
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredFriends.setPredicate(friend -> {
+            filteredChats.setPredicate(chat -> {
                 if (newValue == null || newValue.isEmpty()) {
-                    return true; // Show all items if search bar is empty
+                    return true;
                 }
-                return friend.toLowerCase().contains(newValue.toLowerCase());
+                return chat.name.toLowerCase().contains(newValue.toLowerCase());
             });
-            displayFriends(filteredFriends);
+            displayChats(filteredChats);
+        });
+    }
+
+    private void initializeChatData() {
+        allChats.addAll(
+            new Chat("Alice Doe", ChatType.PRIVATE, "online", "Hello there!"),
+            new Chat("Bob Smith", ChatType.PRIVATE, "3 hours ago", "See you tomorrow"),
+            new Chat("Project Team", ChatType.GROUP, "5 members", "Meeting at 2 PM"),
+            new Chat("Charlie Brown", ChatType.PRIVATE, "1 day ago", "Thanks for your help"),
+            new Chat("Family Group", ChatType.GROUP, "8 members", "Happy birthday, mom!")
+        );
+    }
+
+    private void displayChats(ObservableList<Chat> chats) {
+        friendListVBox.getChildren().clear();
+        for (Chat chat : chats) {
+            HBox chatEntry = createChatEntry(chat);
+            friendListVBox.getChildren().add(chatEntry);
+        }
+    }
+
+    private HBox createChatEntry(Chat chat) {
+        ImageView avatar = new ImageView(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
+        avatar.setFitHeight(40);
+        avatar.setFitWidth(40);
+
+        VBox infoBox = new VBox(2);
+        Label nameLabel = new Label(chat.name);
+        nameLabel.setStyle("-fx-font-weight: bold;");
+        Label statusLabel = new Label(chat.status);
+        statusLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666666;");
+        Label lastMessageLabel = new Label(chat.lastMessage);
+        lastMessageLabel.setStyle("-fx-font-size: 12px;");
+        infoBox.getChildren().addAll(nameLabel, statusLabel, lastMessageLabel);
+
+        HBox chatEntry = new HBox(10, avatar, infoBox);
+        chatEntry.setPadding(new Insets(5));
+        chatEntry.setAlignment(Pos.CENTER_LEFT);
+        chatEntry.getStyleClass().add("friend-entry");
+        chatEntry.setStyle("-fx-background-radius: 10");
+
+        chatEntry.setOnMouseClicked(event -> {
+            updateChat(chat);
+            updateSelectedFriend(chatEntry);
         });
 
-        ContextMenu contextMenu = new ContextMenu();
-        
-        MenuItem option1Item = new MenuItem("Friend Management");
-        MenuItem option2Item = new MenuItem("My Profile");
-        MenuItem option3Item = new MenuItem("Log out");
-
-        option1Item.setOnAction(this::handleOption1);
-        option2Item.setOnAction(this::handleOption2);
-        option3Item.setOnAction(this::handleLogout);
-
-        contextMenu.getItems().addAll(option1Item, option2Item, option3Item);
-
-        // Show the context menu when the settings icon is clicked
-        settings.setOnMouseClicked(event -> {
-            contextMenu.show(settings, settings.getScene().getWindow().getX() + settings.getLayoutX() + settings.getFitWidth(), settings.getScene().getWindow().getY() + settings.getLayoutY() + settings.getFitHeight());
-        });
-    
-
-        chatListView.setCellFactory(param -> {
-            ListCell<HBox> cell = new ListCell<>() {
-                @Override
-                protected void updateItem(HBox item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        setGraphic(item);
-                        setBackground(null); 
-                    }
-                }
-            };
-        
-            // Remove cell focus and selection highlighting
-            cell.setStyle("-fx-background-color: transparent;"); 
-            cell.setFocusTraversable(false);
-            cell.setMouseTransparent(false);
-        
-            return cell;
-        });
-        
+        return chatEntry;
     }
 
-    private void displayFriends(ObservableList<String> friendsList) {
-        friendListVBox.getChildren().clear(); // Clear existing friend list
-        for (String friend : friendsList) {
-            String name = friend;
-            Label nameLabel = new Label(name);
-
-            ImageView avatar = new ImageView();
-            avatar.setFitHeight(40.0);
-            avatar.setFitWidth(40.0);
-            avatar.setPreserveRatio(true);
-            avatar.setPickOnBounds(true);
-            Image avatarImage = new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png"));
-            avatar.setImage(avatarImage);
-
-            HBox friendEntry = new HBox(5, avatar, nameLabel);
-
-            friendEntry.setPadding(new Insets(5));
-            friendEntry.setAlignment(Pos.CENTER_LEFT);
-
-            friendEntry.setOnMouseClicked(event -> {
-                updateChat(name);
-                searchField.clear();
-                if (selectedFriendEntry != null) {
-                    selectedFriendEntry.setStyle("-fx-background-color: transparent;"); // Reset previous
-                }
-                friendEntry.setStyle("-fx-background-color: lightgray;"); // Highlight new selection
-                selectedFriendEntry = friendEntry; // Update selected entry 
-                chatOption.setVisible(true);
-            });
-            
-            friendListVBox.getChildren().add(friendEntry);
-        }
-    }
-    private void handleOption1(ActionEvent event) {
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/FriendManagement.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-    
-            // Get the current stage (window)
-            Stage stage = (Stage) settings.getScene().getWindow();
-            stage.setScene(scene);
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-
-    private void handleOption2(ActionEvent event) {
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/ProfileScreen.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-    
-            // Get the current stage (window)
-            Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
-
-            stage.setScene(scene);  
-            stage.show();  
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleLogout(ActionEvent event) {
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-    
-            // Get the current stage (window)
-            Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
-
-            stage.setScene(scene);  
-            stage.show();  
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private void updateChat(String friend) {
-        Image avatarImage = new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png"));
-        curUserAva.setImage(avatarImage);
-        curUserName.setText(friend);
+    private void updateChat(Chat chat) {
+        curUserAva.setImage(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
+        curUserName.setText(chat.name);
         chatListView.getItems().clear();
-        // Simulating chat history
         addMessage("Hello", false);
         addMessage("Hi there", true);
+        chatOption.setVisible(true);
     }
 
     @FXML
@@ -266,8 +183,154 @@ public class HomeScreenController {
         }
 
         messageBox.getChildren().add(textFlow);
-
         chatListView.getItems().add(messageBox);
         chatListView.scrollTo(chatListView.getItems().size() - 1);
+    }
+
+    private void updateSelectedFriend(HBox newSelection) {
+        if (selectedFriendEntry != null) {
+            selectedFriendEntry.getStyleClass().remove("selected");
+        }
+        newSelection.getStyleClass().add("selected");
+        selectedFriendEntry = newSelection;
+    }
+
+
+    @FXML
+    private void showCreateGroupPopup() {
+        Stage popupStage = new Stage();
+        popupStage.initModality(Modality.NONE);
+        popupStage.setTitle("Create Group");
+    
+        // Group name input
+        Label groupNameLabel = new Label("Group Name:");
+        TextField groupNameField = new TextField();
+        groupNameField.setPromptText("Enter group name");
+    
+        // Friend search bar
+        Label friendSearchLabel = new Label("Add Friends:");
+        TextField friendSearchField = new TextField();
+        friendSearchField.setPromptText("Search for friends");
+    
+        // Added friends display
+        Label addedFriendsLabel = new Label("Added Friends:");
+        TextArea addedFriendsField = new TextArea();
+        addedFriendsField.setEditable(false);
+        addedFriendsField.setPrefHeight(80);
+    
+        // Confirm and Cancel buttons
+        Button confirmButton = new Button("Confirm");
+        confirmButton.setStyle("-fx-background-color: blue; -fx-text-fill: white;");
+        confirmButton.setOnAction(e -> popupStage.close());
+    
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        cancelButton.setOnAction(e -> popupStage.close());
+    
+        // Layout for buttons
+        HBox buttonBox = new HBox(10, confirmButton, cancelButton);
+        buttonBox.setAlignment(Pos.CENTER);
+    
+        // Main layout
+        VBox layout = new VBox(10,
+                groupNameLabel, groupNameField,
+                friendSearchLabel, friendSearchField,
+                addedFriendsLabel, addedFriendsField,
+                buttonBox
+        );
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.TOP_CENTER);
+    
+        // Scene and show
+        Scene scene = new Scene(layout, 300, 400);
+        popupStage.setScene(scene);
+        popupStage.showAndWait();
+    }
+
+    @FXML
+    private void getAllChat() {
+        filteredChats.setPredicate(chat -> true);
+        displayChats(filteredChats);
+        updateSelectedButton(allButton);
+    }
+
+    @FXML
+    private void getPrivateChat() {
+        filteredChats.setPredicate(chat -> chat.type == ChatType.PRIVATE);
+        displayChats(filteredChats);
+        updateSelectedButton(privateButton);
+    }
+
+    @FXML
+    private void getGroupChat() {
+        filteredChats.setPredicate(chat -> chat.type == ChatType.GROUP);
+        displayChats(filteredChats);
+        updateSelectedButton(groupsButton);
+    }
+
+    
+    private void updateSelectedButton(Button selectedButton) {
+        allButton.getStyleClass().remove("selected");
+        privateButton.getStyleClass().remove("selected");
+        groupsButton.getStyleClass().remove("selected");
+        selectedButton.getStyleClass().add("selected");
+    }
+
+    private void handleFriendManagement(javafx.event.ActionEvent event) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/FriendManagement.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+            Stage stage = (Stage) settings.getScene().getWindow();
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleProfile(javafx.event.ActionEvent event) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/ProfileScreen.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+            Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleLogout(javafx.event.ActionEvent event) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+            Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static class Chat {
+        String name;
+        ChatType type;
+        String status;
+        String lastMessage;
+
+        Chat(String name, ChatType type, String status, String lastMessage) {
+            this.name = name;
+            this.type = type;
+            this.status = status;
+            this.lastMessage = lastMessage;
+        }
+
+        private String getName(){
+            return this.name;
+        }
+    }
+
+    private enum ChatType {
+        PRIVATE, GROUP
     }
 }
