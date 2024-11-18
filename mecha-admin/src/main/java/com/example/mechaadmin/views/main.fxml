@@ -59,7 +59,7 @@
                                                 <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" />
                                                 <Label text="Tìm tài khoản">
                                                    <font>
-                                                      <Font name="Inter Regular" size="14.0" />
+                                                      <Font name="Inter Regular" size="16.0" />
                                                    </font>
                                                 </Label>
                                                 <Label layoutX="330.0" layoutY="26.0" text="Trình trạng">
@@ -80,14 +80,14 @@
                                                       <Font size="14.0" />
                                                    </font>
                                                 </MenuButton>
-                                                <Button mnemonicParsing="false" text="Add new user">
+                                                <Button mnemonicParsing="false" onAction="#switchToProfile" text="Thêm người dùng">
                                                    <font>
                                                       <Font name="Inter Regular" size="14.0" />
                                                    </font>
                                                 </Button>
                                              </children>
                                           </HBox>
-                                          <TableView fx:id="accountTable" layoutY="89.0" minWidth="-Infinity" onMouseClicked="#accountClicked" prefHeight="200.0" prefWidth="569.0">
+                                          <TableView fx:id="accountTable" layoutY="89.0" minWidth="-Infinity" onMouseClicked="#accountClicked" prefHeight="200.0" prefWidth="631.0">
                                             <columns>
                                               <TableColumn fx:id="accountFull" prefWidth="112.79998779296875" text="Họ tên" />
                                               <TableColumn fx:id="accountUser" prefWidth="105.60002136230469" text="Username" />
@@ -168,7 +168,7 @@
                                                    </font>
                                                 </Label>
                                                 <TextField fx:id="boxEmail" disable="true" />
-                                                <Button mnemonicParsing="false" onAction="#switchToProfile" prefHeight="42.0" prefWidth="236.0" text="Xem thông tin chi tiết">
+                                                <Button mnemonicParsing="false" onAction="#switchToProfile" prefHeight="25.0" prefWidth="263.0" text="Xem thông tin chi tiết">
                                                    <font>
                                                       <Font name="Inter Regular" size="14.0" />
                                                    </font>
@@ -180,7 +180,7 @@
                                                             <Font name="Inter Regular" size="14.0" />
                                                          </font>
                                                       </Button>
-                                                      <Button mnemonicParsing="false" prefHeight="42.0" prefWidth="116.0" text="Khóa người dùng">
+                                                      <Button fx:id="khoa" mnemonicParsing="false" prefHeight="28.0" prefWidth="144.0" text="Khóa người dùng">
                                                          <font>
                                                             <Font name="Inter Regular" size="14.0" />
                                                          </font>
@@ -201,7 +201,7 @@
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <TableView fx:id="groupTable" layoutX="34.0" layoutY="25.0" minWidth="-Infinity" onMouseClicked="#groupClicked" prefHeight="414.0" prefWidth="570.0">
+                              <TableView fx:id="groupTable" layoutX="34.0" layoutY="129.0" minWidth="-Infinity" onMouseClicked="#groupClicked" prefHeight="310.0" prefWidth="570.0">
                                  <columns>
                                     <TableColumn fx:id="groupName" prefWidth="105.60002136230469" text="Tên nhóm" />
                                     <TableColumn fx:id="groupCreation" prefWidth="86.4000244140625" text="Ngày tạo" />
@@ -250,9 +250,24 @@
                               </ScrollPane>
                               <Label layoutX="650.0" layoutY="25.0" text="Các thành viên nhóm">
                                  <font>
-                                    <Font name="Inter Regular" size="14.0" />
+                                    <Font name="Inter Regular" size="16.0" />
                                  </font>
                               </Label>
+                              <Group layoutX="34.0" layoutY="71.0">
+                                 <children>
+                                    <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" />
+                                    <Label text="Tìm nhóm">
+                                       <font>
+                                          <Font name="Inter Regular" size="16.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </Group>
+                              <Text layoutX="34.0" layoutY="41.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Nhóm chat">
+                                 <font>
+                                    <Font name="Inter 28pt Regular" size="30.0" />
+                                 </font>
+                              </Text>
                            </children>
                         </AnchorPane>
                   </content>
@@ -261,7 +276,7 @@
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="466.0" prefWidth="1106.0">
                            <children>
-                              <TableView fx:id="reportTable" layoutX="32.0" layoutY="147.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="663.0">
+                              <TableView fx:id="reportTable" layoutX="32.0" layoutY="181.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="663.0">
                                  <columns>
                                     <TableColumn fx:id="reportId" prefWidth="59.20001220703125" text="ID" />
                                     <TableColumn fx:id="reportReporter" prefWidth="142.40005493164062" text="Người báo cáo" />
@@ -309,7 +324,7 @@
                                                 <Image url="@../images/avatars/1.png" />
                                              </image>
                                           </ImageView>
-                                          <Text fx:id="reported" strokeType="OUTSIDE" strokeWidth="0.0" text="Spammer456">
+                                          <Text fx:id="reported" strokeType="OUTSIDE" strokeWidth="0.0" text="SpamLover">
                                              <font>
                                                 <Font name="Inter Regular" size="14.0" />
                                              </font>
@@ -335,7 +350,7 @@
                                     <FlowPane hgap="5.0" layoutX="3.0" layoutY="311.375" prefHeight="35.0" prefWidth="343.0" vgap="5.0">
                                        <children>
                                           <Button mnemonicParsing="false" text="Cảnh báo người dùng" />
-                                          <Button mnemonicParsing="false" text="Khóa người dùng" />
+                                          <Button fx:id="khoa" mnemonicParsing="false" text="Khóa người dùng" />
                                           <Button mnemonicParsing="false" text="Bỏ qua báo cáo" />
                                        </children>
                                     </FlowPane>
@@ -348,28 +363,33 @@
                                     <Button layoutX="159.0" layoutY="391.0" mnemonicParsing="false" text="Lưu" />
                                  </children>
                               </Group>
-                              <DatePicker layoutX="296.0" layoutY="31.0" promptText="Starting date" />
-                              <Label layoutX="276.0" layoutY="34.0" text="-">
+                              <DatePicker layoutX="309.0" layoutY="65.0" promptText="Starting date" />
+                              <Label layoutX="297.0" layoutY="67.0" text="-">
                                  <font>
                                     <Font name="Inter 18pt Regular" size="14.0" />
                                  </font>
                               </Label>
-                              <DatePicker layoutX="101.0" layoutY="31.0" promptText="Ending date" />
-                              <Label layoutX="32.0" layoutY="35.0" text="Thời gian:">
+                              <DatePicker layoutX="114.0" layoutY="65.0" promptText="Ending date" />
+                              <Label layoutX="32.0" layoutY="67.0" text="Thời gian:">
                                  <font>
-                                    <Font name="Inter Regular" size="14.0" />
+                                    <Font name="Inter Regular" size="16.0" />
                                  </font>
                               </Label>
-                              <Group layoutX="32.0" layoutY="76.0">
+                              <Group layoutX="32.0" layoutY="110.0">
                                  <children>
                                     <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Username" />
                                     <Label text="Tìm theo tên">
                                        <font>
-                                          <Font name="Inter Regular" size="14.0" />
+                                          <Font name="Inter Regular" size="16.0" />
                                        </font>
                                     </Label>
                                  </children>
                               </Group>
+                              <Text layoutX="34.0" layoutY="43.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Báo cáo">
+                                 <font>
+                                    <Font name="Inter 28pt Regular" size="30.0" />
+                                 </font>
+                              </Text>
                            </children>
                         </AnchorPane>
                      </content>
@@ -394,12 +414,12 @@
                   <DatePicker layoutX="106.0" layoutY="506.0625" promptText="Ngày bắt đầu" />
                   <Label layoutY="510.0625" text="Lọc thời gian:">
                      <font>
-                        <Font name="Inter Regular" size="14.0" />
+                        <Font name="Inter Regular" size="16.0" />
                      </font>
                   </Label>
                   <Label layoutX="291.0" layoutY="509.0625" text="-">
                      <font>
-                        <Font name="Inter 18pt Regular" size="14.0" />
+                        <Font name="Inter 18pt Regular" size="16.0" />
                      </font>
                   </Label>
                   <DatePicker layoutX="301.0" layoutY="505.0625" promptText="Ngày kết thúc" />
@@ -408,7 +428,7 @@
                         <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
                         <Label text="Tìm tài khoản trong khoảng trên">
                            <font>
-                              <Font name="Inter Regular" size="14.0" />
+                              <Font name="Inter Regular" size="16.0" />
                            </font>
                         </Label>
                      </children>
@@ -450,22 +470,28 @@
                   </Group>
                </children>
             </Group>
-            <Group layoutX="80.0" layoutY="1641.0">
+            <Group layoutX="80.0" layoutY="1657.0">
                <children>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Các lượt đăng nhập gần đây">
+                  <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
+                  <Label text="Tìm tài khoản">
                      <font>
-                        <Font name="Inter 28pt Regular" size="30.0" />
+                        <Font name="Inter Regular" size="16.0" />
                      </font>
-                  </Text>
-                  <TableView fx:id="loginTable" layoutY="19.0" prefHeight="391.0" prefWidth="430.0">
-                     <columns>
-                        <TableColumn fx:id="loginTime" prefWidth="136.0000228881836" text="Thời gian" />
-                        <TableColumn fx:id="loginUser" prefWidth="121.59999084472656" text="Username" />
-                        <TableColumn fx:id="loginFull" prefWidth="108.00006103515625" text="Họ tên" />
-                     </columns>
-                  </TableView>
+                  </Label>
                </children>
             </Group>
+            <Text layoutX="80.0" layoutY="1641.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Các lượt đăng nhập gần đây">
+               <font>
+                  <Font name="Inter 28pt Regular" size="30.0" />
+               </font>
+            </Text>
+            <TableView fx:id="loginTable" layoutX="80.0" layoutY="1717.0" prefHeight="332.0" prefWidth="430.0">
+               <columns>
+                  <TableColumn fx:id="loginTime" prefWidth="136.0000228881836" text="Thời gian" />
+                  <TableColumn fx:id="loginUser" prefWidth="121.59999084472656" text="Username" />
+                  <TableColumn fx:id="loginFull" prefWidth="108.00006103515625" text="Họ tên" />
+               </columns>
+            </TableView>
             <Group layoutX="617.0" layoutY="619.0">
                <children>
                   <Text layoutY="20.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Số lượng hoạt động">
@@ -483,7 +509,7 @@
                   </AreaChart>
                   <Label layoutY="520.0625" text="Chọn năm">
                      <font>
-                        <Font name="Inter Regular" size="14.0" />
+                        <Font name="Inter Regular" size="16.0" />
                      </font>
                   </Label>
                   <Group layoutY="548.0625" />
@@ -534,6 +560,13 @@
                   <DatePicker layoutX="251.0" layoutY="28.0" />
                </children>
             </Group>
+            <TableView fx:id="newTable" layoutX="80.0" layoutY="1236.0" prefHeight="282.0" prefWidth="483.0">
+              <columns>
+                  <TableColumn fx:id="newCreation" prefWidth="130.39995574951172" text="Ngày tạo" />
+                <TableColumn fx:id="newFull" prefWidth="142.3999786376953" text="Họ tên" />
+                <TableColumn fx:id="newUser" prefWidth="123.20001220703125" text="Username" />
+              </columns>
+            </TableView>
          </children>
       </AnchorPane>
    </content>

@@ -168,6 +168,16 @@ public class SceneController implements Initializable {
     
     
     @FXML
+    private TableView<Account> newTable;
+    @FXML 
+    private TableColumn<Account, String> newCreation;
+    @FXML 
+    private TableColumn<Account, String> newFull;
+    @FXML 
+    private TableColumn<Account, String> newUser;
+    
+    
+    @FXML
     private ChoiceBox<String> choiceFriend;
     @FXML
     private ChoiceBox<String> choiceActiveAct;
@@ -232,6 +242,11 @@ public class SceneController implements Initializable {
         choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
         choiceActiveCon.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceStatus.getItems().addAll("Pending", "Resolved", "Under Review");
+        
+        newCreation.setCellValueFactory(new PropertyValueFactory<Account, String>("accountCreation"));
+        newFull.setCellValueFactory(new PropertyValueFactory<Account, String>("accountFull"));
+        newUser.setCellValueFactory(new PropertyValueFactory<Account, String>("accountUser"));
+        newTable.setItems(accounts);   
     }
 
     @FXML
