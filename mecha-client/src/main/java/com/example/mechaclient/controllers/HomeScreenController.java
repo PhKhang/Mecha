@@ -43,10 +43,12 @@ public class HomeScreenController {
     private HBox selectedFriendEntry;
 
     public void initialize() {
+        chatOption.setVisible(false);
         setupContextMenus();
         setupChatListView();
         setupSearchField();
         initializeChatData();
+        updateSelectedButton(allButton);
         displayChats(filteredChats);
     }
 
