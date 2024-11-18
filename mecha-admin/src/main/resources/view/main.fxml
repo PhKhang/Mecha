@@ -34,7 +34,7 @@
 
 <ScrollPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <content>
-      <AnchorPane maxHeight="-Infinity" prefHeight="1410.0" prefWidth="1250.0">
+      <AnchorPane maxHeight="-Infinity" prefHeight="2076.0" prefWidth="1250.0">
          <children>
             <Label layoutX="140.0" layoutY="85.0" minHeight="28.0" minWidth="28.0" prefHeight="40.0" prefWidth="119.0" text="Mecha" AnchorPane.leftAnchor="80.0" AnchorPane.topAnchor="22.0">
                <font>
@@ -397,6 +397,37 @@
                   <Label text="Search for a user in the above range">
                      <font>
                         <Font name="Inter Regular" size="14.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Group>
+            <Text layoutX="77.0" layoutY="1557.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Số lượng bạn bè" AnchorPane.leftAnchor="80.0">
+               <font>
+                  <Font name="Inter 28pt Regular" size="30.0" />
+               </font>
+            </Text>
+            <TableView layoutX="79.0" layoutY="1673.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="569.0" AnchorPane.leftAnchor="80.0">
+               <columns>
+                  <TableColumn prefWidth="112.79998779296875" text="Full name" />
+                  <TableColumn prefWidth="105.60002136230469" text="Username" />
+                  <TableColumn prefWidth="105.60002136230469" text="Ngày tạo" />
+                  <TableColumn minWidth="8.0" prefWidth="102.39996337890625" text="Bạn bè trực tiếp" />
+                  <TableColumn prefWidth="110.40005493164062" text="Bạn của bạn bè" />
+               </columns>
+            </TableView>
+            <ChoiceBox layoutX="301.0" layoutY="1632.0" prefWidth="150.0" />
+            <Text layoutX="80.0" layoutY="1651.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Có số lượng bạn bè trực tiếp">
+               <font>
+                  <Font name="Inter Regular" size="16.0" />
+               </font>
+            </Text>
+            <TextField layoutX="462.0" layoutY="1632.0" prefHeight="26.0" prefWidth="64.0" text="0" />
+            <Group layoutX="80.0" layoutY="1577.0">
+               <children>
+                  <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Full name or username" />
+                  <Label text="Tìm tài khoản">
+                     <font>
+                        <Font name="Inter Regular" size="16.0" />
                      </font>
                   </Label>
                </children>
