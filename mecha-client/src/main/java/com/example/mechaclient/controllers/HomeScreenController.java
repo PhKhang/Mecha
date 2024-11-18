@@ -7,10 +7,12 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -18,15 +20,20 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
-import java.net.URL;
 
 import com.example.mechaclient.ChatApplication;
 
 public class HomeScreenController {
 
     @FXML
-    private Label chatHeader;
-
+    private HBox chatHeader;
+    @FXML
+    private ImageView curUserAva;
+    @FXML
+    private Label curUserName;
+    @FXML
+    private Label chatOption;
+    
     @FXML
     private ListView<HBox> chatListView;
 
@@ -34,13 +41,14 @@ public class HomeScreenController {
     private TextField messageField;
 
     private ObservableList<String> friends = FXCollections.observableArrayList(
-            "Alice Doe",
-            "Bob Smith",
-            "Charlie Brown",   
-            "Charlie C"  
+            "Alice Doe (online)",
+            "Bob Smith (3 hours ago)",
+            "Charlie Brown (1 day ago)",   
+            "Charlie C (online)"  
     );
     
     private HBox selectedFriendEntry = null;
+
     @FXML
     private ImageView settings;  // ImageView for settings icon
 
@@ -57,7 +65,34 @@ public class HomeScreenController {
     private TextField searchField; // Search bar
     private FilteredList<String> filteredFriends;
 
+
     public void initialize() {
+        chatOption.setVisible(false); // Hide the chat option initially
+        // Create the ContextMenu
+        ContextMenu contextMenuOption = new ContextMenu();
+
+        // Create the menu items
+        MenuItem blockUserItem = new MenuItem("Block User");
+        blockUserItem.setOnAction(e -> {
+            // Handle block user action
+            System.out.println("User Blocked");
+        });
+
+        MenuItem reportUserItem = new MenuItem("Report User");
+        reportUserItem.setOnAction(e -> {
+            // Handle report user action
+            System.out.println("User Reported");
+        });
+
+        // Add items to the context menu
+        contextMenuOption.getItems().addAll(blockUserItem, reportUserItem);
+
+        // Show the context menu when right-clicking on the chatOption label
+        chatOption.setOnMouseClicked(event -> {
+            contextMenuOption.show(chatOption, chatOption.getScene().getWindow().getX() + chatOption.localToScene(0, 0).getX() + chatOption.getHeight(), 
+            chatOption.getScene().getWindow().getY() + chatOption.localToScene(0, 0).getY() + chatOption.getWidth() );
+        });
+
         filteredFriends = new FilteredList<>(friends, p -> true);
 
         displayFriends(filteredFriends);
@@ -76,7 +111,7 @@ public class HomeScreenController {
         ContextMenu contextMenu = new ContextMenu();
         
         MenuItem option1Item = new MenuItem("Friend Management");
-        MenuItem option2Item = new MenuItem("Option 2");
+        MenuItem option2Item = new MenuItem("My Profile");
         MenuItem option3Item = new MenuItem("Log out");
 
         option1Item.setOnAction(this::handleOption1);
@@ -120,10 +155,18 @@ public class HomeScreenController {
         friendListVBox.getChildren().clear(); // Clear existing friend list
         for (String friend : friendsList) {
             String name = friend;
-
             Label nameLabel = new Label(name);
 
-            HBox friendEntry = new HBox(5, nameLabel);
+            ImageView avatar = new ImageView();
+            avatar.setFitHeight(40.0);
+            avatar.setFitWidth(40.0);
+            avatar.setPreserveRatio(true);
+            avatar.setPickOnBounds(true);
+            Image avatarImage = new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png"));
+            avatar.setImage(avatarImage);
+
+            HBox friendEntry = new HBox(5, avatar, nameLabel);
+
             friendEntry.setPadding(new Insets(5));
             friendEntry.setAlignment(Pos.CENTER_LEFT);
 
@@ -135,6 +178,7 @@ public class HomeScreenController {
                 }
                 friendEntry.setStyle("-fx-background-color: lightgray;"); // Highlight new selection
                 selectedFriendEntry = friendEntry; // Update selected entry 
+                chatOption.setVisible(true);
             });
             
             friendListVBox.getChildren().add(friendEntry);
@@ -143,10 +187,10 @@ public class HomeScreenController {
     private void handleOption1(ActionEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/FriendManagement.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 600, 400);
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
     
             // Get the current stage (window)
-            Stage stage = (Stage) settings.getScene().getWindow(); // Use the current stage
+            Stage stage = (Stage) settings.getScene().getWindow();
             stage.setScene(scene);
             stage.show();
         } catch (IOException e) {
@@ -156,13 +200,24 @@ public class HomeScreenController {
     
 
     private void handleOption2(ActionEvent event) {
-        System.out.println("Option 2 selected");
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/ProfileScreen.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+    
+            // Get the current stage (window)
+            Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
+
+            stage.setScene(scene);  
+            stage.show();  
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleLogout(ActionEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 600, 400);
+            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
     
             // Get the current stage (window)
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
@@ -174,8 +229,9 @@ public class HomeScreenController {
         }
     }
     private void updateChat(String friend) {
-        String friendName = friend.split(" \\(")[0]; 
-        chatHeader.setText("Chat with " + friendName);
+        Image avatarImage = new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png"));
+        curUserAva.setImage(avatarImage);
+        curUserName.setText(friend);
         chatListView.getItems().clear();
         // Simulating chat history
         addMessage("Hello", false);

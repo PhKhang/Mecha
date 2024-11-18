@@ -1,23 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.mechaclient.controllers.LoginScreenController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-    </padding>
 
-    <Label text="Chat Application" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
-    
-    <TextField fx:id="usernameField" promptText="Username" maxWidth="250"/>
-    <PasswordField fx:id="passwordField" promptText="Password" maxWidth="250"/>
-    
-    <HBox spacing="10" alignment="CENTER">
-        <Button text="Login" onAction="#handleLogin"/>
-        <Button text="Sign Up" onAction="#handleSignUp"/>
-    </HBox>
-</VBox>
-
+<HBox xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaclient.controllers.LoginScreenController">
+   <children>
+      <VBox alignment="CENTER" prefHeight="619.0" prefWidth="742.0" spacing="10.0">
+          <padding>
+              <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+          </padding>
+      
+          <Label style="-fx-font-size: 24px; -fx-font-weight: bold;" text="Chat Application" />
+         <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-text-alignment: center;" text="Hello, and welcome to the chat! We’re excited to have you here." wrappingWidth="185.70570373535156" />
+          
+          <TextField fx:id="usernameField" maxWidth="250" promptText="Username" style="-fx-background-color: transparent; -fx-border-color: lightblue; -fx-border-radius: 6;" />
+          <PasswordField fx:id="passwordField" maxWidth="250" promptText="Password" style="-fx-background-color: transparent; -fx-border-color: lightblue; -fx-border-radius: 6;" />
+         <Label prefWidth="95.0" text="Forgot password?">
+            <VBox.margin>
+               <Insets left="150.0" />
+            </VBox.margin>
+         </Label>
+          
+          <HBox alignment="CENTER" spacing="10">
+              <Button onAction="#handleLogin" prefWidth="150.0" style="-fx-background-color: #115ef7; -fx-background-radius: 20; -fx-border-color: black; -fx-border-radius: 20;" text="Login" textFill="WHITE" />
+            <VBox.margin>
+               <Insets top="15.0" />
+            </VBox.margin>
+          </HBox>
+           <Button onAction="#handleSignUp" prefWidth="150.0" style="-fx-background-color: transparent; -fx-border-color: black; -fx-border-radius: 20;" text="Sign Up" />
+      </VBox>
+   </children>
+</HBox>

@@ -11,7 +11,6 @@ import javafx.stage.Stage;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import java.io.IOException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -77,15 +76,15 @@ public class FriendManagementController {
 
     @FXML
     private void returnToHomeScreen(ActionEvent event) throws IOException {
-        // Load the HomeScreen.fxml file
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/mechaclient/views/HomeScreen.fxml"));
-        Parent homeScreenRoot = loader.load();
+        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/HomeScreen.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 800, 600);
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Scene homeScreenScene = new Scene(homeScreenRoot);
-        stage.setScene(homeScreenScene);
+
+        stage = (Stage) friendRequestContent.getScene().getWindow(); // get scene based on an element that in the scene, in this case it is friendRequestContent
+        stage.setScene(scene);
         stage.show();
     }
-    @FXML
+    @FXML   
     private void showFriendRequests() {
         setActiveTab(friendRequestContent);
         friendRequestTab.setStyle("-fx-background-color: #cccccc;");

@@ -1,0 +1,93 @@
+.back-button {
+    -fx-background-color: transparent;
+    -fx-font-size: 23;
+}
+
+.profile-container {
+    -fx-background-color: #E6F0FF;
+    -fx-padding: 20;
+}
+
+.header-text {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+
+.display-name {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.display-email {
+    -fx-text-fill: #666666;
+}
+
+.field-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.text-field {
+    -fx-background-radius: 5;
+    -fx-padding: 8 12;
+}
+
+.non-editable-field {
+    -fx-background-color: white;
+    -fx-text-fill: #666666;
+}
+
+.editable-field {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+    -fx-border-color: #4a90e2;
+    -fx-border-radius: 5;
+}
+
+.edit-button {
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.confirm-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.cancel-button {
+    -fx-background-color: #666666;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.change-password-button {
+    -fx-background-color: #ff4444;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.password-field {
+    -fx-background-radius: 5;
+    -fx-padding: 8 12;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
+}
+
+.button:pressed {
+    -fx-opacity: 0.8;
+}
+
+.editable-field {
+    -fx-background-color: white;
+}
+.non-editable-field {
+    -fx-background-color: transparent;
+}

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.layout.GridPane?>
+
+<HBox alignment="CENTER_LEFT" xmlns:fx="http://javafx.com/fxml" 
+        fx:controller="com.example.mechaclient.controllers.ProfileScreenController"
+        stylesheets="@../styles/ProfileStyle.css"
+        spacing="20" >
+    <VBox>
+        
+        <!-- Header -->
+        <HBox>
+            <Button text="←" styleClass="back-button"  onAction="#returnToHomeScreen"/>
+            <Label text="My Profile" styleClass="header-text"/>
+        </HBox>
+        <!-- Profile Section -->
+        <HBox alignment="CENTER_LEFT" spacing="15">
+            <!-- Profile Image with Circle Clip -->
+            <StackPane>
+                <ImageView fx:id="profileImage" fitHeight="80" fitWidth="80" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/default-ava.png"/>
+                    </image>
+                </ImageView>
+                <Circle fx:id="clipCircle" radius="40" fill="transparent"/>
+            </StackPane>
+            
+            <VBox spacing="5">
+                <Label fx:id="displayName" text="ABC XYZ" styleClass="display-name"/>
+                <Label fx:id="displayEmail" text="example@gmail.com" styleClass="display-email"/>
+            </VBox>
+            
+            <!-- Edit/Save Buttons Container -->
+            <HBox fx:id="actionButtons" spacing="10" HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT">
+                <Button fx:id="editButton" text="Edit" onAction="#handleEdit" styleClass="edit-button"/>
+                <Button fx:id="confirmButton" text="Confirm" onAction="#handleConfirm" 
+                        styleClass="confirm-button" visible="false"/>
+                <Button fx:id="cancelButton" text="Cancel" onAction="#handleCancel" 
+                        styleClass="cancel-button" visible="false"/>
+            </HBox>
+        </HBox>
+        
+        <!-- Form Grid -->
+        <GridPane hgap="20" vgap="15" alignment="CENTER" fx:id="formInfo">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="50" hgrow="NEVER" />
+                <ColumnConstraints percentWidth="50" hgrow="NEVER" />
+            </columnConstraints>
+            
+            <!-- Left Column -->
+            <Label text="Full Name" styleClass="field-label" 
+                GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="fullNameField" text="Nguyen Van A" editable="false"
+                    GridPane.rowIndex="1" GridPane.columnIndex="0" maxWidth="300"/>
+            
+            <Label text="Gender" styleClass="field-label"
+                GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextField fx:id="genderField" text="Your First Name" editable="false"
+                    GridPane.rowIndex="3" GridPane.columnIndex="0" maxWidth="300"/>
+            
+            <Label text="Address" styleClass="field-label"
+                GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <TextField fx:id="addressField" text="227 Nguyen Van Cu" editable="false"
+                    GridPane.rowIndex="5" GridPane.columnIndex="0" maxWidth="300"/>
+            
+            <!-- Right Column -->
+            <Label text="Username" styleClass="field-label"
+                GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <TextField fx:id="usernameField" text="ABC XYZ" editable="false"
+                    GridPane.rowIndex="1" GridPane.columnIndex="1" maxWidth="300"/>
+            
+            <Label text="Date of birth" styleClass="field-label"
+                GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <TextField fx:id="dobField" text="01/01/2004" editable="false"
+                    GridPane.rowIndex="3" GridPane.columnIndex="1" maxWidth="300"/>
+            
+            <Label text="Email" styleClass="field-label"
+                GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+            <TextField fx:id="emailField" text="example@gmail.com" editable="false"
+                    GridPane.rowIndex="5" GridPane.columnIndex="1" maxWidth="300"/>
+            
+            <!-- Password Section (Full Width) -->
+            <Label text="Password" styleClass="field-label"
+                GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+            <HBox spacing="10" GridPane.rowIndex="7" GridPane.columnIndex="0" 
+                GridPane.columnSpan="2">
+                <PasswordField fx:id="passwordField" text="password123" 
+                            editable="false" HBox.hgrow="ALWAYS" maxWidth="300"/>
+                <Button text="Change Password" onAction="#handleChangePassword" 
+                        styleClass="change-password-button"/>
+            </HBox>
+        </GridPane>
+    </VBox>
+</HBox>
