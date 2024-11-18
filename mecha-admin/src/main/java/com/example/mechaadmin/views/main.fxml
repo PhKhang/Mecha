@@ -32,7 +32,7 @@
 
 <ScrollPane stylesheets="@../styles/app.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaadmin.SceneController">
    <content>
-      <AnchorPane maxHeight="-Infinity" prefHeight="2377.0" prefWidth="1250.0">
+      <AnchorPane maxHeight="-Infinity" prefHeight="2570.0" prefWidth="1250.0">
          <children>
             <Label layoutX="140.0" layoutY="85.0" minHeight="28.0" minWidth="28.0" prefHeight="40.0" prefWidth="119.0" text="Mecha" AnchorPane.leftAnchor="80.0" AnchorPane.topAnchor="22.0">
                <font>
@@ -213,7 +213,7 @@
                                  <content>
                                     <VBox focusTraversable="true" prefHeight="393.0" prefWidth="366.0" spacing="10.0">
                                        <children>
-                                          <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="366.0" spacing="5.0">
+                                          <HBox alignment="CENTER_LEFT" onMouseClicked="#clickToProfile" prefHeight="38.0" prefWidth="366.0" spacing="5.0">
                                              <children>
                                                 <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true">
                                                    <image>
@@ -224,20 +224,20 @@
                                                       <Image url="@../images/crown.png" />
                                                    </image>
                                                 </ImageView>
-                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Trần Nguyễn Phúc Khang">
+                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Phuc Khang">
                                                    <font>
                                                       <Font name="Inter Regular" size="14.0" />
                                                    </font>
                                                 </Text>
                                              </children>
                                           </HBox>
-                                          <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="366.0" spacing="5.0">
+                                          <HBox alignment="CENTER_LEFT" onMouseClicked="#clickToProfile" prefHeight="38.0" prefWidth="366.0" spacing="5.0">
                                              <children>
                                                 <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true">
                                                    <image>
                                                       <Image url="@../images/avatars/1.png" />
                                                    </image></ImageView>
-                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Phúc Khang Trần Nguyễn">
+                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Man the Man">
                                                    <font>
                                                       <Font name="Inter Regular" size="14.0" />
                                                    </font>
@@ -261,14 +261,14 @@
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="466.0" prefWidth="1106.0">
                            <children>
-                              <TableView layoutX="32.0" layoutY="147.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="663.0">
+                              <TableView fx:id="reportTable" layoutX="32.0" layoutY="147.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="663.0">
                                  <columns>
-                                    <TableColumn prefWidth="59.20001220703125" text="ID" />
-                                    <TableColumn prefWidth="142.40005493164062" text="Người báo cáo" />
-                                    <TableColumn prefWidth="119.19998168945312" text="Người vi phạm" />
-                                    <TableColumn prefWidth="114.4000244140625" text="Lý do" />
-                                    <TableColumn prefWidth="112.79998779296875" text="Thời gian" />
-                                    <TableColumn prefWidth="112.79998779296875" text="Tình trạng" />
+                                    <TableColumn fx:id="reportId" prefWidth="59.20001220703125" text="ID" />
+                                    <TableColumn fx:id="reportReporter" prefWidth="142.40005493164062" text="Người báo cáo" />
+                                    <TableColumn fx:id="reportReported" prefWidth="119.19998168945312" text="Người vi phạm" />
+                                    <TableColumn fx:id="reportReason" prefWidth="114.4000244140625" text="Lý do" />
+                                    <TableColumn fx:id="reportTime" prefWidth="112.79998779296875" text="Thời gian" />
+                                    <TableColumn fx:id="reportStatus" prefWidth="112.79998779296875" text="Tình trạng" />
                                  </columns>
                               </TableView>
                               <Group layoutX="747.0" layoutY="25.625">
@@ -283,32 +283,40 @@
                                           <Font name="Inter Regular" size="14.0" />
                                        </font>
                                     </Text>
-                                    <HBox alignment="CENTER_LEFT" layoutX="3.0" layoutY="61.375" prefHeight="40.0" prefWidth="309.0">
+                                    <HBox fx:id="repoter" alignment="CENTER_LEFT" layoutX="3.0" layoutY="45.375" onMouseClicked="#clickToProfile" prefHeight="40.0" prefWidth="309.0" spacing="5.0">
                                        <children>
-                                          <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" />
-                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Phúc Khang Trần Nguyễn">
+                                          <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true">
+                                             <image>
+                                                <Image url="@../images/avatars/1.png" />
+                                             </image>
+                                          </ImageView>
+                                          <Text fx:id="reporter" strokeType="OUTSIDE" strokeWidth="0.0" text="Phúc Khang Trần Nguyễn">
                                              <font>
                                                 <Font name="Inter Regular" size="14.0" />
                                              </font>
                                           </Text>
                                        </children>
                                     </HBox>
-                                    <Label layoutX="3.0" layoutY="41.375" text="Báo cáo bởi">
+                                    <Label layoutX="3.0" layoutY="25.375" text="Báo cáo bởi">
                                        <font>
                                           <Font name="Inter 24pt Medium" size="14.0" />
                                        </font>
                                     </Label>
-                                    <HBox alignment="CENTER_LEFT" layoutX="3.0" layoutY="113.375" prefHeight="40.0" prefWidth="309.0">
+                                    <HBox alignment="CENTER_LEFT" layoutX="3.0" layoutY="104.375" onMouseClicked="#clickToProfile" prefHeight="40.0" prefWidth="309.0" spacing="5.0">
                                        <children>
-                                          <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" />
-                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Spammer456">
+                                          <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true">
+                                             <image>
+                                                <Image url="@../images/avatars/1.png" />
+                                             </image>
+                                          </ImageView>
+                                          <Text fx:id="reported" strokeType="OUTSIDE" strokeWidth="0.0" text="Spammer456">
                                              <font>
                                                 <Font name="Inter Regular" size="14.0" />
                                              </font>
                                           </Text>
                                        </children>
                                     </HBox>
-                                    <Label layoutX="3.0" layoutY="93.375" text="Người vi phạm">
+                                    <Label layoutX="3.0" layoutY="85.375" text="Người vi phạm">
                                        <font>
                                           <Font name="Inter 28pt Medium" size="14.0" />
                                        </font>
@@ -336,11 +344,11 @@
                                           <Font name="Inter 18pt Medium" size="14.0" />
                                        </font>
                                     </Label>
-                                    <ChoiceBox layoutX="1.0" layoutY="392.375" prefWidth="150.0" />
+                                    <ChoiceBox fx:id="choiceStatus" layoutX="1.0" layoutY="392.375" prefWidth="150.0" />
                                     <Button layoutX="159.0" layoutY="391.0" mnemonicParsing="false" text="Lưu" />
                                  </children>
                               </Group>
-                              <DatePicker layoutX="282.0" layoutY="31.0" promptText="Starting date" />
+                              <DatePicker layoutX="296.0" layoutY="31.0" promptText="Starting date" />
                               <Label layoutX="276.0" layoutY="34.0" text="-">
                                  <font>
                                     <Font name="Inter 18pt Regular" size="14.0" />
@@ -389,12 +397,12 @@
                         <Font name="Inter Regular" size="14.0" />
                      </font>
                   </Label>
-                  <Label layoutX="284.0" layoutY="509.0625" text="-">
+                  <Label layoutX="291.0" layoutY="509.0625" text="-">
                      <font>
                         <Font name="Inter 18pt Regular" size="14.0" />
                      </font>
                   </Label>
-                  <DatePicker layoutX="294.0" layoutY="505.0625" promptText="Ngày kết thúc" />
+                  <DatePicker layoutX="301.0" layoutY="505.0625" promptText="Ngày kết thúc" />
                   <Group layoutY="548.0625">
                      <children>
                         <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
@@ -407,7 +415,7 @@
                   </Group>
                </children>
             </Group>
-            <Group layoutX="80.0" layoutY="2061.0">
+            <Group layoutX="80.0" layoutY="2137.0">
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Số lượng bạn bè">
                      <font>
@@ -423,7 +431,7 @@
                         <TableColumn fx:id="friendIndirect" prefWidth="110.40005493164062" text="Bạn của bạn bè" />
                      </columns>
                   </TableView>
-                  <ChoiceBox layoutX="221.0" layoutY="104.0625" prefWidth="150.0" />
+                  <ChoiceBox fx:id="choiceFriend" layoutX="221.0" layoutY="104.0625" prefWidth="150.0" />
                   <Text layoutX="1.0" layoutY="121.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Có số lượng bạn bè trực tiếp">
                      <font>
                         <Font name="Inter Regular" size="16.0" />
@@ -432,7 +440,7 @@
                   <TextField layoutX="382.0" layoutY="104.0625" prefHeight="26.0" prefWidth="64.0" text="0" />
                   <Group layoutY="49.0625">
                      <children>
-                        <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Full name or username" />
+                        <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
                         <Label text="Tìm tài khoản">
                            <font>
                               <Font name="Inter Regular" size="16.0" />
@@ -442,7 +450,6 @@
                   </Group>
                </children>
             </Group>
-            <Button layoutX="241.0" layoutY="578.0" mnemonicParsing="false" onAction="#switchToProfile" text="Button" />
             <Group layoutX="80.0" layoutY="1641.0">
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Các lượt đăng nhập gần đây">
@@ -450,23 +457,23 @@
                         <Font name="Inter 28pt Regular" size="30.0" />
                      </font>
                   </Text>
-                  <TableView layoutY="19.0" prefHeight="343.0" prefWidth="430.0">
+                  <TableView fx:id="loginTable" layoutY="19.0" prefHeight="391.0" prefWidth="430.0">
                      <columns>
-                        <TableColumn prefWidth="88.0" text="Thời gian" />
-                        <TableColumn prefWidth="99.19995880126953" text="Username" />
-                        <TableColumn prefWidth="99.19995880126953" text="Họ tên" />
+                        <TableColumn fx:id="loginTime" prefWidth="136.0000228881836" text="Thời gian" />
+                        <TableColumn fx:id="loginUser" prefWidth="121.59999084472656" text="Username" />
+                        <TableColumn fx:id="loginFull" prefWidth="108.00006103515625" text="Họ tên" />
                      </columns>
                   </TableView>
                </children>
             </Group>
             <Group layoutX="617.0" layoutY="619.0">
                <children>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Số lượng hoạt động">
+                  <Text layoutY="20.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Số lượng hoạt động">
                      <font>
                         <Font name="Inter 28pt Regular" size="30.0" />
                      </font>
                   </Text>
-                  <AreaChart layoutY="90.0625">
+                  <AreaChart layoutY="90.0625" prefHeight="409.0" prefWidth="500.0">
                      <xAxis>
                         <CategoryAxis side="BOTTOM" />
                      </xAxis>
@@ -474,37 +481,37 @@
                         <NumberAxis side="LEFT" />
                      </yAxis>
                   </AreaChart>
-                  <Label layoutY="510.0625" text="Chọn năm">
+                  <Label layoutY="520.0625" text="Chọn năm">
                      <font>
                         <Font name="Inter Regular" size="14.0" />
                      </font>
                   </Label>
                   <Group layoutY="548.0625" />
-                  <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutX="80.0" layoutY="506.0" prefHeight="26.0" prefWidth="68.0" promptText="Năm" />
+                  <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutX="80.0" layoutY="516.0" prefHeight="26.0" prefWidth="68.0" promptText="Năm" />
                </children>
             </Group>
-            <Group layoutX="590.0" layoutY="1649.0">
+            <Group layoutX="593.0" layoutY="1641.0">
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Người dùng hoạt động">
                      <font>
                         <Font name="Inter 28pt Regular" size="30.0" />
                      </font>
                   </Text>
-                  <TableView layoutY="210.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="589.0">
+                  <TableView fx:id="activeTable" layoutY="210.0" minWidth="-Infinity" prefHeight="200.0" prefWidth="589.0">
                      <columns>
-                        <TableColumn prefWidth="112.79998779296875" text="Họ tên" />
-                        <TableColumn prefWidth="105.60002136230469" text="Username" />
-                        <TableColumn prefWidth="91.199951171875" text="Ngày tạo" />
-                        <TableColumn minWidth="8.0" prefWidth="91.20001220703125" text="Mở ứng dụng" />
-                        <TableColumn prefWidth="95.99993896484375" text="Chat cá nhân" />
-                        <TableColumn prefWidth="95.99993896484375" text="Chat nhóm" />
+                        <TableColumn fx:id="activeFull" prefWidth="112.79998779296875" text="Họ tên" />
+                        <TableColumn fx:id="activeUser" prefWidth="105.60002136230469" text="Username" />
+                        <TableColumn fx:id="activeCreation" prefWidth="91.199951171875" text="Ngày tạo" />
+                        <TableColumn fx:id="activeOpen" minWidth="8.0" prefWidth="91.20001220703125" text="Mở ứng dụng" />
+                        <TableColumn fx:id="activeChat" prefWidth="95.99993896484375" text="Chat cá nhân" />
+                        <TableColumn fx:id="activeGroup" prefWidth="95.99993896484375" text="Chat nhóm" />
                      </columns>
                   </TableView>
-                  <ChoiceBox layoutX="1.0" layoutY="144.0" prefWidth="150.0" />
+                  <ChoiceBox fx:id="choiceActiveAct" accessibleText="A" layoutX="1.0" layoutY="144.0" prefWidth="150.0" />
                   <TextField layoutX="323.0" layoutY="143.0" prefHeight="26.0" prefWidth="64.0" text="0" />
                   <Group layoutX="1.0" layoutY="71.0">
                      <children>
-                        <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Full name or username" />
+                        <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
                         <Label text="Tìm tài khoản">
                            <font>
                               <Font name="Inter Regular" size="16.0" />
@@ -512,7 +519,7 @@
                         </Label>
                      </children>
                   </Group>
-                  <ChoiceBox layoutX="162.0" layoutY="144.0" prefWidth="150.0" />
+                  <ChoiceBox fx:id="choiceActiveCon" layoutX="162.0" layoutY="144.0" prefWidth="150.0" />
                   <DatePicker layoutX="32.0" layoutY="28.0" />
                   <Label layoutY="30.0" text="Từ">
                      <font>
