@@ -324,10 +324,6 @@ public class HomeScreenController {
             this.status = status;
             this.lastMessage = lastMessage;
         }
-
-        private String getName(){
-            return this.name;
-        }
     }
 
     private enum ChatType {
