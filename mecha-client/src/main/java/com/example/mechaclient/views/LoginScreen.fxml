@@ -10,7 +10,7 @@
 <?import javafx.scene.text.Text?>
 
 
-<HBox xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaclient.controllers.LoginScreenController">
+<HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaclient.controllers.LoginScreenController">
    <children>
       <VBox alignment="CENTER" prefHeight="619.0" prefWidth="742.0" spacing="10.0">
           <padding>
