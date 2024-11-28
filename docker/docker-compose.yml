@@ -1,0 +1,16 @@
+services:
+  db:
+    container_name: mecha_db
+    image: mysql
+    restart: always
+    ports:
+      - "4321:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: chat_application
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
+    volumes:
+      - type: bind 
+        source: ./db
+        target: /docker-entrypoint-initdb.d
