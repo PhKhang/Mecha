@@ -1,9 +1,13 @@
-package com.example.mechaadmin;
+package com.example.mechaadmin.controllers;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Random;
 import java.util.ResourceBundle;
+
+import com.example.mechaadmin.Account;
+import com.example.mechaadmin.GroupChat;
+import com.example.mechaadmin.Report;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;

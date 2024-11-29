@@ -1,4 +1,4 @@
-package com.example.mechaadmin;
+package com.example.mechaadmin.controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

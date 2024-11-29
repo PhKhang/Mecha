@@ -18,7 +18,14 @@
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
         <version>6.6.3.Final</version>
-    </dependency> 
+    </dependency>
+    <dependency>
+      <groupId>MySQL</groupId>
+      <artifactId>mysql-connector-j-9.1.0</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/mysql-connector-j-9.1.0.jar</systemPath>
+    </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>

@@ -1,4 +1,4 @@
-package com.example.mechaadmin;
+package com.example.mechaadmin.controllers;
 
 import java.io.IOException;
 import java.net.URL;
@@ -12,7 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class ProfileController implements Initializable {
+public class LoginController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -22,7 +22,7 @@ public class ProfileController implements Initializable {
     }
 
     public void switchToMain(ActionEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("views/main.fxml"));
+        root = FXMLLoader.load(getClass().getResource("../views/main.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);

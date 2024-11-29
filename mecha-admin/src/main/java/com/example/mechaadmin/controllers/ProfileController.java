@@ -1,4 +1,4 @@
-package com.example.mechaadmin;
+package com.example.mechaadmin.controllers;
 
 import java.io.IOException;
 import java.net.URL;
@@ -12,7 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class LoginController implements Initializable {
+public class ProfileController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
