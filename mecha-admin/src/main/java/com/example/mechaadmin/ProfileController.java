@@ -1,4 +1,4 @@
-package com.example.mechaadmin.controllers;
+package com.example.mechaadmin;
 
 import java.io.IOException;
 import java.net.URL;

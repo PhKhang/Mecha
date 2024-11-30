@@ -10,7 +10,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class UserDAO {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -26,10 +26,10 @@ public class User {
     @Column(name = "created_at")
     LocalDate createdAt;
 
-    public User() {
+    public UserDAO() {
     }
 
-    public User(int userId, String username, String email, String address, String passwordHash, String fullName, String status, LocalDate createdAt) {
+    public UserDAO(int userId, String username, String email, String address, String passwordHash, String fullName, String status, LocalDate createdAt) {
         this.userId = userId;
         this.username = username;
         this.email = email;

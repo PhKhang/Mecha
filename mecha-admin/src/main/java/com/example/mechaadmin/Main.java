@@ -6,11 +6,20 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
+
+import com.example.mechaadmin.bus.ReportBUS;
+import com.example.mechaadmin.dto.ReportInfoDTO;
 
 public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
+        ReportBUS reportBUS = new ReportBUS();
+        List<ReportInfoDTO> list = reportBUS.getAll();
+        
+        System.out.println(list.size());
+        
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("views/login.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());

@@ -1,13 +1,10 @@
-package com.example.mechaadmin.controllers;
+package com.example.mechaadmin;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Random;
 import java.util.ResourceBundle;
-
-import com.example.mechaadmin.Account;
-import com.example.mechaadmin.GroupChat;
-import com.example.mechaadmin.Report;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -320,6 +317,7 @@ public class SceneController implements Initializable {
         root = FXMLLoader.load(getClass().getResource("views/profile.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());
         stage.setScene(scene);
         stage.show();
     }

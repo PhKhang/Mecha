@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "log_history")
-public class Log {
+public class LogDAO {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
@@ -18,10 +18,10 @@ public class Log {
     @Column(name = "section_end")
     LocalDate sectionEnd;
 
-    public Log() {
+    public LogDAO() {
     }
 
-    public Log(int logId, int userId, LocalDate sectionStart, LocalDate sectionEnd) {
+    public LogDAO(int logId, int userId, LocalDate sectionStart, LocalDate sectionEnd) {
         this.logId = logId;
         this.userId = userId;
         this.sectionStart = sectionStart;

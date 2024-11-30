@@ -6,7 +6,7 @@
     <session-factory>
 
         <!-- Set URL -->
-        <property name = "hibernate.connection.url">jdbc:mysql://localhost:4321/db</property>
+        <property name = "hibernate.connection.url">jdbc:mysql://localhost:4321/chat_application</property>
 
         <!-- Set User Name -->
         <property name = "hibernate.connection.username">user</property>
@@ -24,8 +24,8 @@
         <property name="hibernate.transaction.jta.platform">true</property>
 
         <!-- src\main\java\dto\Person.java -->
-        <mapping class="dao.ReportDAO" />
-        <mapping class="dao.UserDAO" />
+        <mapping class="com.example.mechaadmin.dao.ReportDAO" />
+        <mapping class="com.example.mechaadmin.dao.UserDAO" />
 
     </session-factory>
 </hibernate-configuration>

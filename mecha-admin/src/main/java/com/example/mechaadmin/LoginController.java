@@ -1,7 +1,8 @@
-package com.example.mechaadmin.controllers;
+package com.example.mechaadmin;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
@@ -22,9 +23,10 @@ public class LoginController implements Initializable {
     }
 
     public void switchToMain(ActionEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("../views/main.fxml"));
+        root = FXMLLoader.load(getClass().getResource("views/main.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());
         stage.setScene(scene);
         stage.show();
     }
