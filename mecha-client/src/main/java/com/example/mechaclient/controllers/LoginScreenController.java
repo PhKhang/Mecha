@@ -9,6 +9,10 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+
 import com.example.mechaclient.ChatApplication;
 
 public class LoginScreenController {
@@ -20,7 +24,31 @@ public class LoginScreenController {
 
     @FXML
     private void handleLogin() throws IOException {
-        loadHomeScreen();
+        String username = usernameField.getText();
+        String password = passwordField.getText();
+        if (username.isEmpty() || password.isEmpty()) {
+            System.out.println("Please enter username and password");
+            return;
+        }
+
+        try (Socket socket = new Socket("localhost", 12345);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+
+            out.writeObject("LOGIN");
+            out.writeObject(username);
+            out.writeObject(password);
+
+            String response = (String) in.readObject();
+            if ("SUCCESS".equals(response)) {
+                System.out.println("Login successful!");
+                loadHomeScreen();
+            } else {
+                System.out.println("Invalid username or password");
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML

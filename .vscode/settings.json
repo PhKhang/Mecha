@@ -1,0 +1,10 @@
+{
+    "java.debug.settings.onBuildFailureProceed": true,
+    "java.project.sourcePaths": [
+        "mecha-server1/mecha-server/src/main/java/com/example/mecha_server",
+        "mecha-server",
+        "mecha-server1"
+    ],
+    "java.project.explorer.showNonJavaResources": false,
+    "java.dependency.packagePresentation": "hierarchical"
+}
