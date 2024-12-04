@@ -1,4 +1,5 @@
 module com.example.mechaadmin {
+    requires java.naming;
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
@@ -11,4 +12,5 @@ module com.example.mechaadmin {
     exports com.example.mechaadmin;
     opens com.example.mechaadmin.dao to org.hibernate.orm.core;
     exports com.example.mechaadmin.dao;
+    opens com.example.mechaadmin.dto to javafx.base;
 }

@@ -2,9 +2,13 @@ package com.example.mechaadmin;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.ResourceBundle;
+
+import com.example.mechaadmin.bus.UserBUS;
+import com.example.mechaadmin.dto.AccountDTO;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -33,49 +37,41 @@ public class SceneController implements Initializable {
 
     // Tai khoan ca nhan
     @FXML
-    private TableView<Account> accountTable;
+    public TableView<AccountDTO> accountTable;
 
-    @FXML
-    private TableColumn<Account, String> accountCreation;
+    class AccountTable {
+        public TableView<AccountDTO> accountTable;
+        public TableColumn<AccountDTO, String> accountCreation;
+        public TableColumn<AccountDTO, String> accountFull;
+        public TableColumn<AccountDTO, String> accountLog;
+        public TableColumn<AccountDTO, String> accountStatus;
+        public TableColumn<AccountDTO, String> accountUser;
 
-    @FXML
-    private TableColumn<Account, String> accountFull;
+        ObservableList<AccountDTO> accounts = FXCollections.observableArrayList();
 
-    @FXML
-    private TableColumn<Account, String> accountLog;
+        @SuppressWarnings("unchecked")
+        AccountTable(TableView<AccountDTO> table) {
+            accountTable = table;
+            accountCreation = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(0);
+            accountFull = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(1);
+            accountLog = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(2);
+            accountStatus = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(3);
+            accountUser = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(4);
 
-    @FXML
-    private TableColumn<Account, String> accountStatus;
-
-    @FXML
-    private TableColumn<Account, String> accountUser;
-
-    ObservableList<Account> accounts = FXCollections.observableArrayList(
-            new Account("Trần Nguyễn Phúc Khang", "Phuc Khang", "Online", "22/11/2024", "23/11/2024 12:00:00",
-                    "khang@example.com", "123 Đường ABC, Hà Nội", "01/01/1990", "Nam", 5, 10),
-            new Account("Lê Trí Mẩn", "Man the Man", "Offline", "9/11/2024", "11/11/2024 10:34:00", "man@example.com",
-                    "456 Đường DEF, TP.HCM", "02/02/1991", "Nam", 3, 8),
-            new Account("Nguyễn Văn A", "Van A", "Online", "01/01/2024", "01/01/2024 08:00:00", "vana@example.com",
-                    "789 Đường GHI, Đà Nẵng", "03/03/1992", "Nam", 7, 12),
-            new Account("Trần Thị B", "Thi B", "Offline", "02/02/2024", "02/02/2024 09:00:00", "thib@example.com",
-                    "101 Đường JKL, Cần Thơ", "04/04/1993", "Nữ", 4, 9),
-            new Account("Lê Văn C", "Van C", "Online", "03/03/2024", "03/03/2024 10:00:00", "vanc@example.com",
-                    "202 Đường MNO, Hải Phòng", "05/05/1994", "Nam", 6, 11),
-            new Account("Phạm Thị D", "Thi D", "Offline", "04/04/2024", "04/04/2024 11:00:00", "thid@example.com",
-                    "303 Đường PQR, Huế", "06/06/1995", "Nữ", 2, 7),
-            new Account("Nguyễn Văn F", "Van F", "Online", "06/06/2024", "06/06/2024 13:00:00", "vanf@example.com",
-                    "404 Đường STU, Nha Trang", "07/07/1996", "Nam", 5, 10),
-            new Account("Trần Thị G", "Thi G", "Offline", "07/07/2024", "07/07/2024 14:00:00", "thig@example.com",
-                    "505 Đường VWX, Vũng Tàu", "08/08/1997", "Nữ", 3, 8),
-            new Account("Lê Văn H", "Van H", "Online", "08/08/2024", "08/08/2024 15:00:00", "vanh@example.com",
-                    "606 Đường YZ, Quy Nhơn", "09/09/1998", "Nam", 7, 12),
-            new Account("Phạm Thị I", "Thi I", "Offline", "09/09/2024", "09/09/2024 16:00:00", "thii@example.com",
-                    "707 Đường ABC, Biên Hòa", "10/10/1999", "Nữ", 4, 9),
-            new Account("Hoàng Văn E", "Van E", "Online", "05/05/2024", "05/05/2024 12:00:00", "vane@example.com",
-                    "808 Đường DEF, Buôn Ma Thuột", "11/11/2000", "Nam", 6, 11));
-
+            accountUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+            accountFull.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+            accountStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+            accountCreation.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+            accountLog.setCellValueFactory(new PropertyValueFactory<>("recentLogin"));
+            accountTable.setItems(accounts);
+        }
+        
+        public void updateContent(List<AccountDTO> list){
+            accounts.clear();
+            accounts.addAll(list);
+        }
+    }
     // Cac nhom
-
     @FXML
     private TableColumn<GroupChat, String> groupCreation;
 
@@ -104,54 +100,53 @@ public class SceneController implements Initializable {
             new GroupChat("Nhóm 10", "01/12/2024"));
 
     @FXML
-    private TableView<Account> friendCount;
+    private TableView<AccountDTO> friendCount;
     @FXML
-    private TableColumn<Account, String> friendName;
+    private TableColumn<AccountDTO, String> friendName;
     @FXML
-    private TableColumn<Account, String> friendUser;
+    private TableColumn<AccountDTO, String> friendUser;
     @FXML
-    private TableColumn<Account, String> friendCreation;
+    private TableColumn<AccountDTO, String> friendCreation;
     @FXML
-    private TableColumn<Account, Integer> friendDirect;
+    private TableColumn<AccountDTO, Integer> friendDirect;
     @FXML
-    private TableColumn<Account, Integer> friendIndirect;
+    private TableColumn<AccountDTO, Integer> friendIndirect;
 
     @FXML
-    private TableView<Account> loginTable;
+    private TableView<AccountDTO> loginTable;
     @FXML
-    private TableColumn<Account, String> loginTime;
+    private TableColumn<AccountDTO, String> loginTime;
     @FXML
-    private TableColumn<Account, String> loginUser;
+    private TableColumn<AccountDTO, String> loginUser;
     @FXML
-    private TableColumn<Account, String> loginFull;
+    private TableColumn<AccountDTO, String> loginFull;
 
     @FXML
-    private TableView<Account> activeTable;
+    private TableView<AccountDTO> activeTable;
     @FXML
-    private TableColumn<Account, String> activeFull;
+    private TableColumn<AccountDTO, String> activeFull;
     @FXML
-    private TableColumn<Account, String> activeUser;
+    private TableColumn<AccountDTO, String> activeUser;
     @FXML
-    private TableColumn<Account, String> activeCreation;
+    private TableColumn<AccountDTO, String> activeCreation;
     @FXML
-    private TableColumn<Account, String> activeOpen;
+    private TableColumn<AccountDTO, String> activeOpen;
     @FXML
-    private TableColumn<Account, String> activeChat;
+    private TableColumn<AccountDTO, String> activeChat;
     @FXML
-    private TableColumn<Account, String> activeGroup;
+    private TableColumn<AccountDTO, String> activeGroup;
 
     ObservableList<Report> reports = FXCollections.observableArrayList(
-        new Report("1", "Phuc Khang", "SpamLover", "Spamming", "22/11/2024", "Pending"),
-        new Report("2", "Man the Man", "RuleBreaker", "Inappropriate Content", "23/11/2024", "Resolved"),
-        new Report("3", "Van A", "Cheater", "Hacking", "24/11/2024", "Pending"),
-        new Report("4", "Thi B", "Spammer", "Spamming", "25/11/2024", "Pending"),
-        new Report("5", "Van C", "Hacker", "Hacking", "26/11/2024", "Resolved"),
-        new Report("6", "Thi D", "Abuser", "Abuse", "27/11/2024", "Pending"),
-        new Report("7", "Van F", "Spammer", "Spamming", "28/11/2024", "Resolved"),
-        new Report("8", "Thi G", "Cheater", "Hacking", "29/11/2024", "Pending"),
-        new Report("9", "Van H", "RuleBreaker", "Inappropriate Content", "30/11/2024", "Resolved"),
-        new Report("10", "Thi I", "Abuser", "Abuse", "01/12/2024", "Pending")
-    );
+            new Report("1", "Phuc Khang", "SpamLover", "Spamming", "22/11/2024", "Pending"),
+            new Report("2", "Man the Man", "RuleBreaker", "Inappropriate Content", "23/11/2024", "Resolved"),
+            new Report("3", "Van A", "Cheater", "Hacking", "24/11/2024", "Pending"),
+            new Report("4", "Thi B", "Spammer", "Spamming", "25/11/2024", "Pending"),
+            new Report("5", "Van C", "Hacker", "Hacking", "26/11/2024", "Resolved"),
+            new Report("6", "Thi D", "Abuser", "Abuse", "27/11/2024", "Pending"),
+            new Report("7", "Van F", "Spammer", "Spamming", "28/11/2024", "Resolved"),
+            new Report("8", "Thi G", "Cheater", "Hacking", "29/11/2024", "Pending"),
+            new Report("9", "Van H", "RuleBreaker", "Inappropriate Content", "30/11/2024", "Resolved"),
+            new Report("10", "Thi I", "Abuser", "Abuse", "01/12/2024", "Pending"));
     @FXML
     private TableView<Report> reportTable;
     @FXML
@@ -166,18 +161,16 @@ public class SceneController implements Initializable {
     private TableColumn<Report, String> reportTime;
     @FXML
     private TableColumn<Report, String> reportStatus;
-    
-    
+
     @FXML
-    private TableView<Account> newTable;
-    @FXML 
-    private TableColumn<Account, String> newCreation;
-    @FXML 
-    private TableColumn<Account, String> newFull;
-    @FXML 
-    private TableColumn<Account, String> newUser;
-    
-    
+    private TableView<AccountDTO> newTable;
+    @FXML
+    private TableColumn<AccountDTO, String> newCreation;
+    @FXML
+    private TableColumn<AccountDTO, String> newFull;
+    @FXML
+    private TableColumn<AccountDTO, String> newUser;
+
     @FXML
     private ChoiceBox<String> choiceFriend;
     @FXML
@@ -186,15 +179,17 @@ public class SceneController implements Initializable {
     private ChoiceBox<String> choiceActiveCon;
     @FXML
     private ChoiceBox<String> choiceStatus;
-    
+
+    AccountTable accTable;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        accountFull.setCellValueFactory(new PropertyValueFactory<Account, String>("accountFull"));
-        accountUser.setCellValueFactory(new PropertyValueFactory<Account, String>("accountUser"));
-        accountStatus.setCellValueFactory(new PropertyValueFactory<Account, String>("accountStatus"));
-        accountCreation.setCellValueFactory(new PropertyValueFactory<Account, String>("accountCreation"));
-        accountLog.setCellValueFactory(new PropertyValueFactory<Account, String>("accountLog"));
-        accountTable.setItems(accounts);
+        UserBUS userBUS = new UserBUS();
+        accTable = new AccountTable(accountTable);
+
+        accTable.updateContent(userBUS.getAllUsers());
+        System.out.println(accTable.accounts.size());
+        System.out.println(accTable.accounts.get(0).getFullName());
 
         groupName.setCellValueFactory(new PropertyValueFactory<GroupChat, String>("groupChatName"));
         groupCreation.setCellValueFactory(new PropertyValueFactory<GroupChat, String>("creationDate"));
@@ -204,21 +199,21 @@ public class SceneController implements Initializable {
                 cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getMembers().size())));
         groupTable.setItems(groups);
 
-        friendName.setCellValueFactory(new PropertyValueFactory<Account, String>("accountFull"));
-        friendUser.setCellValueFactory(new PropertyValueFactory<Account, String>("accountUser"));
-        friendCreation.setCellValueFactory(new PropertyValueFactory<Account, String>("accountCreation"));
-        friendDirect.setCellValueFactory(new PropertyValueFactory<Account, Integer>("directFriends"));
-        friendIndirect.setCellValueFactory(new PropertyValueFactory<Account, Integer>("indirectFriends"));
-        friendCount.setItems(accounts);
+        friendName.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
+        friendUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
+        friendCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
+        friendDirect.setCellValueFactory(new PropertyValueFactory<AccountDTO, Integer>("directFriends"));
+        friendIndirect.setCellValueFactory(new PropertyValueFactory<AccountDTO, Integer>("indirectFriends"));
+        friendCount.setItems(accTable.accounts);
 
-        loginTime.setCellValueFactory(new PropertyValueFactory<Account, String>("accountLog"));
-        loginUser.setCellValueFactory(new PropertyValueFactory<Account, String>("accountUser"));
-        loginFull.setCellValueFactory(new PropertyValueFactory<Account, String>("accountFull"));
-        loginTable.setItems(accounts);
-        
-        activeFull.setCellValueFactory(new PropertyValueFactory<Account, String>("accountFull"));
-        activeUser.setCellValueFactory(new PropertyValueFactory<Account, String>("accountUser"));
-        activeCreation.setCellValueFactory(new PropertyValueFactory<Account, String>("accountCreation"));
+        loginTime.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("recentLogin"));
+        loginUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
+        loginFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
+        loginTable.setItems(accTable.accounts);
+
+        activeFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
+        activeUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
+        activeCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
         Random random = new Random(1);
         activeOpen.setCellValueFactory(cellData -> {
             return new SimpleStringProperty(String.valueOf(random.nextInt(20) + 2));
@@ -227,10 +222,10 @@ public class SceneController implements Initializable {
             return new SimpleStringProperty(String.valueOf(random.nextInt(10) + 1));
         });
         activeGroup.setCellValueFactory(cellData -> {
-            return new SimpleStringProperty(String.valueOf(random.nextInt(5) ));
+            return new SimpleStringProperty(String.valueOf(random.nextInt(5)));
         });
-        activeTable.setItems(accounts);
-        
+        activeTable.setItems(accTable.accounts);
+
         reportId.setCellValueFactory(new PropertyValueFactory<Report, String>("reportId"));
         reportReporter.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReporter"));
         reportReported.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReported"));
@@ -238,16 +233,16 @@ public class SceneController implements Initializable {
         reportTime.setCellValueFactory(new PropertyValueFactory<Report, String>("reportDate"));
         reportStatus.setCellValueFactory(new PropertyValueFactory<Report, String>("reportStatus"));
         reportTable.setItems(reports);
-        
+
         choiceFriend.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
         choiceActiveCon.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceStatus.getItems().addAll("Pending", "Resolved", "Under Review");
-        
-        newCreation.setCellValueFactory(new PropertyValueFactory<Account, String>("accountCreation"));
-        newFull.setCellValueFactory(new PropertyValueFactory<Account, String>("accountFull"));
-        newUser.setCellValueFactory(new PropertyValueFactory<Account, String>("accountUser"));
-        newTable.setItems(accounts);   
+
+        newCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
+        newFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
+        newUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
+        newTable.setItems(accTable.accounts);
     }
 
     @FXML
@@ -271,13 +266,13 @@ public class SceneController implements Initializable {
     // Tai khoan ca nhan
     @FXML
     public void accountClicked() {
-        Account account = accountTable.getSelectionModel().getSelectedItem();
-        boxFull.setText(String.valueOf(account.getAccountFull()));
-        boxUser.setText(String.valueOf(account.getAccountUser()));
-        boxAddr.setText(String.valueOf(account.getAccountAddress()));
-        boxDob.setText(String.valueOf(account.getAccountDob()));
-        boxEmail.setText(String.valueOf(account.getAccountEmail()));
-        boxGen.setText(String.valueOf(account.getAccountGender()));
+        AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
+        boxFull.setText(String.valueOf(account.getFullName()));
+        boxUser.setText(String.valueOf(account.getUsername()));
+        boxAddr.setText(String.valueOf(account.getAddress()));
+        boxDob.setText(String.valueOf(account.getDob()));
+        boxEmail.setText(String.valueOf(account.getEmail()));
+        boxGen.setText(String.valueOf(account.getGender()));
     }
 
     // Cac nhom
@@ -306,12 +301,12 @@ public class SceneController implements Initializable {
         stage.setScene(scene);
         stage.show();
     }
-    
+
     @FXML
     public void handleMouseClick(MouseEvent event) {
         System.out.println("Clicked");
     }
-    
+
     @FXML
     public void clickToProfile(MouseEvent event) throws IOException {
         root = FXMLLoader.load(getClass().getResource("views/profile.fxml"));
