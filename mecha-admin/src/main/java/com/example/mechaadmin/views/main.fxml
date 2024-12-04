@@ -56,7 +56,7 @@
                                        <children>
                                           <Group>
                                              <children>
-                                                <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" />
+                                                <TextField fx:id="accountSearch" accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" />
                                                 <Label text="Tìm tài khoản">
                                                    <font>
                                                       <Font name="Inter Regular" size="16.0" />

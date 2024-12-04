@@ -2,6 +2,7 @@ package com.example.mechaadmin;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -9,6 +10,7 @@ import java.util.ResourceBundle;
 
 import com.example.mechaadmin.bus.UserBUS;
 import com.example.mechaadmin.dto.AccountDTO;
+import com.example.mechaadmin.dto.GroupChatDTO;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -65,39 +67,47 @@ public class SceneController implements Initializable {
             accountLog.setCellValueFactory(new PropertyValueFactory<>("recentLogin"));
             accountTable.setItems(accounts);
         }
-        
-        public void updateContent(List<AccountDTO> list){
+
+        public void updateContent(List<AccountDTO> list) {
             accounts.clear();
             accounts.addAll(list);
         }
     }
+
     // Cac nhom
     @FXML
-    private TableColumn<GroupChat, String> groupCreation;
+    public TableView<GroupChatDTO> groupTable;
+    class GroupChatTable {
+        public TableView<GroupChatDTO> groupTable;
+        private TableColumn<GroupChatDTO, String> groupCreation;
+        private TableColumn<GroupChatDTO, String> groupMem;
+        private TableColumn<GroupChatDTO, String> groupMemNum;
+        private TableColumn<GroupChatDTO, String> groupName;
+        
+        ObservableList<GroupChatDTO> groups = FXCollections.observableArrayList();
+        
+        @SuppressWarnings("unchecked")
+        GroupChatTable(TableView<GroupChatDTO> table){
+            groupTable = table;
+            groupName = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(0);
+            groupCreation = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(1);
+            groupMemNum = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(2);
+            groupMem = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(3);
+            
+            groupName.setCellValueFactory(new PropertyValueFactory<>("groupName"));
+            groupCreation.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+            groupMem.setCellValueFactory(cellData -> new SimpleStringProperty(
+                    String.join(", ", cellData.getValue().getMembers())));
+            groupMemNum.setCellValueFactory(new PropertyValueFactory<>("totalMembers"));
+            groupTable.setItems(groups);
+        }
+        
+        public void updateContent(List<GroupChatDTO> list) {
+            groups.clear();
+            groups.addAll(list);
+        }
+    }
 
-    @FXML
-    private TableColumn<GroupChat, String> groupMem;
-
-    @FXML
-    private TableColumn<GroupChat, String> groupMemNum;
-
-    @FXML
-    private TableColumn<GroupChat, String> groupName;
-
-    @FXML
-    private TableView<GroupChat> groupTable;
-
-    ObservableList<GroupChat> groups = FXCollections.observableArrayList(
-            new GroupChat("Nhóm 1", "22/11/2024"),
-            new GroupChat("Nhóm 2", "23/11/2024"),
-            new GroupChat("Nhóm 3", "24/11/2024"),
-            new GroupChat("Nhóm 4", "25/11/2024"),
-            new GroupChat("Nhóm 5", "26/11/2024"),
-            new GroupChat("Nhóm 6", "27/11/2024"),
-            new GroupChat("Nhóm 7", "28/11/2024"),
-            new GroupChat("Nhóm 8", "29/11/2024"),
-            new GroupChat("Nhóm 9", "30/11/2024"),
-            new GroupChat("Nhóm 10", "01/12/2024"));
 
     @FXML
     private TableView<AccountDTO> friendCount;
@@ -181,23 +191,27 @@ public class SceneController implements Initializable {
     private ChoiceBox<String> choiceStatus;
 
     AccountTable accTable;
+    GroupChatTable grpTable;
 
+    @FXML
+    TextField accountSearch;
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         UserBUS userBUS = new UserBUS();
         accTable = new AccountTable(accountTable);
+        grpTable = new GroupChatTable(groupTable);
 
         accTable.updateContent(userBUS.getAllUsers());
         System.out.println(accTable.accounts.size());
         System.out.println(accTable.accounts.get(0).getFullName());
-
-        groupName.setCellValueFactory(new PropertyValueFactory<GroupChat, String>("groupChatName"));
-        groupCreation.setCellValueFactory(new PropertyValueFactory<GroupChat, String>("creationDate"));
-        groupMem.setCellValueFactory(cellData -> new SimpleStringProperty(
-                String.join(", ", cellData.getValue().getMemNames())));
-        groupMemNum.setCellValueFactory(
-                cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getMembers().size())));
-        groupTable.setItems(groups);
+        
+        grpTable.updateContent(userBUS.getAllGroups());
+        
+        accountSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            System.out.println("Searching for: " + newValue);
+            accTable.updateContent(userBUS.getAllUsers().subList(0, 1));
+        });
 
         friendName.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
         friendUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));

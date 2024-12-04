@@ -10,13 +10,17 @@ import java.util.List;
 import java.util.Objects;
 
 import com.example.mechaadmin.bus.ReportBUS;
+import com.example.mechaadmin.bus.UserBUS;
+import com.example.mechaadmin.dto.GroupChatDTO;
 import com.example.mechaadmin.dto.ReportInfoDTO;
 
 public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         ReportBUS reportBUS = new ReportBUS();
-        List<ReportInfoDTO> list = reportBUS.getAll();
+        UserBUS userBUS = new UserBUS();
+        // List<ReportInfoDTO> list = reportBUS.getAll();
+        List<GroupChatDTO> list = userBUS.getAllGroups();
         
         System.out.println(list.size());
         

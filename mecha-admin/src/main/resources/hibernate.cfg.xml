@@ -27,6 +27,8 @@
         <mapping class="com.example.mechaadmin.dao.ReportDAO" />
         <mapping class="com.example.mechaadmin.dao.UserDAO" />
         <mapping class="com.example.mechaadmin.dao.LogDAO" />
+        <mapping class="com.example.mechaadmin.dao.ChatDAO" />
+        <mapping class="com.example.mechaadmin.dao.MemberDAO" />
 
     </session-factory>
 </hibernate-configuration>

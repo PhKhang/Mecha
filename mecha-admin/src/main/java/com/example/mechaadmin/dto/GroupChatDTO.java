@@ -1,46 +1,42 @@
-package com.example.mechaadmin.dao;
-
-import jakarta.persistence.*;
+package com.example.mechaadmin.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
-@Entity
-@Table(name = "chats")
-public class ChatDAO {
-    @Id
-    @Column(name = "chat_id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class GroupChatDTO {
     private Integer chatId;
-    @Column(name = "group_name")
     private String groupName;
-    @Column(name = "chat_type")
     private String chatType;
-    @Column(name = "admin_id")
     private Integer adminId;
-    @Column(name = "created_at")
     private LocalDate createdAt;
-
-    public ChatDAO() {
+    private List<String> members;
+    private Integer totalMembers;
+    
+    public GroupChatDTO() {
         this.chatId = 0;
         this.groupName = "";
         this.chatType = "";
-        this.adminId = 0;
+        this.adminId = -1;
         this.createdAt = LocalDate.now();
+        this.members = null;
+        this.totalMembers = 0;
     }
-
-    public ChatDAO(int chatId, String groupName, String chatType, int admindId, LocalDate createdAt) {
+    
+    public GroupChatDTO(int chatId, String groupName, String chatType, Integer adminId, LocalDate createdAt, List<String> members, int totalMembers) {
         this.chatId = chatId;
         this.groupName = groupName;
         this.chatType = chatType;
-        this.adminId = admindId;
+        this.adminId = adminId;
         this.createdAt = createdAt;
+        this.members = members;
+        this.totalMembers = totalMembers;
     }
 
     public Integer getChatId() {
         return chatId;
     }
 
-    public void setChatId(int chatId) {
+    public void setChatId(Integer chatId) {
         this.chatId = chatId;
     }
 
@@ -64,8 +60,8 @@ public class ChatDAO {
         return adminId;
     }
 
-    public void setAdminId(int admindId) {
-        this.adminId = admindId;
+    public void setAdminId(Integer adminId) {
+        this.adminId = adminId;
     }
 
     public LocalDate getCreatedAt() {
@@ -75,4 +71,22 @@ public class ChatDAO {
     public void setCreatedAt(LocalDate createdAt) {
         this.createdAt = createdAt;
     }
+
+    public List<String> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<String> members) {
+        this.members = members;
+    }
+
+    public Integer getTotalMembers() {
+        return totalMembers;
+    }
+
+    public void setTotalMembers(Integer totalMembers) {
+        this.totalMembers = totalMembers;
+    }
+    
+    
 }

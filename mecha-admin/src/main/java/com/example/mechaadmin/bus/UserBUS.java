@@ -2,6 +2,7 @@ package com.example.mechaadmin.bus;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.hibernate.Session;
@@ -9,8 +10,10 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.example.mechaadmin.dao.UserDAO;
-import com.example.mechaadmin.dao.GroupDAO;
+import com.example.mechaadmin.dao.ChatDAO;
+import com.example.mechaadmin.dao.MemberDAO;
 import com.example.mechaadmin.dto.AccountDTO;
+import com.example.mechaadmin.dto.GroupChatDTO;
 
 public class UserBUS {
     Configuration configuration = null;
@@ -50,19 +53,33 @@ public class UserBUS {
         return accounts;
     }
 
-    public List<Object[]> getAllGroups() {
+    public List<GroupChatDTO> getAllGroups() {
         session.beginTransaction();
 
         List<Object[]> groups = session
                 // .createQuery("select g from GroupDAO g", Object[].class)
-                .createQuery("select c.*, group_concat(u.username) from chats c \r\n" + //
-                        "join chat_members cm on c.chat_id = cm.chat_id\r\n" + //
-                        "join users u on cm.user_id = u.user_id \r\n" + //
-                        "group by c.chat_id ", Object[].class)
+                // .createQuery("select c from ChatDAO c ", Object[].class)
+                .createQuery("select c, group_concat(u.username), count(u.username) from ChatDAO c \r\n" + //
+                        "join MemberDAO cm on c.chatId = cm.chatId\r\n" + //
+                        "join UserDAO u on cm.userId = u.userId \r\n" + //
+                        "group by c.chatId ", Object[].class)
                 .getResultList();
 
         session.getTransaction().commit();
+        
+        List<GroupChatDTO> groupChats = new ArrayList<GroupChatDTO>();
+        for (Object[] group : groups) {
+            GroupChatDTO groupChat = new GroupChatDTO();
+            groupChat.setChatId(((ChatDAO) group[0]).getChatId());
+            groupChat.setGroupName(((ChatDAO) group[0]).getGroupName());
+            groupChat.setChatType(((ChatDAO) group[0]).getChatType());
+            groupChat.setAdminId(((ChatDAO) group[0]).getAdminId());
+            groupChat.setCreatedAt(((ChatDAO) group[0]).getCreatedAt());
+            groupChat.setMembers(Arrays.asList(((String) group[1]).split(",")));
+            groupChat.setTotalMembers(((Long) group[2]).intValue());
+            groupChats.add(groupChat);
+        }
 
-        return groups;
+        return groupChats;
     }
 }
