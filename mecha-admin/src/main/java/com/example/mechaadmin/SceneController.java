@@ -3,10 +3,12 @@ package com.example.mechaadmin;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
 
 import com.example.mechaadmin.bus.UserBUS;
 import com.example.mechaadmin.dto.AccountDTO;
@@ -24,6 +26,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -50,15 +54,19 @@ public class SceneController implements Initializable {
         public TableColumn<AccountDTO, String> accountUser;
 
         ObservableList<AccountDTO> accounts = FXCollections.observableArrayList();
+        List<AccountDTO> originalData = null;
+
+        Predicate<AccountDTO> filter = account -> false;
+        String searchKey = "";
 
         @SuppressWarnings("unchecked")
         AccountTable(TableView<AccountDTO> table) {
             accountTable = table;
-            accountCreation = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(0);
-            accountFull = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(1);
-            accountLog = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(2);
-            accountStatus = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(3);
-            accountUser = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(4);
+            accountCreation = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(3);
+            accountFull = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(0);
+            accountLog = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(4);
+            accountStatus = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(2);
+            accountUser = (TableColumn<AccountDTO, String>) accountTable.getColumns().get(1);
 
             accountUser.setCellValueFactory(new PropertyValueFactory<>("username"));
             accountFull.setCellValueFactory(new PropertyValueFactory<>("fullName"));
@@ -68,32 +76,71 @@ public class SceneController implements Initializable {
             accountTable.setItems(accounts);
         }
 
+        public void updateOriginal(List<AccountDTO> list) {
+            originalData = new ArrayList<>(list);
+            accounts.clear();
+            accounts.addAll(list);
+        }
+
+        public void updateOriginal() {
+            accounts.clear();
+            accounts.addAll(originalData);
+        }
+
         public void updateContent(List<AccountDTO> list) {
             accounts.clear();
             accounts.addAll(list);
+        }
+
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                accTable.updateContent(filtered);
+            } else {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(account -> !account.getFullName().toLowerCase().contains(searchKey)
+                        && !account.getUsername().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                accTable.updateContent(filtered);
+            }
+        }
+
+        public void setFilterPredicate(Predicate<AccountDTO> filter) {
+            this.filter = filter;
+            List<AccountDTO> filtered = new ArrayList<>(originalData);
+            filtered.removeIf(filter);
+            accTable.updateContent(filtered);
+            search(searchKey);
         }
     }
 
     // Cac nhom
     @FXML
     public TableView<GroupChatDTO> groupTable;
+
     class GroupChatTable {
         public TableView<GroupChatDTO> groupTable;
         private TableColumn<GroupChatDTO, String> groupCreation;
         private TableColumn<GroupChatDTO, String> groupMem;
         private TableColumn<GroupChatDTO, String> groupMemNum;
         private TableColumn<GroupChatDTO, String> groupName;
-        
+
         ObservableList<GroupChatDTO> groups = FXCollections.observableArrayList();
+        List<GroupChatDTO> originalData = null;
         
+        Predicate<GroupChatDTO> filter = group -> false;
+        String searchKey = "";
+
         @SuppressWarnings("unchecked")
-        GroupChatTable(TableView<GroupChatDTO> table){
+        GroupChatTable(TableView<GroupChatDTO> table) {
             groupTable = table;
             groupName = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(0);
             groupCreation = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(1);
             groupMemNum = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(2);
             groupMem = (TableColumn<GroupChatDTO, String>) groupTable.getColumns().get(3);
-            
+
             groupName.setCellValueFactory(new PropertyValueFactory<>("groupName"));
             groupCreation.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
             groupMem.setCellValueFactory(cellData -> new SimpleStringProperty(
@@ -101,13 +148,37 @@ public class SceneController implements Initializable {
             groupMemNum.setCellValueFactory(new PropertyValueFactory<>("totalMembers"));
             groupTable.setItems(groups);
         }
+
+        public void updateOriginal(List<GroupChatDTO> list) {
+            originalData = new ArrayList<>(list);
+            groups.clear();
+            groups.addAll(list);
+        }
+        
+        public void updateOriginal() {
+            groups.clear();
+            groups.addAll(originalData);
+        }
         
         public void updateContent(List<GroupChatDTO> list) {
             groups.clear();
             groups.addAll(list);
         }
+        
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<GroupChatDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                grpTable.updateContent(filtered);
+            } else {
+                List<GroupChatDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(group -> !group.getGroupName().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                grpTable.updateContent(filtered);
+            }
+        }
     }
-
 
     @FXML
     private TableView<AccountDTO> friendCount;
@@ -195,24 +266,46 @@ public class SceneController implements Initializable {
 
     @FXML
     TextField accountSearch;
-    
+    @FXML
+    MenuButton accountMenu;
+    @FXML
+    TextField groupSearch;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         UserBUS userBUS = new UserBUS();
         accTable = new AccountTable(accountTable);
         grpTable = new GroupChatTable(groupTable);
 
-        accTable.updateContent(userBUS.getAllUsers());
-        System.out.println(accTable.accounts.size());
-        System.out.println(accTable.accounts.get(0).getFullName());
-        
-        grpTable.updateContent(userBUS.getAllGroups());
-        
-        accountSearch.textProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("Searching for: " + newValue);
-            accTable.updateContent(userBUS.getAllUsers().subList(0, 1));
-        });
+        // ----------------- User data -----------------
+        accTable.updateOriginal(userBUS.getAllUsers());
 
+        accountSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            accTable.search(newValue);
+        });
+        accountMenu.getItems().addAll(new MenuItem("Tất cả"), new MenuItem("Đang hoạt động"),
+        new MenuItem("Không hoạt động"));
+        accountMenu.getItems().get(0).setOnAction((e) -> {
+            Predicate<AccountDTO> filter = account -> false;
+            accTable.setFilterPredicate(filter);
+        });
+        accountMenu.getItems().get(1).setOnAction((e) -> {
+            Predicate<AccountDTO> filter = account -> !account.getStatus().toLowerCase().contains("online");
+            accTable.setFilterPredicate(filter);
+        });
+        accountMenu.getItems().get(2).setOnAction((e) -> {
+            Predicate<AccountDTO> filter = account -> !account.getStatus().toLowerCase().contains("offline");
+            accTable.setFilterPredicate(filter);
+        });
+        
+        // ----------------- Group data -----------------
+        grpTable.updateOriginal(userBUS.getAllGroups());
+        groupSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            System.out.println(newValue);
+            grpTable.search(newValue);
+        });
+        
+        
         friendName.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
         friendUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
         friendCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
