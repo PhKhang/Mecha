@@ -33,7 +33,15 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 public class SceneController implements Initializable {
@@ -129,7 +137,7 @@ public class SceneController implements Initializable {
 
         ObservableList<GroupChatDTO> groups = FXCollections.observableArrayList();
         List<GroupChatDTO> originalData = null;
-        
+
         Predicate<GroupChatDTO> filter = group -> false;
         String searchKey = "";
 
@@ -154,17 +162,17 @@ public class SceneController implements Initializable {
             groups.clear();
             groups.addAll(list);
         }
-        
+
         public void updateOriginal() {
             groups.clear();
             groups.addAll(originalData);
         }
-        
+
         public void updateContent(List<GroupChatDTO> list) {
             groups.clear();
             groups.addAll(list);
         }
-        
+
         public void search(String s) {
             searchKey = s.trim().toLowerCase();
             if (s.trim().equals("")) {
@@ -284,7 +292,7 @@ public class SceneController implements Initializable {
             accTable.search(newValue);
         });
         accountMenu.getItems().addAll(new MenuItem("Tất cả"), new MenuItem("Đang hoạt động"),
-        new MenuItem("Không hoạt động"));
+                new MenuItem("Không hoạt động"));
         accountMenu.getItems().get(0).setOnAction((e) -> {
             Predicate<AccountDTO> filter = account -> false;
             accTable.setFilterPredicate(filter);
@@ -297,15 +305,14 @@ public class SceneController implements Initializable {
             Predicate<AccountDTO> filter = account -> !account.getStatus().toLowerCase().contains("offline");
             accTable.setFilterPredicate(filter);
         });
-        
+
         // ----------------- Group data -----------------
         grpTable.updateOriginal(userBUS.getAllGroups());
         groupSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             System.out.println(newValue);
             grpTable.search(newValue);
         });
-        
-        
+
         friendName.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
         friendUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
         friendCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
@@ -385,12 +392,29 @@ public class SceneController implements Initializable {
     // Cac nhom
     @FXML
     private ScrollPane memList;
+    @FXML
+    private VBox VMemList;
 
     @FXML
     public void groupClicked() {
-        // GroupChat group = groupTable.getSelectionModel().getSelectedItem();
-        memList.setVisible(true);
-
+        GroupChatDTO group = groupTable.getSelectionModel().getSelectedItem();
+        VMemList.getChildren().clear();
+        VMemList.getChildren().addAll(group.getMembers().stream().map(member -> {
+            ImageView profile = new ImageView(new Image(
+                    "https://pub-b0a9bdcea1cd4f6ca28d98f878366466.r2.dev/1733287277424-468916132_438255359333153_2130388637852454432_n.jpg",
+                    40, 40, true, true));
+            Circle clip = new Circle(20, 20, 20);
+            profile.setClip(clip);
+            // ImageView crown = new ImageView(new Image("..\\images\\crown.png", 20, 20, true, true));
+            Text username = new Text(member);
+            username.setFont(new Font(14));
+            username.setTextAlignment(TextAlignment.CENTER);
+            HBox memberBox = new HBox(
+                    profile,
+                    username);
+            memberBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            return memberBox;
+        }).toArray(HBox[]::new));
     }
 
     public void switchToMain(ActionEvent event) throws IOException {

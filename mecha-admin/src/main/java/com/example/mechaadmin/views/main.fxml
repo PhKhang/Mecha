@@ -206,9 +206,9 @@
                                     <TableColumn fx:id="groupMem" prefWidth="112.79998779296875" text="Thành viên" />
                                  </columns>
                               </TableView>
-                              <ScrollPane fx:id="memList" layoutX="650.0" layoutY="43.0" prefHeight="395.0" prefWidth="368.0" visible="false">
+                              <ScrollPane fx:id="memList" layoutX="650.0" layoutY="43.0" prefHeight="395.0" prefWidth="368.0">
                                  <content>
-                                    <VBox focusTraversable="true" prefHeight="393.0" prefWidth="366.0" spacing="10.0">
+                                    <VBox fx:id="VMemList" focusTraversable="true" prefHeight="393.0" prefWidth="366.0" spacing="10.0">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" onMouseClicked="#clickToProfile" prefHeight="38.0" prefWidth="366.0" spacing="5.0">
                                              <children>
