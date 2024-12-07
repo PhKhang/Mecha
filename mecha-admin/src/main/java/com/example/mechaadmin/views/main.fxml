@@ -360,13 +360,13 @@
                                     <Button layoutX="159.0" layoutY="391.0" mnemonicParsing="false" text="Lưu" />
                                  </children>
                               </Group>
-                              <DatePicker layoutX="309.0" layoutY="65.0" promptText="Starting date" />
+                              <DatePicker fx:id="reportEnd" layoutX="309.0" layoutY="65.0" promptText="Starting date" />
                               <Label layoutX="297.0" layoutY="67.0" text="-">
                                  <font>
                                     <Font name="Inter 18pt Regular" size="14.0" />
                                  </font>
                               </Label>
-                              <DatePicker layoutX="114.0" layoutY="65.0" promptText="Ending date" />
+                              <DatePicker fx:id="reportStart" layoutX="114.0" layoutY="65.0" promptText="Ending date" />
                               <Label layoutX="32.0" layoutY="67.0" text="Thời gian:">
                                  <font>
                                     <Font name="Inter Regular" size="16.0" />
@@ -374,7 +374,7 @@
                               </Label>
                               <Group layoutX="32.0" layoutY="110.0">
                                  <children>
-                                    <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Username" />
+                                    <TextField fx:id="reportSearch" accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Username" />
                                     <Label text="Tìm theo tên">
                                        <font>
                                           <Font name="Inter Regular" size="16.0" />

@@ -59,9 +59,10 @@ public class UserBUS {
         List<Object[]> groups = session
                 // .createQuery("select g from GroupDAO g", Object[].class)
                 // .createQuery("select c from ChatDAO c ", Object[].class)
-                .createQuery("select c, group_concat(u.username), count(u.username) from ChatDAO c \r\n" + //
+                .createQuery("select c, group_concat(u.username) as memebers, count(u.username) as amount, group_concat(u.userId) as ids, u2.username as admin from ChatDAO c \r\n" + //
                         "join MemberDAO cm on c.chatId = cm.chatId\r\n" + //
                         "join UserDAO u on cm.userId = u.userId \r\n" + //
+                        "left join UserDAO u2 on c.adminId = u2.userId \r\n" + //
                         "group by c.chatId ", Object[].class)
                 .getResultList();
 

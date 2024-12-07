@@ -10,9 +10,11 @@ import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 
+import com.example.mechaadmin.bus.ReportBUS;
 import com.example.mechaadmin.bus.UserBUS;
 import com.example.mechaadmin.dto.AccountDTO;
 import com.example.mechaadmin.dto.GroupChatDTO;
+import com.example.mechaadmin.dto.ReportInfoDTO;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -26,6 +28,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
@@ -224,33 +227,90 @@ public class SceneController implements Initializable {
     private TableColumn<AccountDTO, String> activeChat;
     @FXML
     private TableColumn<AccountDTO, String> activeGroup;
-
-    ObservableList<Report> reports = FXCollections.observableArrayList(
-            new Report("1", "Phuc Khang", "SpamLover", "Spamming", "22/11/2024", "Pending"),
-            new Report("2", "Man the Man", "RuleBreaker", "Inappropriate Content", "23/11/2024", "Resolved"),
-            new Report("3", "Van A", "Cheater", "Hacking", "24/11/2024", "Pending"),
-            new Report("4", "Thi B", "Spammer", "Spamming", "25/11/2024", "Pending"),
-            new Report("5", "Van C", "Hacker", "Hacking", "26/11/2024", "Resolved"),
-            new Report("6", "Thi D", "Abuser", "Abuse", "27/11/2024", "Pending"),
-            new Report("7", "Van F", "Spammer", "Spamming", "28/11/2024", "Resolved"),
-            new Report("8", "Thi G", "Cheater", "Hacking", "29/11/2024", "Pending"),
-            new Report("9", "Van H", "RuleBreaker", "Inappropriate Content", "30/11/2024", "Resolved"),
-            new Report("10", "Thi I", "Abuser", "Abuse", "01/12/2024", "Pending"));
+    
     @FXML
-    private TableView<Report> reportTable;
-    @FXML
-    private TableColumn<Report, String> reportId;
-    @FXML
-    private TableColumn<Report, String> reportReporter;
-    @FXML
-    private TableColumn<Report, String> reportReported;
-    @FXML
-    private TableColumn<Report, String> reportReason;
-    @FXML
-    private TableColumn<Report, String> reportTime;
-    @FXML
-    private TableColumn<Report, String> reportStatus;
-
+    private TableView<ReportInfoDTO> reportTable;
+    class ReportInfoTable {
+        private TableView<ReportInfoDTO> reportTable;
+        private TableColumn<ReportInfoDTO, String> reportId;
+        private TableColumn<ReportInfoDTO, String> reportReporter;
+        private TableColumn<ReportInfoDTO, String> reportReported;
+        private TableColumn<ReportInfoDTO, String> reportReason;
+        private TableColumn<ReportInfoDTO, String> reportTime;
+        private TableColumn<ReportInfoDTO, String> reportStatus;
+        
+        ObservableList<ReportInfoDTO> reports = FXCollections.observableArrayList();
+        List<ReportInfoDTO> originalData = null;
+        
+        Predicate<ReportInfoDTO> filter = report -> false;
+        String searchKey = "";
+        
+        @SuppressWarnings("unchecked")
+        ReportInfoTable(TableView<ReportInfoDTO> table) {
+            reportTable = table;
+            reportId = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(0);
+            reportReporter = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(1);
+            reportReported = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(2);
+            reportReason = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(3);
+            reportTime = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(4);
+            reportStatus = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(5);
+            
+            reportId.setCellValueFactory(new PropertyValueFactory<>("reportId"));
+            reportReporter.setCellValueFactory(new PropertyValueFactory<>("reportReporter"));
+            reportReported.setCellValueFactory(new PropertyValueFactory<>("reportReported"));
+            reportReason.setCellValueFactory(new PropertyValueFactory<>("reportReason"));
+            reportTime.setCellValueFactory(new PropertyValueFactory<>("reportDate"));
+            reportStatus.setCellValueFactory(new PropertyValueFactory<>("reportStatus"));
+            reportTable.setItems(reports);
+        }
+        
+        public void updateOriginal(List<ReportInfoDTO> list) {
+            originalData = new ArrayList<>(list);
+            reports.clear();
+            reports.addAll(list);
+        }
+        
+        public void updateOriginal() {
+            reports.clear();
+            reports.addAll(originalData);
+        }
+        
+        public void updateContent(List<ReportInfoDTO> list) {
+            reports.clear();
+            reports.addAll(list);
+        }
+        
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<ReportInfoDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                reportTable.getItems().clear();
+                reportTable.getItems().addAll(filtered);
+            } else {
+                List<ReportInfoDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(report -> !report.getReporter().toLowerCase().contains(searchKey)
+                        && !report.getReported().toLowerCase().contains(searchKey)
+                        && !report.getReason().toLowerCase().contains(searchKey)
+                        && !report.getStatus().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                reportTable.getItems().clear();
+                reportTable.getItems().addAll(filtered);
+            }
+        }
+        
+        public void setFilterPredicate(Predicate<ReportInfoDTO> filter) {
+            this.filter = filter;
+            List<ReportInfoDTO> filtered = new ArrayList<>(originalData);
+            filtered.removeIf(filter);
+            reports.clear();
+            reports.addAll(filtered);
+            search(searchKey);
+        }
+    }
+    
+    ReportInfoTable rprtTable;
+            
     @FXML
     private TableView<AccountDTO> newTable;
     @FXML
@@ -278,6 +338,12 @@ public class SceneController implements Initializable {
     MenuButton accountMenu;
     @FXML
     TextField groupSearch;
+    @FXML
+    TextField reportSearch;
+    @FXML
+    DatePicker reportStart;
+    @FXML
+    DatePicker reportEnd;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -313,6 +379,7 @@ public class SceneController implements Initializable {
             grpTable.search(newValue);
         });
 
+        // ----------------
         friendName.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
         friendUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
         friendCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
@@ -340,13 +407,46 @@ public class SceneController implements Initializable {
         });
         activeTable.setItems(accTable.accounts);
 
-        reportId.setCellValueFactory(new PropertyValueFactory<Report, String>("reportId"));
-        reportReporter.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReporter"));
-        reportReported.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReported"));
-        reportReason.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReason"));
-        reportTime.setCellValueFactory(new PropertyValueFactory<Report, String>("reportDate"));
-        reportStatus.setCellValueFactory(new PropertyValueFactory<Report, String>("reportStatus"));
-        reportTable.setItems(reports);
+        // ----------------- Report data -----------------
+        ReportBUS reportBUS = new ReportBUS();
+        rprtTable = new ReportInfoTable(reportTable);
+        rprtTable.updateOriginal(reportBUS.getAll());
+        
+        reportSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            rprtTable.search(newValue);
+        });
+        
+        reportStart.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDate start = reportStart.getValue();
+            LocalDate end = reportEnd.getValue();
+            if (start != null && end != null) {
+                Predicate<ReportInfoDTO> filter = report -> {
+                    LocalDate date = report.getCreatedAt();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                rprtTable.setFilterPredicate(filter);
+            }
+        });
+        
+        reportEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDate start = reportStart.getValue();
+            LocalDate end = reportEnd.getValue();
+            if (start != null && end != null) {
+                Predicate<ReportInfoDTO> filter = report -> {
+                    LocalDate date = report.getCreatedAt();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                rprtTable.setFilterPredicate(filter);
+            }
+        });
+        
+        // reportId.setCellValueFactory(new PropertyValueFactory<Report, String>("reportId"));
+        // reportReporter.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReporter"));
+        // reportReported.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReported"));
+        // reportReason.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReason"));
+        // reportTime.setCellValueFactory(new PropertyValueFactory<Report, String>("reportDate"));
+        // reportStatus.setCellValueFactory(new PropertyValueFactory<Report, String>("reportStatus"));
+        // reportTable.setItems(reports);
 
         choiceFriend.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
