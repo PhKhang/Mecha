@@ -19,8 +19,18 @@ import javafx.stage.Stage;
 import javafx.stage.Modality;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 import com.example.mechaclient.ChatApplication;
+import com.example.mechaclient.models.ChatBox;
+import com.example.mechaclient.models.UserSession;
+import com.example.mechaclient.models.ChatBox.ChatType;
 
 public class HomeScreenController {
 
@@ -38,11 +48,14 @@ public class HomeScreenController {
     @FXML private Button privateButton;
     @FXML private Button groupsButton;
 
-    private ObservableList<Chat> allChats = FXCollections.observableArrayList();
-    private FilteredList<Chat> filteredChats;
+    private ObservableList<ChatBox> allChats = FXCollections.observableArrayList();
+    private FilteredList<ChatBox> filteredChats;
     private HBox selectedFriendEntry;
 
     public void initialize() {
+        String username = UserSession.getInstance().getUsername();
+        System.out.println("Login user: " + username);
+
         chatOption.setVisible(false);
         setupContextMenus();
         setupChatListView();
@@ -102,25 +115,55 @@ public class HomeScreenController {
         });
     }
 
+    // private void initializeChatData() {
+    //     allChats.addAll(
+    //         new Chat("Alice Doe", ChatType.PRIVATE, "online", "Hello there!"),
+    //         new Chat("Bob Smith", ChatType.PRIVATE, "3 hours ago", "See you tomorrow"),
+    //         new Chat("Project Team", ChatType.GROUP, "5 members", "Meeting at 2 PM"),
+    //         new Chat("Charlie Brown", ChatType.PRIVATE, "1 day ago", "Thanks for your help"),
+    //         new Chat("Family Group", ChatType.GROUP, "8 members", "Happy birthday, mom!")
+    //     );
+    // }
     private void initializeChatData() {
-        allChats.addAll(
-            new Chat("Alice Doe", ChatType.PRIVATE, "online", "Hello there!"),
-            new Chat("Bob Smith", ChatType.PRIVATE, "3 hours ago", "See you tomorrow"),
-            new Chat("Project Team", ChatType.GROUP, "5 members", "Meeting at 2 PM"),
-            new Chat("Charlie Brown", ChatType.PRIVATE, "1 day ago", "Thanks for your help"),
-            new Chat("Family Group", ChatType.GROUP, "8 members", "Happy birthday, mom!")
-        );
+        allChats.clear();
+        int currentUserId = UserSession.getInstance().getUserId();
+        try (Socket socket = new Socket("localhost", 12345);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+            
+            out.writeObject("GET_FRIEND_LIST");
+            out.writeObject(currentUserId);
+
+            Object response = in.readObject();
+            if (response instanceof List) {
+                List<String[]> friendList = (List<String[]>) response;
+        
+                for (String[] friend : friendList) {
+                    int chatId = Integer.parseInt(friend[0]);
+                    String fullname = friend[1];
+                    String status = friend[2];
+                    System.out.println("Friend: " + fullname + ", Status: " + status);
+                    allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId));
+                }
+            } else {
+                System.out.println("Unexpected response from server: " + response);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+      
     }
 
-    private void displayChats(ObservableList<Chat> chats) {
+    private void displayChats(ObservableList<ChatBox> chats) {
         friendListVBox.getChildren().clear();
-        for (Chat chat : chats) {
+        for (ChatBox chat : chats) {
             HBox chatEntry = createChatEntry(chat);
             friendListVBox.getChildren().add(chatEntry);
         }
     }
 
-    private HBox createChatEntry(Chat chat) {
+    private HBox createChatEntry(ChatBox chat) {
         ImageView avatar = new ImageView(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
         avatar.setFitHeight(40);
         avatar.setFitWidth(40);
@@ -148,12 +191,36 @@ public class HomeScreenController {
         return chatEntry;
     }
 
-    private void updateChat(Chat chat) {
+    private void updateChat(ChatBox chat) {
         curUserAva.setImage(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
         curUserName.setText(chat.name);
         chatListView.getItems().clear();
-        addMessage("Hello", false);
-        addMessage("Hi there", true);
+        // addMessage("Hello", false);
+        // addMessage("Hi there", true);
+        try (Socket socket = new Socket("localhost", 12345);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+
+            out.writeObject("GET_CHAT_MESSAGES");
+            out.writeObject(String.valueOf(chat.chatId));
+
+            Object response = in.readObject();
+            if (response instanceof List) {
+                List<String[]> messages = (List<String[]>) response;
+
+                for (String[] msg : messages) {
+                    String senderId = msg[0];
+                    String message = msg[1];
+                    boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
+                    addMessage(message, isUser);
+                }
+            } else {
+                System.out.println("Unexpected response from server: " + response);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         chatOption.setVisible(true);
     }
 
@@ -314,21 +381,4 @@ public class HomeScreenController {
         }
     }
 
-    private static class Chat {
-        String name;
-        ChatType type;
-        String status;
-        String lastMessage;
-
-        Chat(String name, ChatType type, String status, String lastMessage) {
-            this.name = name;
-            this.type = type;
-            this.status = status;
-            this.lastMessage = lastMessage;
-        }
-    }
-
-    private enum ChatType {
-        PRIVATE, GROUP
-    }
 }

@@ -14,6 +14,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import com.example.mechaclient.ChatApplication;
+import com.example.mechaclient.models.UserSession;
 
 public class LoginScreenController {
     @FXML
@@ -41,7 +42,11 @@ public class LoginScreenController {
 
             String response = (String) in.readObject();
             if ("SUCCESS".equals(response)) {
-                System.out.println("Login successful!");
+                int userId = (int) in.readObject();
+
+                UserSession.getInstance().setUsername(username);
+                UserSession.getInstance().setUserId(userId);
+                
                 loadHomeScreen();
             } else {
                 System.out.println("Invalid username or password");
