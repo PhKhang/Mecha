@@ -411,6 +411,8 @@ public class SceneController implements Initializable {
         ReportBUS reportBUS = new ReportBUS();
         rprtTable = new ReportInfoTable(reportTable);
         rprtTable.updateOriginal(reportBUS.getAll());
+        List<ReportInfoDTO> reports = reportBUS.getAll();
+        System.out.println(reports);
         
         reportSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             rprtTable.search(newValue);
