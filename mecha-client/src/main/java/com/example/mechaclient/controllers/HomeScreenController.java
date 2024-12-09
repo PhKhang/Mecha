@@ -17,6 +17,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.stage.Modality;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -47,16 +48,24 @@ public class HomeScreenController {
     @FXML private Button allButton;
     @FXML private Button privateButton;
     @FXML private Button groupsButton;
-
+    @FXML private HBox messageFieldFrame;
     private ObservableList<ChatBox> allChats = FXCollections.observableArrayList();
     private FilteredList<ChatBox> filteredChats;
     private HBox selectedFriendEntry;
+    private ChatBox currentChat;
+
+    // for active listen for new message to live update
+    private Thread responseListenerThread;
 
     public void initialize() {
+        
         String username = UserSession.getInstance().getUsername();
         System.out.println("Login user: " + username);
 
+        messageFieldFrame.setVisible(false);
         chatOption.setVisible(false);
+
+        startResponseListener();
         setupContextMenus();
         setupChatListView();
         setupSearchField();
@@ -115,44 +124,14 @@ public class HomeScreenController {
         });
     }
 
-    // private void initializeChatData() {
-    //     allChats.addAll(
-    //         new Chat("Alice Doe", ChatType.PRIVATE, "online", "Hello there!"),
-    //         new Chat("Bob Smith", ChatType.PRIVATE, "3 hours ago", "See you tomorrow"),
-    //         new Chat("Project Team", ChatType.GROUP, "5 members", "Meeting at 2 PM"),
-    //         new Chat("Charlie Brown", ChatType.PRIVATE, "1 day ago", "Thanks for your help"),
-    //         new Chat("Family Group", ChatType.GROUP, "8 members", "Happy birthday, mom!")
-    //     );
-    // }
     private void initializeChatData() {
         allChats.clear();
-        int currentUserId = UserSession.getInstance().getUserId();
-        try (Socket socket = new Socket("localhost", 12345);
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-            
-            out.writeObject("GET_FRIEND_LIST");
-            out.writeObject(currentUserId);
-
-            Object response = in.readObject();
-            if (response instanceof List) {
-                List<String[]> friendList = (List<String[]>) response;
-        
-                for (String[] friend : friendList) {
-                    int chatId = Integer.parseInt(friend[0]);
-                    String fullname = friend[1];
-                    String status = friend[2];
-                    System.out.println("Friend: " + fullname + ", Status: " + status);
-                    allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId));
-                }
-            } else {
-                System.out.println("Unexpected response from server: " + response);
-            }
+        try {
+            UserSession.out.writeObject("GET_FRIEND_LIST");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-      
     }
 
     private void displayChats(ObservableList<ChatBox> chats) {
@@ -184,6 +163,8 @@ public class HomeScreenController {
         chatEntry.setStyle("-fx-background-radius: 10");
 
         chatEntry.setOnMouseClicked(event -> {
+            messageFieldFrame.setVisible(true);
+            this.currentChat = chat;
             updateChat(chat);
             updateSelectedFriend(chatEntry);
         });
@@ -195,28 +176,9 @@ public class HomeScreenController {
         curUserAva.setImage(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
         curUserName.setText(chat.name);
         chatListView.getItems().clear();
-        // addMessage("Hello", false);
-        // addMessage("Hi there", true);
-        try (Socket socket = new Socket("localhost", 12345);
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-
-            out.writeObject("GET_CHAT_MESSAGES");
-            out.writeObject(String.valueOf(chat.chatId));
-
-            Object response = in.readObject();
-            if (response instanceof List) {
-                List<String[]> messages = (List<String[]>) response;
-
-                for (String[] msg : messages) {
-                    String senderId = msg[0];
-                    String message = msg[1];
-                    boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
-                    addMessage(message, isUser);
-                }
-            } else {
-                System.out.println("Unexpected response from server: " + response);
-            }
+        try {
+            UserSession.out.writeObject("GET_CHAT_MESSAGES");
+            UserSession.out.writeObject(String.valueOf(chat.chatId));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -228,8 +190,18 @@ public class HomeScreenController {
     private void handleSendMessage() {
         String message = messageField.getText();
         if (!message.isEmpty()) {
-            addMessage(message, true);
-            messageField.clear();
+            try {
+                UserSession.out.writeObject("SEND_MESSAGE");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(currentChat.chatId);
+                UserSession.out.writeObject(message);
+    
+                addMessage(message, true);
+                messageField.clear();
+    
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -254,6 +226,55 @@ public class HomeScreenController {
         messageBox.getChildren().add(textFlow);
         chatListView.getItems().add(messageBox);
         chatListView.scrollTo(chatListView.getItems().size() - 1);
+    }
+
+    private void startResponseListener() {
+        responseListenerThread = new Thread(() -> {
+            try {
+                while (true) {
+                    String response = (String) UserSession.in.readObject();
+                    if ("respond_GET_FRIEND_LIST".equals(response)) {
+                        List<String[]> friendList = (List<String[]>) UserSession.in.readObject();
+                        Platform.runLater(() -> {
+                            for (String[] friend : friendList) {
+                                int chatId = Integer.parseInt(friend[0]);
+                                String fullname = friend[1];
+                                String status = friend[2];
+                                allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId));
+                            }
+                            displayChats(filteredChats);
+                        });
+                        
+                    } 
+                    if ("NEW_MESSAGE".equals(response)) {
+                        int chatId = (int) UserSession.in.readObject();
+                        String message = (String) UserSession.in.readObject();
+                        int senderId = (int) UserSession.in.readObject();
+                        Platform.runLater(() -> {
+                            if (chatId == currentChat.chatId) {
+                                boolean isUser = senderId == UserSession.getInstance().getUserId();
+                                addMessage(message, isUser);
+                            }
+                        });
+                    }
+                    if ("respond_GET_CHAT_MESSAGES".equals(response)) {
+                        List<String[]> messages = (List<String[]>) UserSession.in.readObject();
+                        Platform.runLater(() -> {
+                            for (String[] msg : messages) {
+                                String senderId = msg[0];
+                                String message = msg[1];
+                                boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
+                                addMessage(message, isUser);
+                            }
+                        });
+                    } 
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Error reading from server or connection lost: " + e.getMessage());
+            }
+        });
+        responseListenerThread.start(); 
+        
     }
 
     private void updateSelectedFriend(HBox newSelection) {
@@ -371,6 +392,10 @@ public class HomeScreenController {
 
     private void handleLogout(javafx.event.ActionEvent event) {
         try {
+            UserSession.out.writeObject("LOGOUT");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+            UserSession.socket.close();
+
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();

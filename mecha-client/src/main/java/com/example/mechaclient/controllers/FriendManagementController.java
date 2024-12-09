@@ -37,7 +37,6 @@ public class FriendManagementController {
 
     private final Image defaultAvatar = new Image(ChatApplication.class.getResourceAsStream("images/default-ava.png"));
 
-    @FXML
     public void initialize() {
         showFriendRequests();
         setupFriendRequests();

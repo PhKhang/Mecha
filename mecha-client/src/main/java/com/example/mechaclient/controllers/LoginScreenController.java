@@ -31,19 +31,14 @@ public class LoginScreenController {
             System.out.println("Please enter username and password");
             return;
         }
-
-        try (Socket socket = new Socket("localhost", 12345);
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-
-            out.writeObject("LOGIN");
-            out.writeObject(username);
-            out.writeObject(password);
-
-            String response = (String) in.readObject();
+        // System.out.println("try to login");
+        try {
+            UserSession.out.writeObject("LOGIN");
+            UserSession.out.writeObject(username);
+            UserSession.out.writeObject(password);
+            String response = (String) UserSession.in.readObject();
             if ("SUCCESS".equals(response)) {
-                int userId = (int) in.readObject();
-
+                int userId = (int) UserSession.in.readObject();
                 UserSession.getInstance().setUsername(username);
                 UserSession.getInstance().setUserId(userId);
                 
@@ -51,7 +46,7 @@ public class LoginScreenController {
             } else {
                 System.out.println("Invalid username or password");
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e){
             e.printStackTrace();
         }
     }
