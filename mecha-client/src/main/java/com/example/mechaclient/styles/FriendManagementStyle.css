@@ -102,3 +102,29 @@
     -fx-padding: 5 10;
     -fx-background-radius: 15;
 }
+
+.sub-tab-container {
+    -fx-padding: 0;
+    -fx-spacing: 0;
+    -fx-background-color: #f5f5f5;
+}
+
+.sub-tab-button {
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-padding: 10 15;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: transparent;
+}
+
+.sub-tab-button:selected {
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #87CEEB;
+}
+
+.user-list {
+    -fx-background-color: #f5f5f5;
+    -fx-background-insets: 0;
+    -fx-padding: 10;
+}

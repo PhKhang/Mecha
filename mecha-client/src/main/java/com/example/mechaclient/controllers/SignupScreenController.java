@@ -4,18 +4,27 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 
 import com.example.mechaclient.ChatApplication;
+import com.example.mechaclient.models.UserSession;
+import com.example.mechaclient.models.UserSession.ServerMessageListener;
+import com.example.mechaclient.utils.NotificationUtil;
 
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.scene.Node;
-public class SignupScreenController {
+
+public class SignupScreenController implements ServerMessageListener{
     
     @FXML
     private Button loginButton;
@@ -35,20 +44,26 @@ public class SignupScreenController {
     @FXML
     public void initialize() {
         // Add event handlers
-        loginButton.setOnAction(event -> handleLogin(event));
+        UserSession.getInstance().addMessageListener(this);
+        loginButton.setOnAction(event -> {
+            handleLogin();
+            System.out.println("login pressed");
+        });
         signInButton.setOnAction(event -> handleEmailSignIn(event));
     }
     
-    private void handleLogin(Event event) {
+    private void handleLogin() {
         try {
+            UserSession.socket.close();
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
     
             // Get the current stage (window)
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Stage stage = (Stage) usernameField.getScene().getWindow();
 
-            stage.setScene(scene);  
-            stage.show();  
+            stage.setScene(scene);   
+            UserSession.getInstance().removeMessageListener(this);
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -63,66 +78,63 @@ public class SignupScreenController {
 
         // Validate inputs
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            NotificationUtil.showNotification("Missing field", "All fields are required.");
             System.out.println("All fields are required.");
             return;
         }
 
         if (!isValidEmail(email)) {
+            NotificationUtil.showNotification("Email error", "Invalid email format.");
             System.out.println("Invalid email format.");
             return;
         }
 
         if (!password.equals(confirmPassword)) {
+            NotificationUtil.showNotification("Passwords error", "Passwords do not match.");
             System.out.println("Passwords do not match.");
             return;
         }
         
         String passwordHash = hashPassword(password);
-
-        // Send data to the server for registration
-        try (Socket socket = new Socket("localhost", 12345);
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-
-            out.writeObject("SIGNUP");
-            out.writeObject(username);
-            out.writeObject(email);
-            out.writeObject(passwordHash); 
-            out.writeObject(address);
-
-            String response = (String) in.readObject();
-            if ("SUCCESS".equals(response)) {
-                System.out.println("User registered successfully.");
-                // redirect to login screen
-                try {
-                    FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
-                    Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-            
-                    // Get the current stage (window)
-                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        
-                    stage.setScene(scene);  
-                    stage.show();  
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } 
-            } else {
-                System.out.println("Registration failed.");
-            }
-        } catch (IOException | ClassNotFoundException e) {
+        try {
+            UserSession.out.writeObject("SIGNUP");
+            UserSession.out.writeObject(username);
+            UserSession.out.writeObject(email);
+            UserSession.out.writeObject(passwordHash); 
+            UserSession.out.writeObject(address);
+        } catch (Exception e) {
             e.printStackTrace();
         }
+
+        
     }
 
     private String hashPassword(String password) {
         return password; // TODO: Implement a secure hashing function
     }
 
-
-    
-    
     private boolean isValidEmail(String email) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
         return email.matches(emailRegex);
+    }
+
+    @Override
+    public void onMessageReceived(String serverMessage) {
+        try {
+            if ("SUCCESS".equals(serverMessage)) {
+                
+                // System.out.println("User registered successfully.");
+                Platform.runLater(() -> {
+                    NotificationUtil.showNotification("registration complete", "User registered successfully!");
+                    System.out.println("redirect to login screen");
+                    handleLogin();
+                });
+            } else {
+                System.out.println("Registration failed.");
+            } 
+        } catch (Exception e){
+            System.out.println("error handling response from friend management controller");
+            e.printStackTrace();
+        } 
     }
 }

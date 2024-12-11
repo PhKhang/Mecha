@@ -72,12 +72,14 @@ public class ChatServer {
                 int userId = authenticateUser(username, password);
                 if (userId != 0) {
                     connectedClients.put(userId, this);
-                    System.out.println("connect client " + userId + " successfully: " );
+                    System.out.println("login client " + username + " successfully: " );
                     out.writeObject("SUCCESS");
                     out.writeObject(userId);
+                    out.writeObject(username);
                     System.out.println("all current active user: " + connectedClients.size());
                 } else {
                     out.writeObject("FAILURE");
+                    
                 }
             } else if ("SEND_MESSAGE".equals(action)) {
                 int senderId = (int) in.readObject();
@@ -96,7 +98,7 @@ public class ChatServer {
             } else if ("LOGOUT".equals(action)) {
                 int userId = (int) in.readObject();
                 connectedClients.remove(userId);
-                System.out.println("userId: " + userId + "logged out");
+                System.out.println("userId: " + userId + "logged out. Current num of active user: " + connectedClients.size());
             } else if ("GET_CHAT_MESSAGES".equals(action)) {
                 int chatId = Integer.parseInt((String)in.readObject());
                 List<String[]> messages = getChatMessages(chatId);
@@ -109,8 +111,151 @@ public class ChatServer {
                 String address = (String) in.readObject();
                 boolean success = registerUser(username, email, passwordHash, address);
                 out.writeObject(success ? "SUCCESS" : "FAILURE");
+            } else if ("GET_POTENTIAL_FRIENDS".equals(action)) {
+                int userId = (int) in.readObject();
+                List<String[]> potentialFriends = getPotentialFriends(userId);
+                out.writeObject("respond_GET_POTENTIAL_FRIENDS");
+                out.writeObject(potentialFriends);
+                System.out.println("sent potential users" + potentialFriends);
+            } else if ("ADD_FRIEND_REQUEST".equals(action)){
+                int senderId = (int)in.readObject();
+                int receiverId =  (int)in.readObject();
+                insertFriendRequest(senderId, receiverId);
+            } else if ("GET_USER_FRIEND_REQUEST".equals(action)){
+                int userId = (int) in.readObject();
+                List<String[]> requestSent = getRequestSent(userId);
+                out.writeObject("respond_GET_USER_FRIEND_REQUEST");
+                out.writeObject(requestSent);
+            } else if ("CANCEL_FRIEND_REQUEST".equals(action)){
+                int userId = (int) in.readObject();
+                int friendId = (int) in.readObject();
+                deleteFriendRequest(userId, friendId);
+            } else if ("GET_FRIEND_REQUEST".equals(action)){
+                int userId = (int) in.readObject();
+                List<String[]> requestList = getFriendRequest(userId);
+                out.writeObject("respond_GET_FRIEND_REQUEST");
+                out.writeObject(requestList);
             }
         }
+
+        // Get all of the users that request to be friend with this user(userId)
+        private List<String[]> getFriendRequest(int userId){
+            List<String[]> messages = new ArrayList<>();
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT fr.user_id, u.full_name
+                FROM friend_request fr
+                JOIN users u ON (u.user_id = fr.user_id)
+                WHERE fr.friend_id = ?
+            """)){  
+                stmt.setInt(1, userId);
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    String friendId = rs.getString("fr.user_id");
+                    String friendUsername = rs.getString("u.full_name");
+                    messages.add(new String[]{friendId, friendUsername});
+                }
+                System.out.println("remove friend request complete");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return messages;
+        }
+
+
+        private void deleteFriendRequest(int senderId, int receiverId){
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM friend_request
+                WHERE user_id = ? AND friend_id = ?
+            """)){  
+                stmt.setInt(1, senderId);
+                stmt.setInt(2, receiverId);
+
+                stmt.executeUpdate();
+                System.out.println("remove friend request complete");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+
+        private List<String[]> getRequestSent(int userId){
+            List<String[]> messages = new ArrayList<>();
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT fr.friend_id, u.full_name
+                FROM friend_request fr 
+                JOIN users u ON (fr.friend_id = u.user_id)
+                WHERE fr.user_id = ?
+                """)){  
+                stmt.setInt(1, userId);
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()){
+                    String friendId = rs.getString("fr.friend_id");
+                    String friendUsername = rs.getString("u.full_name");
+                    messages.add(new String[]{friendId, friendUsername});
+                }
+                System.out.println("get friend request to user complete");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return messages;
+        }
+
+        private void insertFriendRequest(int senderId, int receiverId){
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                INSERT INTO friend_request (user_id, friend_id) VALUES (?, ?);
+                """)){  
+                stmt.setInt(1, senderId);
+                stmt.setInt(2, receiverId);
+
+                stmt.executeUpdate();
+                System.out.println("insert friend request complete");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        private static List<String[]> getPotentialFriends(int userId){
+            List<String[]> messages = new ArrayList<>();
+            String query = """
+                    SELECT user_id, full_name 
+                    FROM users 
+                    WHERE user_id NOT IN (
+                        SELECT user1_id FROM friendships WHERE user2_id = ?
+                        UNION
+                        SELECT user2_id FROM friendships WHERE user1_id = ?
+                        UNION   
+                        SELECT friend_id FROM friend_request WHERE user_id = ?
+                        UNION   
+                        SELECT user_id FROM friend_request WHERE friend_id = ?
+                    )
+                    AND user_id != ?;
+                    """;
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, userId);
+                stmt.setInt(2, userId);
+                stmt.setInt(3, userId);
+                stmt.setInt(4, userId);
+                stmt.setInt(5, userId);
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()){
+                    String potentialUserId = rs.getString("user_id");
+                    String potentialUsername = rs.getString("full_name");
+                    messages.add(new String[]{potentialUserId, potentialUsername});
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return messages;
+        } 
 
         private static void insertMessageIntoDatabase(int chatId, int senderId, String message) {
             String query = "INSERT INTO messages (chat_id, sender_id, content, created_at) VALUES (?, ?, ?, NOW())";

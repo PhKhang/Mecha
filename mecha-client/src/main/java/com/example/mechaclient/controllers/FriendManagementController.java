@@ -12,13 +12,21 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import java.io.IOException;
+import java.util.List;
+
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 
 import com.example.mechaclient.ChatApplication;
+import com.example.mechaclient.models.ChatBox;
+import com.example.mechaclient.models.ChatBox.ChatType;
+import com.example.mechaclient.models.UserSession.ServerMessageListener;
+import com.example.mechaclient.models.UserSession;
 
-public class FriendManagementController {
+public class FriendManagementController implements ServerMessageListener {
 
     @FXML private VBox friendRequestContent;
     @FXML private VBox findFriendContent;
@@ -29,16 +37,25 @@ public class FriendManagementController {
     @FXML private ListView<HBox> searchResultList;
     @FXML private ListView<HBox> blockedList;
     @FXML private ListView<HBox> reportedList;
-    
+    @FXML private ListView<HBox> requestsSentList;
+
+    private ObservableList<HBox> allPossibleFriend = FXCollections.observableArrayList();
+
     @FXML private Button friendRequestTab;
     @FXML private Button findFriendTab;
     @FXML private Button blockedListTab;
     @FXML private Button reportedListTab;
 
+    @FXML private Button findFriendSubTab;
+    @FXML private Button requestsSentSubTab;
+
+    @FXML private TextField searchField;
+
     private final Image defaultAvatar = new Image(ChatApplication.class.getResourceAsStream("images/default-ava.png"));
 
     public void initialize() {
-        showFriendRequests();
+        UserSession.getInstance().addMessageListener(this);
+        showFriendRequests();   
         setupFriendRequests();
         setupSearchResults();
         setupBlockedList();
@@ -48,6 +65,29 @@ public class FriendManagementController {
         setupListViewBehavior(searchResultList);
         setupListViewBehavior(blockedList);
         setupListViewBehavior(reportedList);
+        setupListViewBehavior(requestsSentList);
+
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> filterFriendLists(newValue));
+    }
+
+    private void filterFriendLists(String query) {
+        filterList(searchResultList, query);
+    }
+
+    private void filterList(ListView<HBox> listView, String query) {
+        ObservableList<HBox> allItems = allPossibleFriend;
+        ObservableList<HBox> filteredItems = allItems.filtered(item -> {
+            if (item == null || query.isEmpty()) return true;
+            Label usernameLabel = (Label) item.lookup(".fullname-label"); 
+            if (usernameLabel != null) {
+                String username = usernameLabel.getText();
+                return username.toLowerCase().contains(query.toLowerCase());
+            }
+            return false;
+        });
+        listView.setItems(filteredItems);
+        showFindFriendResults();
+        
     }
 
     private void setupListViewBehavior(ListView<HBox> listView) {
@@ -62,7 +102,7 @@ public class FriendManagementController {
                 }
             }
         });
-
+        
         listView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (oldSelection != null) {
                 oldSelection.setStyle("-fx-background-color: transparent;");
@@ -71,6 +111,40 @@ public class FriendManagementController {
                 newSelection.setStyle("-fx-background-color: #d0e8ff;");
             }
         });
+    }
+
+    
+
+    @FXML
+    private void showFindFriendResults() {
+        setActiveSubTab(searchResultList, findFriendSubTab);
+    }
+
+    @FXML
+    private void showRequestsSent() {
+        setActiveSubTab(requestsSentList, requestsSentSubTab);
+        loadRequestsSent();
+    }
+
+    private void setActiveSubTab(ListView<HBox> listView, Button activeTab) {
+        searchResultList.setVisible(false);
+        requestsSentList.setVisible(false);
+
+        findFriendSubTab.pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), false);
+        requestsSentSubTab.pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), false);
+
+        listView.setVisible(true);
+        activeTab.pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), true);
+    }
+
+    private void loadRequestsSent() {
+        try {
+            UserSession.out.writeObject("GET_USER_FRIEND_REQUEST");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        
     }
 
     @FXML
@@ -82,17 +156,32 @@ public class FriendManagementController {
         stage = (Stage) friendRequestContent.getScene().getWindow(); // get scene based on an element that in the scene, in this case it is friendRequestContent
         stage.setScene(scene);
         stage.show();
+        UserSession.getInstance().removeMessageListener(this);
     }
+
     @FXML   
     private void showFriendRequests() {
+        try {
+            UserSession.out.writeObject("GET_FRIEND_REQUEST");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         setActiveTab(friendRequestContent);
         friendRequestTab.setStyle("-fx-background-color: #cccccc;");
     }
 
     @FXML
     private void showFindFriend() {
+         try {
+            UserSession.out.writeObject("GET_POTENTIAL_FRIENDS");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         setActiveTab(findFriendContent);
         findFriendTab.setStyle("-fx-background-color: #cccccc;");
+        showFindFriendResults();
     }
 
     @FXML
@@ -122,16 +211,16 @@ public class FriendManagementController {
     }
 
     private void setupFriendRequests() {
-        ObservableList<HBox> items = FXCollections.observableArrayList();
-        items.add(createFriendRequestItem("Username1", "40 minutes ago"));
-        items.add(createFriendRequestItem("Username2", "40 minutes ago"));
-        friendRequestList.setItems(items);
+        // ObservableList<HBox> items = FXCollections.observableArrayList();
+        // items.add(createFriendRequestItem("Username1", "40 minutes ago"));
+        // items.add(createFriendRequestItem("Username2", "40 minutes ago"));
+        // friendRequestList.setItems(items);
     }
 
     private void setupSearchResults() {
-        ObservableList<HBox> items = FXCollections.observableArrayList();
-        items.add(createSearchResultItem("Username1"));
-        searchResultList.setItems(items);
+        // ObservableList<HBox> items = FXCollections.observableArrayList();
+        // items.add(createSearchResultItem("Username1"));
+        // searchResultList.setItems(items);
     }
 
     private void setupBlockedList() {
@@ -139,7 +228,7 @@ public class FriendManagementController {
         items.add(createBlockedUserItem("Username1"));
         blockedList.setItems(items);
     }
-
+    
     private void setupReportedList() {
         ObservableList<HBox> items = FXCollections.observableArrayList();
         items.add(createReportedUserItem("Username1", "Pending"));
@@ -147,7 +236,7 @@ public class FriendManagementController {
         reportedList.setItems(items);
     }
 
-    private HBox createFriendRequestItem(String username, String time) {
+    private HBox createFriendRequestItem(int userId, String fullname) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
@@ -155,11 +244,12 @@ public class FriendManagementController {
         ImageView avatar = createCircularAvatar(defaultAvatar);
         
         VBox userInfo = new VBox(5);
-        Label usernameLabel = new Label(username);
-        usernameLabel.setStyle("-fx-text-fill: black;");
-        Label timeLabel = new Label(time);
+        Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
+        fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.getStyleClass().add(".fullname-label");
+        Label timeLabel = new Label("username placeholder");
         timeLabel.getStyleClass().add("time-label");
-        userInfo.getChildren().addAll(usernameLabel, timeLabel);
+        userInfo.getChildren().addAll(fullnameLabel, timeLabel);
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -174,7 +264,41 @@ public class FriendManagementController {
         return item;
     }
 
-    private HBox createSearchResultItem(String username) {
+    private HBox createSearchResultItem(int userId, String fullname) {
+        HBox item = new HBox(10);
+        item.setPadding(new Insets(8, 15, 8, 15));
+        item.setAlignment(Pos.CENTER_LEFT);
+  
+        ImageView avatar = createCircularAvatar(defaultAvatar);
+        
+        Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
+        fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.getStyleClass().add("fullname-label");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Button addButton = new Button("Add friend");
+        addButton.getStyleClass().add("add-button");
+        addButton.setOnAction(event -> {
+            try {
+                UserSession.out.writeObject("ADD_FRIEND_REQUEST");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(userId);
+                System.out.println("sending friend request to server");
+                Platform.runLater(() -> {
+                    showFindFriend();
+                });
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            event.getTarget();
+        });
+        item.getChildren().addAll(avatar, fullnameLabel, spacer, addButton);
+        return item;
+    }
+
+    private HBox createUserFriendRequestItem(int userId, String username) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
@@ -186,10 +310,25 @@ public class FriendManagementController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        Button addButton = new Button("Add friend");
-        addButton.getStyleClass().add("add-button");
-        
-        item.getChildren().addAll(avatar, usernameLabel, spacer, addButton);
+        Button cancelButton = new Button("Cancel request");
+        cancelButton.getStyleClass().add("cancel-button");
+        cancelButton.setOnAction(event -> {
+            try {
+                UserSession.out.writeObject("CANCEL_FRIEND_REQUEST");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(userId);
+                System.out.println("remove user's friend request");
+                Platform.runLater(() -> {
+                    showFindFriend();
+                    showRequestsSent();
+                });
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            event.getTarget();
+        });
+        item.getChildren().addAll(avatar, usernameLabel, spacer, cancelButton);
         return item;
     }
 
@@ -242,5 +381,50 @@ public class FriendManagementController {
         avatar.setClip(clip);
 
         return avatar;
+    }
+
+    @Override
+    public void onMessageReceived(String serverMessage) {
+        try {
+            if ("respond_GET_POTENTIAL_FRIENDS".equals(serverMessage)) {
+                List<String[]> potentialFriends = (List<String[]>) UserSession.in.readObject();
+                ObservableList<HBox> items = FXCollections.observableArrayList();
+                for (String[] friend : potentialFriends) {
+                    int userId = Integer.parseInt(friend[0]);
+                    String fullname = friend[1];
+                    items.add(createSearchResultItem(userId, fullname));  
+                }
+                Platform.runLater(() -> {
+                    allPossibleFriend = items;
+                    searchResultList.setItems(items);
+                });
+            } else if ("respond_GET_USER_FRIEND_REQUEST".equals(serverMessage)){
+                List<String[]> friendRequests = (List<String[]>) UserSession.in.readObject();
+                ObservableList<HBox> items = FXCollections.observableArrayList();
+                System.out.println("got friend request");
+                for (String[] friend : friendRequests) {
+                    int friendId = Integer.parseInt(friend[0]);
+                    String friendFullname = friend[1];
+                    items.add(createUserFriendRequestItem(friendId, friendFullname));   
+                }
+                Platform.runLater(() -> {
+                    requestsSentList.setItems(items);
+                });
+            } else if ("respond_GET_FRIEND_REQUEST".equals(serverMessage)){
+                List<String[]> friendRequestToUser = (List<String[]>) UserSession.in.readObject();
+                ObservableList<HBox> items = FXCollections.observableArrayList();
+                for (String[] friend : friendRequestToUser) {
+                    int friendId = Integer.parseInt(friend[0]);
+                    String friendFullname = friend[1];
+                    items.add(createFriendRequestItem(friendId, friendFullname));   
+                }
+                Platform.runLater(() -> {
+                    friendRequestList.setItems(items);
+                });
+            }
+        } catch (Exception e){
+            System.out.println("error handling response from friend management controller");
+            e.printStackTrace();
+        } 
     }
 }

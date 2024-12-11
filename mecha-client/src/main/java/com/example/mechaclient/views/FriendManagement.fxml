@@ -40,8 +40,17 @@
             
             <!-- Find Friend Content -->
             <VBox fx:id="findFriendContent" visible="false" spacing="10">
-                <TextField promptText="search for friend here..." styleClass="search-field"/>
-                <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
+                <TextField fx:id="searchField" promptText="search for friend here..." styleClass="search-field"/>
+                <!-- <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/> -->
+
+                <HBox spacing="0" styleClass="sub-tab-container">
+                    <Button text="Find Friend" fx:id="findFriendSubTab" styleClass="sub-tab-button" onAction="#showFindFriendResults" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button text="Requests Sent" fx:id="requestsSentSubTab" styleClass="sub-tab-button" onAction="#showRequestsSent" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+                <StackPane>
+                    <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
+                    <ListView fx:id="requestsSentList" VBox.vgrow="ALWAYS" styleClass="user-list" visible="false"/>
+                </StackPane>
             </VBox>
             
             <!-- Blocked List Content -->

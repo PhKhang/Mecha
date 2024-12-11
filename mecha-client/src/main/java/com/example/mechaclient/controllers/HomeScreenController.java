@@ -31,9 +31,10 @@ import java.util.List;
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.ChatBox;
 import com.example.mechaclient.models.UserSession;
+import com.example.mechaclient.models.UserSession.ServerMessageListener;
 import com.example.mechaclient.models.ChatBox.ChatType;
 
-public class HomeScreenController {
+public class HomeScreenController implements ServerMessageListener{
 
     @FXML private HBox chatHeader;
     @FXML private ImageView curUserAva;
@@ -55,7 +56,8 @@ public class HomeScreenController {
     private ChatBox currentChat;
 
     // for active listen for new message to live update
-    private Thread responseListenerThread;
+    // private Thread responseListenerThread;
+    // private boolean threadAlive = true;
 
     public void initialize() {
         
@@ -65,7 +67,8 @@ public class HomeScreenController {
         messageFieldFrame.setVisible(false);
         chatOption.setVisible(false);
 
-        startResponseListener();
+        UserSession.getInstance().addMessageListener(this);
+        // startResponseListener();
         setupContextMenus();
         setupChatListView();
         setupSearchField();
@@ -228,54 +231,19 @@ public class HomeScreenController {
         chatListView.scrollTo(chatListView.getItems().size() - 1);
     }
 
-    private void startResponseListener() {
-        responseListenerThread = new Thread(() -> {
-            try {
-                while (true) {
-                    String response = (String) UserSession.in.readObject();
-                    if ("respond_GET_FRIEND_LIST".equals(response)) {
-                        List<String[]> friendList = (List<String[]>) UserSession.in.readObject();
-                        Platform.runLater(() -> {
-                            for (String[] friend : friendList) {
-                                int chatId = Integer.parseInt(friend[0]);
-                                String fullname = friend[1];
-                                String status = friend[2];
-                                allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId));
-                            }
-                            displayChats(filteredChats);
-                        });
-                        
-                    } 
-                    if ("NEW_MESSAGE".equals(response)) {
-                        int chatId = (int) UserSession.in.readObject();
-                        String message = (String) UserSession.in.readObject();
-                        int senderId = (int) UserSession.in.readObject();
-                        Platform.runLater(() -> {
-                            if (chatId == currentChat.chatId) {
-                                boolean isUser = senderId == UserSession.getInstance().getUserId();
-                                addMessage(message, isUser);
-                            }
-                        });
-                    }
-                    if ("respond_GET_CHAT_MESSAGES".equals(response)) {
-                        List<String[]> messages = (List<String[]>) UserSession.in.readObject();
-                        Platform.runLater(() -> {
-                            for (String[] msg : messages) {
-                                String senderId = msg[0];
-                                String message = msg[1];
-                                boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
-                                addMessage(message, isUser);
-                            }
-                        });
-                    } 
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                System.out.println("Error reading from server or connection lost: " + e.getMessage());
-            }
-        });
-        responseListenerThread.start(); 
+    // private void startResponseListener() {
+    //     responseListenerThread = new Thread(() -> {
+    //         try {
+    //             while (threadAlive) {
+                    
+    //             }
+    //         } catch (IOException | ClassNotFoundException e) {
+    //             System.out.println("Error reading from server or connection lost: " + e.getMessage());
+    //         }
+    //     });
+    //     responseListenerThread.start(); 
         
-    }
+    // }
 
     private void updateSelectedFriend(HBox newSelection) {
         if (selectedFriendEntry != null) {
@@ -373,6 +341,8 @@ public class HomeScreenController {
             Stage stage = (Stage) settings.getScene().getWindow();
             stage.setScene(scene);
             stage.show();
+            UserSession.getInstance().removeMessageListener(this);
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -401,7 +371,55 @@ public class HomeScreenController {
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
             stage.setScene(scene);
             stage.show();
+            UserSession.getInstance().removeMessageListener(this);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onMessageReceived(String serverMessage) {
+        try {
+            if ("respond_GET_FRIEND_LIST".equals(serverMessage)) {
+                System.out.println("process friendlist...");
+                List<String[]> friendList = (List<String[]>) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    for (String[] friend : friendList) {
+                        int chatId = Integer.parseInt(friend[0]);
+                        String fullname = friend[1];
+                        String status = friend[2];
+                        allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId));
+                    }
+                    Platform.runLater(() -> {
+                        displayChats(filteredChats);
+                    });
+                });
+                
+            } 
+            if ("NEW_MESSAGE".equals(serverMessage)) {
+                int chatId = (int) UserSession.in.readObject();
+                String message = (String) UserSession.in.readObject();
+                int senderId = (int) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    if (chatId == currentChat.chatId) {
+                        boolean isUser = senderId == UserSession.getInstance().getUserId();
+                        addMessage(message, isUser);
+                    }
+                });
+            }
+            if ("respond_GET_CHAT_MESSAGES".equals(serverMessage)) {
+                List<String[]> messages = (List<String[]>) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    for (String[] msg : messages) {
+                        String senderId = msg[0];
+                        String message = msg[1];
+                        boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
+                        addMessage(message, isUser);
+                    }
+                });
+            }
+        } catch (Exception e){
+            System.out.println("error handling response from server in home controller: ");
             e.printStackTrace();
         }
     }
