@@ -2,19 +2,25 @@ package com.example.mechaadmin;
 
 import java.io.IOException;
 import java.net.URL;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.ResourceBundle;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.example.mechaadmin.bus.ReportBUS;
+import com.example.mechaadmin.bus.UsageBUS;
 import com.example.mechaadmin.bus.UserBUS;
 import com.example.mechaadmin.dto.AccountDTO;
 import com.example.mechaadmin.dto.GroupChatDTO;
 import com.example.mechaadmin.dto.ReportInfoDTO;
+import com.example.mechaadmin.dto.UsageDTO;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -27,6 +33,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.AreaChart;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.MenuButton;
@@ -46,6 +53,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.scene.chart.AreaChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 
 public class SceneController implements Initializable {
     private Stage stage;
@@ -212,6 +222,74 @@ public class SceneController implements Initializable {
     private TableColumn<AccountDTO, String> loginUser;
     @FXML
     private TableColumn<AccountDTO, String> loginFull;
+    class LoginTable {
+        private TableView<AccountDTO> loginTable;
+        private TableColumn<AccountDTO, String> loginTime;
+        private TableColumn<AccountDTO, String> loginUser;
+        private TableColumn<AccountDTO, String> loginFull;
+
+        ObservableList<AccountDTO> accounts = FXCollections.observableArrayList();
+        List<AccountDTO> originalData = null;
+
+        Predicate<AccountDTO> filter = account -> false;
+        String searchKey = "";
+
+        @SuppressWarnings("unchecked")
+        LoginTable(TableView<AccountDTO> table) {
+            loginTable = table;
+            loginTime = (TableColumn<AccountDTO, String>) loginTable.getColumns().get(0);
+            loginFull = (TableColumn<AccountDTO, String>) loginTable.getColumns().get(1);
+            loginUser = (TableColumn<AccountDTO, String>) loginTable.getColumns().get(2);
+
+            loginUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+            loginFull.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+            loginTime.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().getRecentLogin().toString()));
+            loginTable.setItems(accounts);
+        }
+
+        public void updateOriginal(List<AccountDTO> list) {
+            originalData = new ArrayList<>(list);
+            accounts.clear();
+            accounts.addAll(list);
+        }
+
+        public void updateOriginal() {
+            accounts.clear();
+            accounts.addAll(originalData);
+        }
+
+        public void updateContent(List<AccountDTO> list) {
+            accounts.clear();
+            accounts.addAll(list);
+        }
+
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                loginTable.getItems().clear();
+                loginTable.getItems().addAll(filtered);
+            } else {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(account -> !account.getFullName().toLowerCase().contains(searchKey)
+                        && !account.getUsername().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                loginTable.getItems().clear();
+                loginTable.getItems().addAll(filtered);
+            }
+        }
+
+        public void setFilterPredicate(Predicate<AccountDTO> filter) {
+            this.filter = filter;
+            List<AccountDTO> filtered = new ArrayList<>(originalData);
+            filtered.removeIf(filter);
+            accounts.clear();
+            accounts.addAll(filtered);
+            search(searchKey);
+        }
+    }
 
     @FXML
     private TableView<AccountDTO> activeTable;
@@ -227,9 +305,11 @@ public class SceneController implements Initializable {
     private TableColumn<AccountDTO, String> activeChat;
     @FXML
     private TableColumn<AccountDTO, String> activeGroup;
-    
+
+    // Report
     @FXML
     private TableView<ReportInfoDTO> reportTable;
+
     class ReportInfoTable {
         private TableView<ReportInfoDTO> reportTable;
         private TableColumn<ReportInfoDTO, String> reportId;
@@ -238,13 +318,13 @@ public class SceneController implements Initializable {
         private TableColumn<ReportInfoDTO, String> reportReason;
         private TableColumn<ReportInfoDTO, String> reportTime;
         private TableColumn<ReportInfoDTO, String> reportStatus;
-        
+
         ObservableList<ReportInfoDTO> reports = FXCollections.observableArrayList();
         List<ReportInfoDTO> originalData = null;
-        
+
         Predicate<ReportInfoDTO> filter = report -> false;
         String searchKey = "";
-        
+
         @SuppressWarnings("unchecked")
         ReportInfoTable(TableView<ReportInfoDTO> table) {
             reportTable = table;
@@ -254,32 +334,32 @@ public class SceneController implements Initializable {
             reportReason = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(3);
             reportTime = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(4);
             reportStatus = (TableColumn<ReportInfoDTO, String>) reportTable.getColumns().get(5);
-            
+
             reportId.setCellValueFactory(new PropertyValueFactory<>("reportId"));
-            reportReporter.setCellValueFactory(new PropertyValueFactory<>("reportReporter"));
-            reportReported.setCellValueFactory(new PropertyValueFactory<>("reportReported"));
-            reportReason.setCellValueFactory(new PropertyValueFactory<>("reportReason"));
-            reportTime.setCellValueFactory(new PropertyValueFactory<>("reportDate"));
-            reportStatus.setCellValueFactory(new PropertyValueFactory<>("reportStatus"));
+            reportReporter.setCellValueFactory(new PropertyValueFactory<>("reporter"));
+            reportReported.setCellValueFactory(new PropertyValueFactory<>("reported"));
+            reportReason.setCellValueFactory(new PropertyValueFactory<>("reason"));
+            reportTime.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+            reportStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
             reportTable.setItems(reports);
         }
-        
+
         public void updateOriginal(List<ReportInfoDTO> list) {
             originalData = new ArrayList<>(list);
             reports.clear();
             reports.addAll(list);
         }
-        
+
         public void updateOriginal() {
             reports.clear();
             reports.addAll(originalData);
         }
-        
+
         public void updateContent(List<ReportInfoDTO> list) {
             reports.clear();
             reports.addAll(list);
         }
-        
+
         public void search(String s) {
             searchKey = s.trim().toLowerCase();
             if (s.trim().equals("")) {
@@ -298,7 +378,7 @@ public class SceneController implements Initializable {
                 reportTable.getItems().addAll(filtered);
             }
         }
-        
+
         public void setFilterPredicate(Predicate<ReportInfoDTO> filter) {
             this.filter = filter;
             List<ReportInfoDTO> filtered = new ArrayList<>(originalData);
@@ -308,17 +388,187 @@ public class SceneController implements Initializable {
             search(searchKey);
         }
     }
-    
+
     ReportInfoTable rprtTable;
-            
+
     @FXML
     private TableView<AccountDTO> newTable;
     @FXML
-    private TableColumn<AccountDTO, String> newCreation;
+    AreaChart<String, Integer> newChart;
     @FXML
-    private TableColumn<AccountDTO, String> newFull;
+    private DatePicker newStart;
     @FXML
-    private TableColumn<AccountDTO, String> newUser;
+    private DatePicker newEnd;
+    @FXML
+    private TextField newSearch;
+
+    class NewTable {
+        public TableView<AccountDTO> newTable;
+        public AreaChart<String, Integer> lineChart;
+        public TableColumn<AccountDTO, String> newCreation;
+        public TableColumn<AccountDTO, String> newFull;
+        public TableColumn<AccountDTO, String> newUser;
+
+        ObservableList<AccountDTO> accounts = FXCollections.observableArrayList();
+        List<AccountDTO> originalData = null;
+
+        Predicate<AccountDTO> filter = account -> false;
+        String searchKey = "";
+
+        @SuppressWarnings("unchecked")
+        NewTable(TableView<AccountDTO> table, AreaChart<String, Integer> lineChart) {
+            newTable = table;
+            this.lineChart = lineChart;
+            newCreation = (TableColumn<AccountDTO, String>) newTable.getColumns().get(0);
+            newFull = (TableColumn<AccountDTO, String>) newTable.getColumns().get(1);
+            newUser = (TableColumn<AccountDTO, String>) newTable.getColumns().get(2);
+
+            newUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+            newFull.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+            newCreation.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+            newTable.setItems(accounts);
+        }
+
+        public void updateChart(List<AccountDTO> list) {
+            XYChart.Series<String, Integer> series = new XYChart.Series<>();
+            series.setName("New accounts");
+            Map<LocalDateTime, Long> dateCountMap = list.stream()
+                    .collect(Collectors.groupingBy(AccountDTO::getCreatedAt, Collectors.counting()))
+                    .entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (e1, e2) -> e1,
+                            LinkedHashMap::new));
+
+            for (LocalDateTime date : dateCountMap.keySet()) {
+                series.getData().add(new XYChart.Data<>(date.toString(), dateCountMap.get(date).intValue()));
+            }
+
+            lineChart.getData().clear();
+            lineChart.getData().add(series);
+        }
+
+        public void updateOriginal(List<AccountDTO> list) {
+            originalData = new ArrayList<>(list);
+            accounts.clear();
+            accounts.addAll(list);
+            updateChart(list);
+        }
+
+        public void updateOriginal() {
+            accounts.clear();
+            accounts.addAll(originalData);
+            updateChart(originalData);
+        }
+
+        public void updateContent(List<AccountDTO> list) {
+            accounts.clear();
+            accounts.addAll(list);
+            updateChart(list);
+        }
+
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                newTable.getItems().clear();
+                newTable.getItems().addAll(filtered);
+            } else {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(account -> !account.getFullName().toLowerCase().contains(searchKey)
+                        && !account.getUsername().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                newTable.getItems().clear();
+                newTable.getItems().addAll(filtered);
+            }
+        }
+
+        public void setFilterPredicate(Predicate<AccountDTO> filter) {
+            this.filter = filter;
+            List<AccountDTO> filtered = new ArrayList<>(originalData);
+            filtered.removeIf(filter);
+            accounts.clear();
+            accounts.addAll(filtered);
+            updateChart(filtered);
+            search(searchKey);
+        }
+    }
+
+    @FXML
+    private AreaChart<String, Integer> activeChart;
+    @FXML
+    private TextField activeYear;
+
+    // Active
+    class ActiveTable {
+        public AreaChart<String, Integer> activeChart;
+
+        ObservableList<UsageDTO> accounts = FXCollections.observableArrayList();
+        List<UsageDTO> originalData = null;
+
+        Predicate<UsageDTO> filter = usage -> false;
+        String searchKey = "";
+
+        ActiveTable(AreaChart<String, Integer> activeChart) {
+            this.activeChart = activeChart;
+        }
+
+        public void updateChart(List<UsageDTO> list) {
+            XYChart.Series<String, Integer> series = new XYChart.Series<>();
+            series.setName("Active accounts");
+            
+            series.getData().addAll(list.stream().map(account -> {
+                return new XYChart.Data<>(account.getMonth().toString(), account.getOpened());
+            }).collect(Collectors.toList()));
+            
+            activeChart.getData().clear();
+            activeChart.getData().add(series);
+        }
+
+        public void updateOriginal(List<UsageDTO> list) {
+            originalData = new ArrayList<>(list);
+            accounts.clear();
+            accounts.addAll(list);
+            updateChart(list);
+        }
+
+        public void updateOriginal() {
+            accounts.clear();
+            accounts.addAll(originalData);
+            updateChart(originalData);
+        }
+
+        public void updateContent(List<UsageDTO> list) {
+            accounts.clear();
+            accounts.addAll(list);
+            updateChart(list);
+        }
+
+        public void search(String s, Function<Integer, List<UsageDTO>> a) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                updateOriginal(a.apply(LocalDateTime.now().getYear()));
+                List<UsageDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+            } else {
+                updateOriginal(a.apply(Integer.parseInt(s)));
+                List<UsageDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+            }
+        }
+
+        // public void setFilterPredicate(Predicate<UsageDTO> filter) {
+        //     this.filter = filter;
+        //     List<UsageDTO> filtered = new ArrayList<>(originalData);
+        //     filtered.removeIf(filter);
+        //     accounts.clear();
+        //     accounts.addAll(filtered);
+        //     search(searchKey);
+        // }
+    }
 
     @FXML
     private ChoiceBox<String> choiceFriend;
@@ -413,52 +663,105 @@ public class SceneController implements Initializable {
         rprtTable.updateOriginal(reportBUS.getAll());
         List<ReportInfoDTO> reports = reportBUS.getAll();
         System.out.println(reports);
-        
+
         reportSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             rprtTable.search(newValue);
         });
-        
+
         reportStart.valueProperty().addListener((observable, oldValue, newValue) -> {
-            LocalDate start = reportStart.getValue();
-            LocalDate end = reportEnd.getValue();
+            LocalDateTime start = reportStart.getValue().atTime(0, 0);
+            LocalDateTime end = reportEnd.getValue().atTime(23, 59);
+            System.out.println("Start: " + start + " End: " + end);
             if (start != null && end != null) {
                 Predicate<ReportInfoDTO> filter = report -> {
-                    LocalDate date = report.getCreatedAt();
+                    LocalDateTime date = report.getCreatedAt();
                     return date.isBefore(start) || date.isAfter(end);
                 };
                 rprtTable.setFilterPredicate(filter);
+            } else {
+                Predicate<ReportInfoDTO> filter = report -> false;
+                rprtTable.setFilterPredicate(filter);
             }
         });
-        
+
         reportEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
-            LocalDate start = reportStart.getValue();
-            LocalDate end = reportEnd.getValue();
+            LocalDateTime start = reportStart.getValue().atTime(0, 0);
+            LocalDateTime end = reportEnd.getValue().atTime(23, 59);
             if (start != null && end != null) {
                 Predicate<ReportInfoDTO> filter = report -> {
-                    LocalDate date = report.getCreatedAt();
+                    LocalDateTime date = report.getCreatedAt();
                     return date.isBefore(start) || date.isAfter(end);
                 };
                 rprtTable.setFilterPredicate(filter);
+            } else {
+                Predicate<ReportInfoDTO> filter = report -> false;
+                rprtTable.setFilterPredicate(filter);
             }
         });
+
+        // ----------------- Line Chart -----------------
+        NewTable nwTable = new NewTable(newTable, newChart);
+        nwTable.updateOriginal(userBUS.getAllUsers());
+        nwTable.updateChart(nwTable.originalData);
+
+        newSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            nwTable.search(newValue);
+        });
+
+        newStart.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDateTime start = newStart.getValue().atTime(0, 0);
+            LocalDateTime end = newEnd.getValue().atTime(23, 59);
+            System.out.println("Start: " + start + " End: " + end);
+            if (start != null && end != null) {
+                Predicate<AccountDTO> filter = account -> {
+                    LocalDateTime date = account.getCreatedAt();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                nwTable.setFilterPredicate(filter);
+            } else {
+                Predicate<AccountDTO> filter = account -> false;
+                nwTable.setFilterPredicate(filter);
+            }
+        });
+
+        newEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDateTime start = newStart.getValue().atTime(0, 0);
+            LocalDateTime end = newEnd.getValue().atTime(23, 59);
+            if (start != null && end != null) {
+                Predicate<AccountDTO> filter = account -> {
+                    LocalDateTime date = account.getCreatedAt();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                nwTable.setFilterPredicate(filter);
+            } else {
+                Predicate<AccountDTO> filter = account -> false;
+                nwTable.setFilterPredicate(filter);
+            }
+        });
+
+        // ------- Active Chart -------
+        UsageBUS usageBUS = new UsageBUS();
+        ActiveTable actTable = new ActiveTable(activeChart);
+        actTable.updateOriginal(usageBUS.getAppOpened(LocalDateTime.now().getYear()));
+        actTable.updateChart(actTable.originalData);
         
-        // reportId.setCellValueFactory(new PropertyValueFactory<Report, String>("reportId"));
-        // reportReporter.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReporter"));
-        // reportReported.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReported"));
-        // reportReason.setCellValueFactory(new PropertyValueFactory<Report, String>("reportReason"));
-        // reportTime.setCellValueFactory(new PropertyValueFactory<Report, String>("reportDate"));
-        // reportStatus.setCellValueFactory(new PropertyValueFactory<Report, String>("reportStatus"));
-        // reportTable.setItems(reports);
+        activeYear.textProperty().addListener((observable, oldValue, newValue) -> {
+            actTable.search(newValue, (year) -> {
+                return usageBUS.getAppOpened((int)year);
+            });
+        });
+        
+        // 
+        LoginTable lginTable = new LoginTable(loginTable);
+        lginTable.updateOriginal(userBUS.getAllUsers());
+        
+        
 
         choiceFriend.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
         choiceActiveCon.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceStatus.getItems().addAll("Pending", "Resolved", "Under Review");
 
-        newCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
-        newFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
-        newUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
-        newTable.setItems(accTable.accounts);
     }
 
     @FXML
@@ -501,22 +804,64 @@ public class SceneController implements Initializable {
     public void groupClicked() {
         GroupChatDTO group = groupTable.getSelectionModel().getSelectedItem();
         VMemList.getChildren().clear();
-        VMemList.getChildren().addAll(group.getMembers().stream().map(member -> {
+        List<HBox> memberBoxList = group.getMembers().stream().map(mem -> {
             ImageView profile = new ImageView(new Image(
-                    "https://pub-b0a9bdcea1cd4f6ca28d98f878366466.r2.dev/1733287277424-468916132_438255359333153_2130388637852454432_n.jpg",
-                    40, 40, true, true));
+                    "https://pub-b0a9bdcea1cd4f6ca28d98f878366466.r2.dev/1.png",
+                    40, 40, true, true, true));
             Circle clip = new Circle(20, 20, 20);
             profile.setClip(clip);
-            // ImageView crown = new ImageView(new Image("..\\images\\crown.png", 20, 20, true, true));
-            Text username = new Text(member);
+            profile.setFitWidth(40);
+            profile.setFitHeight(40);
+            Text username = new Text(mem);
             username.setFont(new Font(14));
             username.setTextAlignment(TextAlignment.CENTER);
-            HBox memberBox = new HBox(
-                    profile,
-                    username);
+            HBox memberBox = new HBox(profile, username);
             memberBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             return memberBox;
-        }).toArray(HBox[]::new));
+        }).toList();
+        System.out.println("Member size: " + memberBoxList.size());
+        VMemList.getChildren().addAll(memberBoxList);
+    }
+
+    @FXML
+    Text reportIdText;
+    @FXML
+    ImageView reporterProfile;
+    @FXML
+    Text reporter;
+    @FXML
+    ImageView reportedProfile;
+    @FXML
+    Text reported;
+
+    public void reportClicked() {
+        System.out.println("Report clicked");
+        ReportInfoDTO report = reportTable.getSelectionModel().getSelectedItem();
+        reportIdText.setText("Report ID: " + report.getReportId());
+        List<Integer> peopleIds = new ArrayList<>();
+        rprtTable.originalData.forEach(r -> {
+            if (r.getReportId() == report.getReportId()) {
+                reporter.setText(r.getReporter());
+                reported.setText(r.getReported());
+                peopleIds.add(r.getReporterId());
+                peopleIds.add(r.getReportedId());
+            }
+        });
+        Thread a = new Thread(() -> {
+            List<AccountDTO> people = new UserBUS().getByIdList(peopleIds);
+
+            people.forEach(p -> {
+                if (p.getUsername().equals(reporter.getText())) {
+                    reporterProfile.setImage(new Image(p.getProfileUrl()));
+                    // reporter.setText(p.getUsername());
+                } else {
+                    reportedProfile.setImage(new Image(p.getProfileUrl()));
+                    // reported.setText(p.getUsername());
+                }
+            });
+            System.out.println("Update report people done");
+        });
+        a.start();
     }
 
     public void switchToMain(ActionEvent event) throws IOException {

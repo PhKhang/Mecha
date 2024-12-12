@@ -1,6 +1,6 @@
 package com.example.mechaadmin.bus;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +11,6 @@ import org.hibernate.cfg.Configuration;
 
 import com.example.mechaadmin.dao.UserDAO;
 import com.example.mechaadmin.dao.ChatDAO;
-import com.example.mechaadmin.dao.MemberDAO;
 import com.example.mechaadmin.dto.AccountDTO;
 import com.example.mechaadmin.dto.GroupChatDTO;
 
@@ -44,13 +43,75 @@ public class UserBUS {
             account.setUsername(((UserDAO) user[0]).getUsername());
             account.setStatus(((UserDAO) user[0]).getStatus());
             account.setCreatedAt(((UserDAO) user[0]).getCreatedAt());
-            account.setRecentLogin(LocalDate.now());
+            account.setRecentLogin(LocalDateTime.now());
             account.setAddress(((UserDAO) user[0]).getAddress());
             account.setEmail(((UserDAO) user[0]).getEmail());
             accounts.add(account);
         }
 
         return accounts;
+    }
+    
+    public List<AccountDTO> getByIdList(List<Integer> ids){
+        session.beginTransaction();
+        
+        List<Object[]> users = session
+                .createQuery("select u, l.sectionStart from UserDAO u left join LogDAO l on u.userId = l.userId where u.userId in :ids", Object[].class)
+                .setParameter("ids", ids)
+                .getResultList();
+        
+        session.getTransaction().commit();
+        
+        List<AccountDTO> accounts = new ArrayList<AccountDTO>();
+        for (Object[] user : users) {
+            AccountDTO account = new AccountDTO();
+            account.setFullName(((UserDAO) user[0]).getFullName());
+            account.setUsername(((UserDAO) user[0]).getUsername());
+            account.setStatus(((UserDAO) user[0]).getStatus());
+            account.setCreatedAt(((UserDAO) user[0]).getCreatedAt());
+            account.setRecentLogin((LocalDateTime) user[1]);
+            account.setAddress(((UserDAO) user[0]).getAddress());
+            account.setEmail(((UserDAO) user[0]).getEmail());
+            accounts.add(account);
+        }
+        
+        return accounts;
+    }
+    
+    public void lockAccount(int userId) {
+        session.beginTransaction();
+        
+        UserDAO user = session.get(UserDAO.class, userId);
+        user.setStatus("locked");
+        
+        session.getTransaction().commit();
+    }
+    
+    public void warnAccount(int userId) {
+        session.beginTransaction();
+        
+        UserDAO user = session.get(UserDAO.class, userId);
+        user.setStatus("warned");
+        
+        session.getTransaction().commit();
+    }
+    
+    public void unlockAccount(int userId) {
+        session.beginTransaction();
+        
+        UserDAO user = session.get(UserDAO.class, userId);
+        user.setStatus("active");
+        
+        session.getTransaction().commit();
+    }
+    
+    public void deleteAccount(int userId) {
+        session.beginTransaction();
+        
+        UserDAO user = session.get(UserDAO.class, userId);
+        session.remove(user);
+        
+        session.getTransaction().commit();
     }
 
     public List<GroupChatDTO> getAllGroups() {

@@ -1,6 +1,6 @@
 package com.example.mechaadmin.dao;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +25,7 @@ public class ReportDAO {
     private String reason;
     private String status;
     @Column(name = "created_at")
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     
     public ReportDAO() {
         this.reportId = 0;
@@ -33,10 +33,10 @@ public class ReportDAO {
         this.reportedId = 0;
         this.reason = "";
         this.status = "";
-        this.createdAt = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
     }
     
-    public ReportDAO(int reportId, int reportedId, int reporterId, String reason, String status, LocalDate createdAt) {
+    public ReportDAO(int reportId, int reportedId, int reporterId, String reason, String status, LocalDateTime createdAt) {
         this.reportId = reportId;
         this.reporterId = reporterId;
         this.reportedId = reportedId;
@@ -85,11 +85,11 @@ public class ReportDAO {
         this.status = status;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
     

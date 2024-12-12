@@ -1,6 +1,6 @@
 package com.example.mechaadmin.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class GroupChatDTO {
@@ -8,7 +8,7 @@ public class GroupChatDTO {
     private String groupName;
     private String chatType;
     private Integer adminId;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private List<String> members;
     private Integer totalMembers;
     
@@ -17,12 +17,12 @@ public class GroupChatDTO {
         this.groupName = "";
         this.chatType = "";
         this.adminId = -1;
-        this.createdAt = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
         this.members = null;
         this.totalMembers = 0;
     }
     
-    public GroupChatDTO(int chatId, String groupName, String chatType, Integer adminId, LocalDate createdAt, List<String> members, int totalMembers) {
+    public GroupChatDTO(int chatId, String groupName, String chatType, Integer adminId, LocalDateTime createdAt, List<String> members, int totalMembers) {
         this.chatId = chatId;
         this.groupName = groupName;
         this.chatType = chatType;
@@ -64,11 +64,11 @@ public class GroupChatDTO {
         this.adminId = adminId;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 

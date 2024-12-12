@@ -2,7 +2,7 @@ package com.example.mechaadmin.dao;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_members")
@@ -14,15 +14,15 @@ public class MemberDAO {
     @Column(name = "user_id")
     int userId;
     @Column(name = "joined_at")
-    LocalDate joinedAt;
+    LocalDateTime joinedAt;
 
     public MemberDAO() {
         this.chatId = 0;
         this.userId = 0;
-        this.joinedAt = LocalDate.now();
+        this.joinedAt = LocalDateTime.now();
     }
     
-    public MemberDAO(int chatId, int userId, LocalDate joinedAt) {
+    public MemberDAO(int chatId, int userId, LocalDateTime joinedAt) {
         this.chatId = chatId;
         this.userId = userId;
         this.joinedAt = joinedAt;
@@ -44,11 +44,11 @@ public class MemberDAO {
         this.userId = userId;
     }
 
-    public LocalDate getJoinedAt() {
+    public LocalDateTime getJoinedAt() {
         return joinedAt;
     }
 
-    public void setJoinedAt(LocalDate joinedAt) {
+    public void setJoinedAt(LocalDateTime joinedAt) {
         this.joinedAt = joinedAt;
     }
 }

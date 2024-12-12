@@ -1,31 +1,32 @@
 package com.example.mechaadmin.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class AccountDTO {
     String fullName;
     String username;
     String status;
-    LocalDate createdAt;
-    LocalDate recentLogin;
+    LocalDateTime createdAt;
+    LocalDateTime recentLogin;
     String address;
     String email;
     String dob;
     String gender;
     Integer directFriends;
     Integer indirectFriends;
+    String profileUrl = "https://pub-b0a9bdcea1cd4f6ca28d98f878366466.r2.dev/1.png";
     
     public AccountDTO() {
         this.fullName = "";
         this.username = "";
         this.status = "";
-        this.createdAt = LocalDate.now();
-        this.recentLogin = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
+        this.recentLogin = LocalDateTime.now();
         this.address = "";
         this.email = "";
     }
     
-    public AccountDTO(String fullName, String username, String status, LocalDate createdAt, LocalDate recentLogin, String address, String email) {
+    public AccountDTO(String fullName, String username, String status, LocalDateTime createdAt, LocalDateTime recentLogin, String address, String email) {
         this.fullName = fullName;
         this.username = username;
         this.status = status;
@@ -59,19 +60,19 @@ public class AccountDTO {
         this.status = status;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDate getRecentLogin() {
+    public LocalDateTime getRecentLogin() {
         return recentLogin;
     }
 
-    public void setRecentLogin(LocalDate recentLogin) {
+    public void setRecentLogin(LocalDateTime recentLogin) {
         this.recentLogin = recentLogin;
     }
 
@@ -123,5 +124,11 @@ public class AccountDTO {
 		this.indirectFriends = indirectFriends;
 	}
     
+    public String getProfileUrl() {
+        return profileUrl;
+    }
     
+    public void setProfileUrl(String profileUrl) {
+        this.profileUrl = profileUrl;
+    }
 }
