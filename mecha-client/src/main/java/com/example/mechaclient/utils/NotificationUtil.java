@@ -1,7 +1,10 @@
 package com.example.mechaclient.utils;
 
+import java.util.Optional;
+
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 
 public class NotificationUtil {
     public static void showNotification(String title, String message) {
@@ -11,5 +14,16 @@ public class NotificationUtil {
         alert.setContentText(message);
 
         alert.showAndWait();
+    }
+
+    public static boolean showConfirmationBox(String title, String message) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        
+        return result.isPresent() && result.get() == ButtonType.OK;
     }
 }

@@ -15,7 +15,7 @@
 <HBox prefHeight="600.0" prefWidth="800.0" stylesheets="@../styles/HomeScreenStyle.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaclient.controllers.HomeScreenController">
     <VBox prefWidth="200" style="-fx-background-color: white; -fx-border-color: white;">
         <HBox alignment="CENTER_LEFT" style="-fx-background-color: #7AB2D3; -fx-border-radius: 10px;">
-            <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10 0 10 10;" text="Chats" />
+            <Label fx:id="fullnameLabel" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10 0 10 10;"/>
             <Region HBox.hgrow="ALWAYS" />
             <ImageView fx:id="settings" fitHeight="44.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
                 <image>
@@ -63,8 +63,7 @@
     
     <VBox HBox.hgrow="ALWAYS">
         <HBox fx:id="chatHeader" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #7AB2D3;">
-            <ImageView fx:id="curUserAva" fitHeight="56.0" fitWidth="61.0" pickOnBounds="true" preserveRatio="true" />
-            <Label fx:id="curUserName" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Label fx:id="curUserName" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
             <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="chatOption">
                 <graphic>

@@ -51,11 +51,9 @@ public class FriendManagementController implements ServerMessageListener {
 
     @FXML private TextField searchField;
 
-    private final Image defaultAvatar = new Image(ChatApplication.class.getResourceAsStream("images/default-ava.png"));
-
     public void initialize() {
         UserSession.getInstance().addMessageListener(this);
-        showFriendRequests();   
+        // showFriendRequests();   
         setupFriendRequests();
         setupSearchResults();
         setupBlockedList();
@@ -103,14 +101,14 @@ public class FriendManagementController implements ServerMessageListener {
             }
         });
         
-        listView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (oldSelection != null) {
-                oldSelection.setStyle("-fx-background-color: transparent;");
-            }
-            if (newSelection != null) {
-                newSelection.setStyle("-fx-background-color: #d0e8ff;");
-            }
-        });
+        // listView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+        //     if (oldSelection != null) {
+        //         oldSelection.setStyle("-fx-background-color: transparent;");
+        //     }
+        //     if (newSelection != null) {
+        //         newSelection.setStyle("-fx-background-color:rgb(55, 204, 250);");
+        //     }
+        // });
     }
 
     
@@ -186,6 +184,12 @@ public class FriendManagementController implements ServerMessageListener {
 
     @FXML
     private void showBlockedList() {
+        try {
+            UserSession.out.writeObject("GET_BLOCKED_LIST");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         setActiveTab(blockedListContent);
         blockedListTab.setStyle("-fx-background-color: #cccccc;");
     }
@@ -224,9 +228,9 @@ public class FriendManagementController implements ServerMessageListener {
     }
 
     private void setupBlockedList() {
-        ObservableList<HBox> items = FXCollections.observableArrayList();
-        items.add(createBlockedUserItem("Username1"));
-        blockedList.setItems(items);
+        // ObservableList<HBox> items = FXCollections.observableArrayList();
+        // items.add(createBlockedUserItem("Username1"));
+        // blockedList.setItems(items);
     }
     
     private void setupReportedList() {
@@ -240,8 +244,8 @@ public class FriendManagementController implements ServerMessageListener {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
+        item.getStyleClass().add("box-item");
         
-        ImageView avatar = createCircularAvatar(defaultAvatar);
         
         VBox userInfo = new VBox(5);
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
@@ -256,20 +260,39 @@ public class FriendManagementController implements ServerMessageListener {
         
         Button acceptButton = new Button("Accept");
         acceptButton.getStyleClass().add("accept-button");
-        
+        acceptButton.setOnAction(e -> {
+            try {
+                UserSession.out.writeObject("ACCEPT_FRIEND_REQUEST");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId()); // receiver
+                UserSession.out.writeObject(userId); // sender
+                System.out.println("accepting friend");
+                showFriendRequests();
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
         Button declineButton = new Button("Decline");
         declineButton.getStyleClass().add("decline-button");
-        
-        item.getChildren().addAll(avatar, userInfo, spacer, acceptButton, declineButton);
+        declineButton.setOnAction(e -> {
+            try {
+                UserSession.out.writeObject("DECLINE_FRIEND_REQUEST");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId()); // receiver
+                UserSession.out.writeObject(userId); // sender
+                showFriendRequests();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+        item.getChildren().addAll(userInfo, spacer, acceptButton, declineButton);
         return item;
     }
 
     private HBox createSearchResultItem(int userId, String fullname) {
-        HBox item = new HBox(10);
+        HBox item = new HBox(5);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
-  
-        ImageView avatar = createCircularAvatar(defaultAvatar);
+        item.getStyleClass().add("box-item");
         
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
         fullnameLabel.setStyle("-fx-text-fill: black;");
@@ -294,19 +317,19 @@ public class FriendManagementController implements ServerMessageListener {
             }
             event.getTarget();
         });
-        item.getChildren().addAll(avatar, fullnameLabel, spacer, addButton);
+        item.getChildren().addAll(fullnameLabel, spacer, addButton);
         return item;
     }
 
-    private HBox createUserFriendRequestItem(int userId, String username) {
+    private HBox createUserFriendRequestItem(int userId, String fullname) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
+        item.getStyleClass().add("box-item");
+    
         
-        ImageView avatar = createCircularAvatar(defaultAvatar);
-        
-        Label usernameLabel = new Label(username);
-        usernameLabel.setStyle("-fx-text-fill: black;");
+        Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
+        fullnameLabel.setStyle("-fx-text-fill: black;");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
@@ -328,26 +351,37 @@ public class FriendManagementController implements ServerMessageListener {
             }
             event.getTarget();
         });
-        item.getChildren().addAll(avatar, usernameLabel, spacer, cancelButton);
+        item.getChildren().addAll(fullnameLabel, spacer, cancelButton);
         return item;
     }
 
-    private HBox createBlockedUserItem(String username) {
+    private HBox createBlockedUserItem(int userId, String fullname) {
+        System.out.println("createBlocked user called");
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
+        item.getStyleClass().add("box-item");
         
-        ImageView avatar = createCircularAvatar(defaultAvatar);
-        
-        Label usernameLabel = new Label(username);
-        usernameLabel.setStyle("-fx-text-fill: black;");
+        Label fullnameLabel = new Label(fullname);
+        fullnameLabel.setStyle("-fx-text-fill: black;");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
         Button removeButton = new Button("Remove block");
         removeButton.getStyleClass().add("remove-block-button");
-        
-        item.getChildren().addAll(avatar, usernameLabel, spacer, removeButton);
+        removeButton.setOnAction(e -> {
+            try {
+                UserSession.out.writeObject("REMOVE_BLOCK");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(userId);
+                Platform.runLater(() -> {
+                    showBlockedList();
+                });
+            } catch (IOException ex){
+                ex.printStackTrace();
+            }
+        });
+        item.getChildren().addAll(fullnameLabel, spacer, removeButton);
         return item;
     }
 
@@ -355,7 +389,7 @@ public class FriendManagementController implements ServerMessageListener {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
-        ImageView avatar = createCircularAvatar(defaultAvatar);
+        item.getStyleClass().add("box-item");
         
         Label usernameLabel = new Label(username);
         usernameLabel.setStyle("-fx-text-fill: black;");
@@ -368,20 +402,20 @@ public class FriendManagementController implements ServerMessageListener {
         statusValue.getStyleClass().add(status.toLowerCase() + "-status");
         statusLabel.setStyle("-fx-text-fill: black;");
         statusValue.setStyle("-fx-text-fill: black;");
-        item.getChildren().addAll(avatar, usernameLabel, spacer, statusLabel, statusValue);
+        item.getChildren().addAll(usernameLabel, spacer, statusLabel, statusValue);
         return item;
     }
 
-    private ImageView createCircularAvatar(Image image) {
-        ImageView avatar = new ImageView(image);
-        avatar.setFitHeight(40);
-        avatar.setFitWidth(40);
+    // private ImageView createCircularAvatar(Image image) {
+    //     ImageView avatar = new ImageView(image);
+    //     avatar.setFitHeight(40);
+    //     avatar.setFitWidth(40);
 
-        Circle clip = new Circle(20, 20, 20);
-        avatar.setClip(clip);
+    //     Circle clip = new Circle(20, 20, 20);
+    //     avatar.setClip(clip);
 
-        return avatar;
-    }
+    //     return avatar;
+    // }
 
     @Override
     public void onMessageReceived(String serverMessage) {
@@ -420,6 +454,17 @@ public class FriendManagementController implements ServerMessageListener {
                 }
                 Platform.runLater(() -> {
                     friendRequestList.setItems(items);
+                });
+            } else if ("respond_GET_BLOCKED_LIST".equals(serverMessage)){
+                List<String[]> blockedUserList = (List<String[]>) UserSession.in.readObject();
+                ObservableList<HBox> items = FXCollections.observableArrayList();
+                for (String[] blockedUser : blockedUserList) {
+                    int userId = Integer.parseInt(blockedUser[0]);
+                    String fullname = blockedUser[1];
+                    items.add(createBlockedUserItem(userId, fullname));   
+                }
+                Platform.runLater(() -> {
+                    blockedList.setItems(items);
                 });
             }
         } catch (Exception e){

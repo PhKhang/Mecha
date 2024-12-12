@@ -13,6 +13,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
@@ -27,17 +29,17 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.ChatBox;
 import com.example.mechaclient.models.UserSession;
 import com.example.mechaclient.models.UserSession.ServerMessageListener;
+import com.example.mechaclient.utils.NotificationUtil;
 import com.example.mechaclient.models.ChatBox.ChatType;
 
 public class HomeScreenController implements ServerMessageListener{
 
     @FXML private HBox chatHeader;
-    @FXML private ImageView curUserAva;
+    // @FXML private ImageView curUserAva;
     @FXML private Label curUserName;
     @FXML private Label chatOption;
     @FXML private ListView<HBox> chatListView;
@@ -50,6 +52,8 @@ public class HomeScreenController implements ServerMessageListener{
     @FXML private Button privateButton;
     @FXML private Button groupsButton;
     @FXML private HBox messageFieldFrame;
+
+    @FXML private Label fullnameLabel;
     private ObservableList<ChatBox> allChats = FXCollections.observableArrayList();
     private FilteredList<ChatBox> filteredChats;
     private HBox selectedFriendEntry;
@@ -61,9 +65,7 @@ public class HomeScreenController implements ServerMessageListener{
 
     public void initialize() {
         
-        String username = UserSession.getInstance().getUsername();
-        System.out.println("Login user: " + username);
-
+        fullnameLabel.setText(UserSession.getInstance().getFullname());
         messageFieldFrame.setVisible(false);
         chatOption.setVisible(false);
 
@@ -80,6 +82,23 @@ public class HomeScreenController implements ServerMessageListener{
     private void setupContextMenus() {
         ContextMenu chatOptionMenu = new ContextMenu();
         MenuItem blockUserItem = new MenuItem("Block User");
+        blockUserItem.setOnAction(e -> {
+            try {
+                boolean isConfirmn = NotificationUtil.showConfirmationBox("Block User", "Do you want to block this user?\nYou will unfriend this person.\nThey will not see you in the add friend session.");
+                if (isConfirmn){
+                    if (currentChat.type == ChatType.PRIVATE) {
+                        UserSession.out.writeObject("BLOCK_USER");
+                        UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                        UserSession.out.writeObject(currentChat.chatId);
+                    }
+                    initializeChatData();
+                    chatListView.getItems().clear();
+                    messageFieldFrame.setVisible(false);
+                }
+            } catch (IOException ex){
+                ex.printStackTrace();
+            }
+        });
         MenuItem reportUserItem = new MenuItem("Report User");
         chatOptionMenu.getItems().addAll(blockUserItem, reportUserItem);
 
@@ -146,37 +165,52 @@ public class HomeScreenController implements ServerMessageListener{
     }
 
     private HBox createChatEntry(ChatBox chat) {
-        ImageView avatar = new ImageView(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
-        avatar.setFitHeight(40);
-        avatar.setFitWidth(40);
+    // Create name label
+    Label nameLabel = new Label(chat.name);
+    nameLabel.setStyle("-fx-font-weight: bold;");
 
-        VBox infoBox = new VBox(2);
-        Label nameLabel = new Label(chat.name);
-        nameLabel.setStyle("-fx-font-weight: bold;");
-        Label statusLabel = new Label(chat.status);
-        statusLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666666;");
-        Label lastMessageLabel = new Label(chat.lastMessage);
-        lastMessageLabel.setStyle("-fx-font-size: 12px;");
-        infoBox.getChildren().addAll(nameLabel, statusLabel, lastMessageLabel);
+    // Create status label
+    Label statusLabel = new Label(chat.status);
+    statusLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666666;");
 
-        HBox chatEntry = new HBox(10, avatar, infoBox);
-        chatEntry.setPadding(new Insets(5));
-        chatEntry.setAlignment(Pos.CENTER_LEFT);
-        chatEntry.getStyleClass().add("friend-entry");
-        chatEntry.setStyle("-fx-background-radius: 10");
-
-        chatEntry.setOnMouseClicked(event -> {
-            messageFieldFrame.setVisible(true);
-            this.currentChat = chat;
-            updateChat(chat);
-            updateSelectedFriend(chatEntry);
-        });
-
-        return chatEntry;
+    // Create status indicator (green or grey dot)
+    Circle statusIndicator = new Circle(5); // 5 is the radius of the circle
+    if (chat.status.equalsIgnoreCase("online")) {
+        statusIndicator.setFill(Paint.valueOf("green"));
+    } else {
+        statusIndicator.setFill(Paint.valueOf("grey"));
     }
 
+    // Create horizontal box for name and status
+    HBox nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel); // 5px spacing
+    nameStatusBox.setAlignment(Pos.CENTER_LEFT);
+
+    // Create last message label
+    Label lastMessageLabel = new Label(chat.lastMessage);
+    lastMessageLabel.setStyle("-fx-font-size: 12px;");
+
+    // Vertical box to combine name/status and last message
+    VBox infoBox = new VBox(2, nameStatusBox, lastMessageLabel);
+
+    // Main horizontal box for the chat entry
+    HBox chatEntry = new HBox(10, infoBox);
+    chatEntry.setPadding(new Insets(5));
+    chatEntry.setAlignment(Pos.CENTER_LEFT);
+    chatEntry.getStyleClass().add("friend-entry");
+    chatEntry.setStyle("-fx-background-radius: 10");
+
+    // Add click event for selecting the chat
+    chatEntry.setOnMouseClicked(event -> {
+        messageFieldFrame.setVisible(true);
+        this.currentChat = chat;
+        updateChat(chat);
+        updateSelectedFriend(chatEntry);
+    });
+
+    return chatEntry;
+}
+
     private void updateChat(ChatBox chat) {
-        curUserAva.setImage(new Image(getClass().getResourceAsStream("/com/example/mechaclient/images/default-ava.png")));
         curUserName.setText(chat.name);
         chatListView.getItems().clear();
         try {
@@ -254,57 +288,138 @@ public class HomeScreenController implements ServerMessageListener{
     }
 
 
+    // @FXML
+    // private void showCreateGroupPopup() {
+    //     Stage popupStage = new Stage();
+    //     popupStage.initModality(Modality.NONE);
+    //     popupStage.setTitle("Create Group");
+    
+    //     // Group name input
+    //     Label groupNameLabel = new Label("Group Name:");
+    //     TextField groupNameField = new TextField();
+    //     groupNameField.setPromptText("Enter group name");
+    
+    //     // Friend search bar
+    //     Label friendSearchLabel = new Label("Add Friends:");
+    //     TextField friendSearchField = new TextField();
+    //     friendSearchField.setPromptText("Search for friends");
+    
+    //     // Added friends display
+    //     Label addedFriendsLabel = new Label("Added Friends:");
+    //     TextArea addedFriendsField = new TextArea();
+    //     addedFriendsField.setEditable(false);
+    //     addedFriendsField.setPrefHeight(80);
+    
+    //     // Confirm and Cancel buttons
+    //     Button confirmButton = new Button("Confirm");
+    //     confirmButton.setStyle("-fx-background-color: blue; -fx-text-fill: white;");
+    //     confirmButton.setOnAction(e -> popupStage.close());
+    
+    //     Button cancelButton = new Button("Cancel");
+    //     cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+    //     cancelButton.setOnAction(e -> popupStage.close());
+    
+    //     // Layout for buttons
+    //     HBox buttonBox = new HBox(10, confirmButton, cancelButton);
+    //     buttonBox.setAlignment(Pos.CENTER);
+    
+    //     // Main layout
+    //     VBox layout = new VBox(10,
+    //             groupNameLabel, groupNameField,
+    //             friendSearchLabel, friendSearchField,
+    //             addedFriendsLabel, addedFriendsField,
+    //             buttonBox
+    //     );
+    //     layout.setPadding(new Insets(20));
+    //     layout.setAlignment(Pos.TOP_CENTER);
+    
+    //     // Scene and show
+    //     Scene scene = new Scene(layout, 300, 400);
+    //     popupStage.setScene(scene);
+    //     popupStage.showAndWait();
+    // }
     @FXML
     private void showCreateGroupPopup() {
+        // Create a new stage for the popup
         Stage popupStage = new Stage();
         popupStage.initModality(Modality.NONE);
         popupStage.setTitle("Create Group");
-    
-        // Group name input
+
         Label groupNameLabel = new Label("Group Name:");
         TextField groupNameField = new TextField();
         groupNameField.setPromptText("Enter group name");
-    
-        // Friend search bar
+
         Label friendSearchLabel = new Label("Add Friends:");
         TextField friendSearchField = new TextField();
         friendSearchField.setPromptText("Search for friends");
-    
-        // Added friends display
+
+        ListView<String> friendListView = new ListView<>();
+        friendListView.setMaxHeight(100); // Limit the dropdown height
+
+        ObservableList<String> friendList = FXCollections.observableArrayList("Alice", "Bob", "Charlie", "David");
+        friendListView.setItems(friendList);
+
         Label addedFriendsLabel = new Label("Added Friends:");
-        TextArea addedFriendsField = new TextArea();
-        addedFriendsField.setEditable(false);
-        addedFriendsField.setPrefHeight(80);
-    
+        VBox addedFriendsBox = new VBox(5); // Holds the added friends dynamically
+
+
+        friendSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            String lowerCaseFilter = newValue.toLowerCase();
+            if (lowerCaseFilter.isEmpty()) {
+                friendListView.setItems(friendList);
+            } else {
+                friendListView.setItems(friendList.filtered(friend -> friend.toLowerCase().contains(lowerCaseFilter)));
+            }
+        });
+
+        // Handle friend selection from the dropdown
+        friendListView.setOnMouseClicked(event -> {
+            String selectedFriend = friendListView.getSelectionModel().getSelectedItem();
+            if (selectedFriend != null) {
+                HBox addedFriendItem = new HBox(5);
+                Label friendLabel = new Label(selectedFriend);
+
+                Button removeButton = new Button("x");
+                removeButton.setOnAction(e -> addedFriendsBox.getChildren().remove(addedFriendItem));
+
+                addedFriendItem.getChildren().addAll(friendLabel, removeButton);
+                addedFriendsBox.getChildren().add(addedFriendItem);
+
+                friendSearchField.clear();
+                friendListView.setItems(friendList); // Reset the dropdown to show all friends
+            }
+        });
+
         // Confirm and Cancel buttons
         Button confirmButton = new Button("Confirm");
         confirmButton.setStyle("-fx-background-color: blue; -fx-text-fill: white;");
         confirmButton.setOnAction(e -> popupStage.close());
-    
+
         Button cancelButton = new Button("Cancel");
         cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
         cancelButton.setOnAction(e -> popupStage.close());
-    
+
         // Layout for buttons
         HBox buttonBox = new HBox(10, confirmButton, cancelButton);
         buttonBox.setAlignment(Pos.CENTER);
-    
+
         // Main layout
         VBox layout = new VBox(10,
                 groupNameLabel, groupNameField,
                 friendSearchLabel, friendSearchField,
-                addedFriendsLabel, addedFriendsField,
+                friendListView,
+                addedFriendsLabel, addedFriendsBox,
                 buttonBox
         );
         layout.setPadding(new Insets(20));
         layout.setAlignment(Pos.TOP_CENTER);
-    
-        // Scene and show
-        Scene scene = new Scene(layout, 300, 400);
+
+        // Set the scene and show the popup
+        Scene scene = new Scene(layout, 300, 500);
         popupStage.setScene(scene);
         popupStage.showAndWait();
     }
-
+    
     @FXML
     private void getAllChat() {
         filteredChats.setPredicate(chat -> true);

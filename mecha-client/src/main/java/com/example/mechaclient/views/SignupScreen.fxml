@@ -30,7 +30,7 @@
          </font>
       </Label>
         
-        <TextField fx:id="usernameField" maxWidth="500" prefWidth="367.0" promptText="username" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <TextField fx:id="usernameField" maxWidth="500" prefWidth="367.0" promptText="username" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
       <Label prefHeight="20.0" prefWidth="68.0" style="-fx-font-weight: bold;" text="Email">
          <font>
             <Font size="14.0" />
@@ -40,6 +40,28 @@
          </VBox.margin>
       </Label>
       <TextField fx:id="emailField" maxWidth="500" prefWidth="367.0" promptText="name@example.com" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      
+      <!-- full name Field -->
+      <Label style="-fx-font-weight: bold;" text="Full name">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets right="450.0" top="10.0" />
+         </VBox.margin>
+      </Label>
+      <TextField fx:id="fullnameField" maxWidth="500" prefWidth="367.0" promptText="fullname" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <!-- address Field -->
+      <Label style="-fx-font-weight: bold;" text="Address">
+         <font>
+            <Font size="14.0" />
+         </font>
+         <VBox.margin>
+            <Insets right="450.0" top="10.0"/>
+         </VBox.margin>
+      </Label>
+      <TextField fx:id="addressField" maxWidth="500" prefWidth="367.0" promptText="your address" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <!-- password Field-->
       <Label style="-fx-font-weight: bold;" text="Password">
          <font>
             <Font size="14.0" />
@@ -49,6 +71,7 @@
          </VBox.margin>
       </Label>
       <TextField fx:id="passwordField" maxWidth="500" prefWidth="367.0" style="-fx-pref-height: 40px; -fx-background-radius: 6px;" />
+      <!-- confirmPassword Field-->
       <Label prefHeight="20.0" prefWidth="140.0" style="-fx-font-weight: bold;" text="Confirm Password">
          <font>
             <Font size="14.0" />
@@ -71,6 +94,6 @@
             <Hyperlink style="-fx-border-width: 0;" text="Privacy Policy" />
             <Label style="-fx-text-fill: #666666;" text="." />
         </HBox>
-        
+
     </VBox>
 </AnchorPane>

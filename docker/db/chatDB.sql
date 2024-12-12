@@ -81,7 +81,7 @@ CREATE TABLE Report (
 
 -- Group Chat Table
 CREATE TABLE chats (
-    chat_id INT PRIMARY KEY,
+    chat_id INT AUTO_INCREMENT PRIMARY KEY,
     group_name VARCHAR(100),
     chat_type ENUM('private', 'group') NOT NULL,
     admin_id INT,

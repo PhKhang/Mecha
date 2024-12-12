@@ -26,16 +26,13 @@ import javafx.scene.Node;
 
 public class SignupScreenController implements ServerMessageListener{
     
-    @FXML
-    private Button loginButton;
-    @FXML
-    private TextField usernameField;
-    @FXML
-    private TextField emailField;
-    @FXML
-    private TextField passwordField;
-    @FXML
-    private TextField confirmPasswordField;
+    @FXML private Button loginButton;
+    @FXML private TextField usernameField;
+    @FXML private TextField fullnameField;
+    @FXML private TextField addressField;
+    @FXML private TextField emailField;
+    @FXML private TextField passwordField;
+    @FXML private TextField confirmPasswordField;
 
     
     @FXML
@@ -71,10 +68,11 @@ public class SignupScreenController implements ServerMessageListener{
     
     private void handleEmailSignIn(Event event) {
         String username = usernameField.getText();
+        String fullname = fullnameField.getText();
+        String address = addressField.getText();
         String email = emailField.getText();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
-        String address = "default address"; // Temporary address value
 
         // Validate inputs
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
@@ -99,9 +97,10 @@ public class SignupScreenController implements ServerMessageListener{
         try {
             UserSession.out.writeObject("SIGNUP");
             UserSession.out.writeObject(username);
+            UserSession.out.writeObject(fullname);
+            UserSession.out.writeObject(address);
             UserSession.out.writeObject(email);
             UserSession.out.writeObject(passwordHash); 
-            UserSession.out.writeObject(address);
         } catch (Exception e) {
             e.printStackTrace();
         }

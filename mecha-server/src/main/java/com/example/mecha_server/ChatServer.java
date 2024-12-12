@@ -2,6 +2,7 @@ package com.example.mecha_server;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ public class ChatServer {
     private static final String DB_PASSWORD = "1234";
 
     private static final int PORT = 12345;
-    private static Map<Integer, ClientHandler> connectedClients = new ConcurrentHashMap<>(); // to keep of all connected client
+    private static Map<Integer, ClientHandler> connectedClients = new ConcurrentHashMap<>(); // to keep track of all connected client
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server is running on port " + PORT);
@@ -47,8 +48,12 @@ public class ChatServer {
                 in = new ObjectInputStream(clientSocket.getInputStream());
 
                 while (true) {
-                    String action = (String) in.readObject();                    
-                    handleAction(action);
+                    String action = (String) in.readObject(); 
+                    try {                  
+                        handleAction(action);
+                    } catch (IOException | ClassNotFoundException | SQLException e){
+                        e.printStackTrace();
+                    }
                 }
             } catch (IOException | ClassNotFoundException e) {
                 System.out.println("Error handling client: " + e.getMessage());
@@ -65,17 +70,23 @@ public class ChatServer {
                 System.out.println("Error closing connection: " + e.getMessage());
             }
         }
-        private void handleAction(String action) throws IOException, ClassNotFoundException {
+
+        private void handleAction(String action) throws IOException, ClassNotFoundException, SQLException{
             if ("LOGIN".equals(action)) {
                 String username = (String) in.readObject();
                 String password = (String) in.readObject();
-                int userId = authenticateUser(username, password);
-                if (userId != 0) {
+                
+                // User info is user_id and fullname
+                List <String> userInfo = authenticateUser(username, password);
+                if (userInfo != null) {
+                    int userId = Integer.parseInt(userInfo.get(0));
+                    String fullname = userInfo.get(1);
                     connectedClients.put(userId, this);
-                    System.out.println("login client " + username + " successfully: " );
+                    System.out.println("login client " + userInfo.get(1) + " successfully: " );
                     out.writeObject("SUCCESS");
                     out.writeObject(userId);
                     out.writeObject(username);
+                    out.writeObject(fullname);
                     System.out.println("all current active user: " + connectedClients.size());
                 } else {
                     out.writeObject("FAILURE");
@@ -97,22 +108,27 @@ public class ChatServer {
                 System.out.println("friendlist sent");
             } else if ("LOGOUT".equals(action)) {
                 int userId = (int) in.readObject();
+
                 connectedClients.remove(userId);
                 System.out.println("userId: " + userId + "logged out. Current num of active user: " + connectedClients.size());
             } else if ("GET_CHAT_MESSAGES".equals(action)) {
                 int chatId = Integer.parseInt((String)in.readObject());
+
                 List<String[]> messages = getChatMessages(chatId);
                 out.writeObject("respond_GET_CHAT_MESSAGES");
                 out.writeObject(messages);
             } else if ("SIGNUP".equals(action)) {
                 String username = (String) in.readObject();
+                String fullname = (String) in.readObject();
+                String address = (String) in.readObject();
                 String email = (String) in.readObject();
                 String passwordHash = (String) in.readObject();
-                String address = (String) in.readObject();
-                boolean success = registerUser(username, email, passwordHash, address);
+
+                boolean success = registerUser(username, fullname, email, address, passwordHash);
                 out.writeObject(success ? "SUCCESS" : "FAILURE");
             } else if ("GET_POTENTIAL_FRIENDS".equals(action)) {
                 int userId = (int) in.readObject();
+
                 List<String[]> potentialFriends = getPotentialFriends(userId);
                 out.writeObject("respond_GET_POTENTIAL_FRIENDS");
                 out.writeObject(potentialFriends);
@@ -120,6 +136,7 @@ public class ChatServer {
             } else if ("ADD_FRIEND_REQUEST".equals(action)){
                 int senderId = (int)in.readObject();
                 int receiverId =  (int)in.readObject();
+
                 insertFriendRequest(senderId, receiverId);
             } else if ("GET_USER_FRIEND_REQUEST".equals(action)){
                 int userId = (int) in.readObject();
@@ -135,7 +152,208 @@ public class ChatServer {
                 List<String[]> requestList = getFriendRequest(userId);
                 out.writeObject("respond_GET_FRIEND_REQUEST");
                 out.writeObject(requestList);
+            } else if ("ACCEPT_FRIEND_REQUEST".equals(action)){
+                int receiverId = (int)in.readObject();
+                int senderId = (int)in.readObject();
+                removeFriendRequest(senderId, receiverId);
+                addNewFriendships(senderId, receiverId);
+                List<Integer> userIdList = Arrays.asList(senderId, receiverId);
+                addNewChat("", true, senderId, userIdList);
+            } else if ("DECLINE_FRIEND_REQUEST".equals(action)){
+                int receiverId = (int)in.readObject();
+                int senderId = (int)in.readObject();
+                removeFriendRequest(senderId, receiverId);
+            } else if ("BLOCK_USER".equals(action)){
+                int blockerID = (int) in.readObject();
+                int chatId = (int) in.readObject();
+                blockUser(blockerID, chatId);
+            } else if ("REMOVE_BLOCK".equals(action)){
+                int blockerId = (int) in.readObject();
+                int blockedId = (int) in.readObject();
+
+                removeBlockList(blockerId, blockedId);
+                System.out.println("remove Block complete");
+            } else if ("GET_BLOCKED_LIST".equals(action)){
+                int userId = (int) in.readObject();
+                List<String[]> blockedList = getBlockedList(userId);
+                out.writeObject("respond_GET_BLOCKED_LIST");
+                out.writeObject(blockedList);
             }
+        }
+
+        private List<String[]> getBlockedList(int userId) throws SQLException {
+            List<String[]> blockedList = new ArrayList<>();;
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT b.blocked_id, u.full_name
+                FROM Blocked_List b JOIN users u ON b.blocked_id = u.user_id
+                WHERE b.blocker_id = ?
+            """);
+
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()){
+                String blockedId = rs.getString("b.blocked_id");
+                String fullname = rs.getString("u.full_name");
+                System.out.println("Block user: " + blockedId + ", " + fullname);
+                blockedList.add(new String[]{blockedId, fullname});
+            }
+            return blockedList;
+        }
+
+        private boolean removeBlockList(int blockerId, int blockedId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM Blocked_List WHERE blocker_id = ? AND blocked_id = ?
+            """);
+
+            stmt.setInt(1, blockerId);
+            stmt.setInt(2, blockedId);
+
+            return stmt.executeUpdate() == 1 ? true : false;
+        }
+
+        private void blockUser(int blockerId, int chatId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            // Remove friendships first
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT user_id FROM chat_members WHERE (chat_id = ? AND user_id != ?)
+            """);
+
+            stmt.setInt(1, chatId);
+            stmt.setInt(2, blockerId);
+
+            ResultSet rs = stmt.executeQuery();
+            int blockedId = 0;
+            if (rs.next()){
+                blockedId = rs.getInt("user_id");
+            } else {
+                System.out.println("Error blocking user");
+            }
+
+            // Add info into Blocked_List table
+            stmt = conn.prepareStatement("""
+                INSERT INTO Blocked_List (blocker_id, blocked_id) VALUES (?, ?)
+            """);
+            stmt.setInt(1, blockerId);
+            stmt.setInt(2, blockedId);
+            stmt.executeUpdate();
+            removeFriendShip(blockerId, blockedId);
+            removeChat(chatId);
+        }
+
+        private void removeChat(int chatId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            // remove chat members first
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM chat_members WHERE chat_id = ?
+            """);
+
+            stmt.setInt(1, chatId);
+
+            stmt.executeUpdate();
+            System.out.println("remove chat mem complete");
+            // then remove the chat itself
+            stmt = conn.prepareStatement("""
+                DELETE FROM chats WHERE chat_id = ?
+            """);
+
+            stmt.setInt(1, chatId);
+
+            stmt.executeUpdate();
+            System.out.println("remove the chat complete");
+        }
+
+        private void removeFriendShip(int user1_id, int user2_id) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM friendships
+                WHERE (user1_id = ? AND user2_id = ?)
+                OR (user1_id = ? AND user2_id = ?)
+            """);
+
+            stmt.setInt(1, user1_id);
+            stmt.setInt(2, user2_id);
+            stmt.setInt(3, user2_id);
+            stmt.setInt(4, user1_id);
+
+            int row = stmt.executeUpdate();
+            System.out.println(row + " friendship deleted");
+        }
+
+        private void removeFriendRequest(int senderId, int receiverId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM friend_request WHERE user_id = ? and friend_id = ?
+            """);
+            stmt.setInt(1, senderId);
+            stmt.setInt(2, receiverId);
+
+            stmt.executeUpdate();
+        }
+        private void addNewFriendships(int senderId, int receiverId){
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                INSERT INTO friendships (user1_id, user2_id) VALUES (?, ?)
+            """)){  
+                stmt.setInt(1, senderId);
+                stmt.setInt(2, receiverId);
+                stmt.executeUpdate();
+                System.out.println("add friendship complete");
+            } catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+
+        private void addNewChat(String groupName, boolean isPrivate, int adminId, List<Integer>userIdList) throws SQLException{
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                INSERT INTO chats (group_name, chat_type, admin_id) VALUES (?, ?, ?)
+            """);
+            if (!groupName.isEmpty())
+                stmt.setString(1, groupName);
+            else
+                stmt.setInt(1, Types.NULL);
+
+            if (isPrivate)
+                stmt.setString(2, "private");
+            else 
+                stmt.setString(2, "group");
+
+        
+            stmt.setInt(3, adminId);
+            
+            stmt.executeUpdate();
+            
+            stmt = conn.prepareStatement("SELECT LAST_INSERT_ID() as newChatId");
+            ResultSet rs = null;
+            try {
+                rs = stmt.executeQuery();
+            } catch (SQLException e){
+                System.out.println("cant get last insert id");
+                e.printStackTrace();
+            }
+            int chatId;
+            if (rs.next())
+                chatId = rs.getInt("newChatId");
+            else {
+                System.out.println("Error cant found chat id");
+                return;
+            }
+
+            System.out.println("new inserted chat id: " + chatId);
+            for (int userId : userIdList){
+                stmt = conn.prepareStatement("""
+                    INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)
+                """);
+                stmt.setInt(1, chatId);
+                stmt.setInt(2, userId);
+
+                stmt.executeUpdate();
+            }
+            System.out.println("add chat mem complete");
         }
 
         // Get all of the users that request to be friend with this user(userId)
@@ -191,7 +409,7 @@ public class ChatServer {
                 WHERE fr.user_id = ?
                 """)){  
                 stmt.setInt(1, userId);
-
+                
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()){
                     String friendId = rs.getString("fr.friend_id");
@@ -234,6 +452,8 @@ public class ChatServer {
                         SELECT friend_id FROM friend_request WHERE user_id = ?
                         UNION   
                         SELECT user_id FROM friend_request WHERE friend_id = ?
+                        UNION 
+                        SELECT blocked_id FROM Blocked_List WHERE blocker_id = ? 
                     )
                     AND user_id != ?;
                     """;
@@ -244,6 +464,7 @@ public class ChatServer {
                 stmt.setInt(3, userId);
                 stmt.setInt(4, userId);
                 stmt.setInt(5, userId);
+                stmt.setInt(6, userId);
 
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()){
@@ -323,33 +544,40 @@ public class ChatServer {
             return messages;
         }
 
-        private static int authenticateUser(String username, String password) {
+        private static List <String> authenticateUser(String username, String password) {
+            List <String> userInfo = new ArrayList<>();
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-                PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE username = ? AND password_hash = ?")) {
+                PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE BINARY username = ? AND password_hash = ?")) {
                 stmt.setString(1, username);
                 stmt.setString(2, password);
                 ResultSet rs = stmt.executeQuery();
-                if (rs.next())
-                    return rs.getInt("user_id");
+                if (rs.next()){
+                    String userId = rs.getString("user_id");
+                    String fullname = rs.getString("full_name");
+                    userInfo.add(userId);
+                    userInfo.add(fullname);
+                    return userInfo;
+                }
                 else
-                    return 0;
+                    return null;
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-            return 0;
+            return null;
         }
 
-        private static boolean registerUser(String username, String email, String passwordHash, String address) {
+        private static boolean registerUser(String username, String fullname, String email, String address, String passwordHash) {
             System.out.println("Registering user: " + username);
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                 PreparedStatement stmt = conn.prepareStatement(
                     "INSERT INTO users (username, email, address, password_hash, full_name, status) " +
-                    "VALUES (?, ?, ?, ?, NULL, 'offline')")) {
+                    "VALUES (?, ?, ?, ?, ?, 'offline')")) {
 
                 stmt.setString(1, username);
                 stmt.setString(2, email);
                 stmt.setString(3, address);
                 stmt.setString(4, passwordHash);
+                stmt.setString(5, fullname);
 
                 int rowsInserted = stmt.executeUpdate();
                 return rowsInserted > 0;

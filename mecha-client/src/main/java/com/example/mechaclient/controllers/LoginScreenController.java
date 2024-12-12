@@ -79,6 +79,7 @@ public class LoginScreenController implements ServerMessageListener{
     }
 
     private void loadHomeScreen() throws IOException {
+        UserSession.getInstance().removeMessageListener(this);
         System.out.println("loading home screen...");
         FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/HomeScreen.fxml"));
         Parent homeScreen = fxmlLoader.load();
@@ -86,7 +87,7 @@ public class LoginScreenController implements ServerMessageListener{
         Stage stage = (Stage) usernameField.getScene().getWindow();
         stage.setScene(scene);
         System.out.println("loading home screen complete");
-        UserSession.getInstance().removeMessageListener(this);
+        
     }
 
     @Override
@@ -96,9 +97,12 @@ public class LoginScreenController implements ServerMessageListener{
             if ("SUCCESS".equals(serverMessage)) {
                 int userId = (int) UserSession.in.readObject();
                 String username = (String) UserSession.in.readObject();
+                String fullname = (String) UserSession.in.readObject();
+                
                 UserSession.getInstance().setUsername(username);
                 UserSession.getInstance().setUserId(userId);
-                
+                UserSession.getInstance().setFullname(fullname);
+
                 System.out.println("processing login complete!");
                 Platform.runLater(() -> {
                     try {
@@ -109,14 +113,14 @@ public class LoginScreenController implements ServerMessageListener{
                         e.printStackTrace();
                     }
                 });
-                
             } else {
-                NotificationUtil.showNotification("Login failed" , "Invalid username or password");
-                System.out.println("Invalid username or password");
+                Platform.runLater(() -> {
+                    NotificationUtil.showNotification("Login failed" , "Invalid username or password");
+                    System.out.println("Invalid username or password");
+                });
             }
         } catch (Exception e){
             System.out.println("error handling response from server in login screen: " + e.getMessage());
-            
         }
     }
 }

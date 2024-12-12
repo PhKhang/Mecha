@@ -19,6 +19,7 @@ public class UserSession {
 
     private String username;
     private int userId;
+    private String fullname;
 
     private Thread listenerThread;
     private boolean isListening;
@@ -40,33 +41,41 @@ public class UserSession {
         out.flush();
         System.out.println("Connected to server successfully: " + socket);
     }
+
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public String getFullname() {
+        return fullname;
     }
 
     public int getUserId() {
         return userId;
     }
 
+
     public void setUserId(int id) {
         this.userId = id;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setFullname(String fullname) {
+        this.fullname = fullname;
+    }
+
     public void startListening() {
         if (listenerThread == null || !listenerThread.isAlive()) {
-            System.out.println("new thread created");
             isListening = true;
             listenerThread = new Thread(() -> {
                 try {
                     while (isListening) {
-                        System.out.println("UserSession getting more respone...");
                         String response = (String) in.readObject();
+                        System.out.println("get response from server: " + response);
                         notifyListeners(response);
-                        System.out.println("notify complete, listening more...");
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     System.err.println("Error listening to server: " + e.getMessage());
@@ -86,13 +95,10 @@ public class UserSession {
 
     public void addMessageListener(ServerMessageListener listener) {
         listeners.add(listener);
-
-        System.out.println("new listener added, current listener size: " + listeners.size());
     }
 
     public void removeMessageListener(ServerMessageListener listener) {
         listeners.remove(listener);
-        System.out.println("a listener removed, current listener size: " + listeners.size());
     }
 
     private void notifyListeners(String message) {

@@ -34,12 +34,12 @@
         <StackPane HBox.hgrow="ALWAYS" styleClass="content-area">
             <!-- Friend Requests Content -->
             <VBox fx:id="friendRequestContent" visible="false" spacing="10">
-                <Label text="2 friend requests" styleClass="section-header"/>
+                <!-- <Label text="2 friend requests" styleClass="section-header"/> -->
                 <ListView fx:id="friendRequestList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
             </VBox>
             
             <!-- Find Friend Content -->
-            <VBox fx:id="findFriendContent" visible="false" spacing="10">
+            <VBox fx:id="findFriendContent" visible="false" spacing="5">
                 <TextField fx:id="searchField" promptText="search for friend here..." styleClass="search-field"/>
                 <!-- <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/> -->
 
@@ -55,13 +55,13 @@
             
             <!-- Blocked List Content -->
             <VBox fx:id="blockedListContent" visible="false" spacing="10">
-                <Label text="1 User blocked" styleClass="section-header"/>
+                <!-- <Label text="1 User blocked" styleClass="section-header"/> -->
                 <ListView fx:id="blockedList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
             </VBox>
             
             <!-- Reported List Content -->
             <VBox fx:id="reportedListContent" visible="false" spacing="10">
-                <Label text="2 Users reported" styleClass="section-header"/>
+                <!-- <Label text="2 Users reported" styleClass="section-header"/> -->
                 <ListView fx:id="reportedList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
             </VBox>
         </StackPane>
