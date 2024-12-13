@@ -27,8 +27,36 @@ public class LogDAO {
         this.sectionStart = sectionStart;
         this.sectionEnd = sectionEnd;
     }
-
-
-
-
+    
+    public int getLogId() {
+        return logId;
+    }
+    
+    public void setLogId(int logId) {
+        this.logId = logId;
+    }
+    
+    public int getUserId() {
+        return userId;
+    }
+    
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+    
+    public LocalDateTime getSectionStart() {
+        return sectionStart;
+    }
+    
+    public void setSectionStart(LocalDateTime sectionStart) {
+        this.sectionStart = sectionStart;
+    }
+    
+    public LocalDateTime getSectionEnd() {
+        return sectionEnd;
+    }
+    
+    public void setSectionEnd(LocalDateTime sectionEnd) {
+        this.sectionEnd = sectionEnd;
+    }
 }

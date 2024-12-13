@@ -13,4 +13,5 @@ module com.example.mechaadmin {
     opens com.example.mechaadmin.dao to org.hibernate.orm.core;
     exports com.example.mechaadmin.dao;
     opens com.example.mechaadmin.dto to javafx.base;
+    exports com.example.mechaadmin.dto;
 }

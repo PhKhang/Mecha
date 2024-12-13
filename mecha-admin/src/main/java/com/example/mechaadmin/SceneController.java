@@ -18,7 +18,9 @@ import com.example.mechaadmin.bus.ReportBUS;
 import com.example.mechaadmin.bus.UsageBUS;
 import com.example.mechaadmin.bus.UserBUS;
 import com.example.mechaadmin.dto.AccountDTO;
+import com.example.mechaadmin.dto.ActivityDTO;
 import com.example.mechaadmin.dto.GroupChatDTO;
+import com.example.mechaadmin.dto.RecentLoginDTO;
 import com.example.mechaadmin.dto.ReportInfoDTO;
 import com.example.mechaadmin.dto.UsageDTO;
 
@@ -215,40 +217,42 @@ public class SceneController implements Initializable {
     private TableColumn<AccountDTO, Integer> friendIndirect;
 
     @FXML
-    private TableView<AccountDTO> loginTable;
+    private TableView<RecentLoginDTO> loginTable;
     @FXML
-    private TableColumn<AccountDTO, String> loginTime;
+    private TableColumn<RecentLoginDTO, String> loginTime;
     @FXML
-    private TableColumn<AccountDTO, String> loginUser;
+    private TableColumn<RecentLoginDTO, String> loginUser;
     @FXML
-    private TableColumn<AccountDTO, String> loginFull;
+    private TableColumn<RecentLoginDTO, String> loginFull;
+    @FXML
+    private TextField loginSearch;
     class LoginTable {
-        private TableView<AccountDTO> loginTable;
-        private TableColumn<AccountDTO, String> loginTime;
-        private TableColumn<AccountDTO, String> loginUser;
-        private TableColumn<AccountDTO, String> loginFull;
+        private TableView<RecentLoginDTO> loginTable;
+        private TableColumn<RecentLoginDTO, String> loginTime;
+        private TableColumn<RecentLoginDTO, String> loginUser;
+        private TableColumn<RecentLoginDTO, String> loginFull;
 
-        ObservableList<AccountDTO> accounts = FXCollections.observableArrayList();
-        List<AccountDTO> originalData = null;
+        ObservableList<RecentLoginDTO> accounts = FXCollections.observableArrayList();
+        List<RecentLoginDTO> originalData = null;
 
-        Predicate<AccountDTO> filter = account -> false;
+        Predicate<RecentLoginDTO> filter = account -> false;
         String searchKey = "";
 
         @SuppressWarnings("unchecked")
-        LoginTable(TableView<AccountDTO> table) {
+        LoginTable(TableView<RecentLoginDTO> table) {
             loginTable = table;
-            loginTime = (TableColumn<AccountDTO, String>) loginTable.getColumns().get(0);
-            loginFull = (TableColumn<AccountDTO, String>) loginTable.getColumns().get(1);
-            loginUser = (TableColumn<AccountDTO, String>) loginTable.getColumns().get(2);
+            loginTime = (TableColumn<RecentLoginDTO, String>) loginTable.getColumns().get(0);
+            loginFull = (TableColumn<RecentLoginDTO, String>) loginTable.getColumns().get(1);
+            loginUser = (TableColumn<RecentLoginDTO, String>) loginTable.getColumns().get(2);
 
             loginUser.setCellValueFactory(new PropertyValueFactory<>("username"));
             loginFull.setCellValueFactory(new PropertyValueFactory<>("fullName"));
             loginTime.setCellValueFactory(cellData -> new SimpleStringProperty(
-                cellData.getValue().getRecentLogin().toString()));
+                cellData.getValue().getTime().toString()));
             loginTable.setItems(accounts);
         }
 
-        public void updateOriginal(List<AccountDTO> list) {
+        public void updateOriginal(List<RecentLoginDTO> list) {
             originalData = new ArrayList<>(list);
             accounts.clear();
             accounts.addAll(list);
@@ -259,7 +263,7 @@ public class SceneController implements Initializable {
             accounts.addAll(originalData);
         }
 
-        public void updateContent(List<AccountDTO> list) {
+        public void updateContent(List<RecentLoginDTO> list) {
             accounts.clear();
             accounts.addAll(list);
         }
@@ -267,12 +271,12 @@ public class SceneController implements Initializable {
         public void search(String s) {
             searchKey = s.trim().toLowerCase();
             if (s.trim().equals("")) {
-                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                List<RecentLoginDTO> filtered = new ArrayList<>(originalData);
                 filtered.removeIf(filter);
                 loginTable.getItems().clear();
                 loginTable.getItems().addAll(filtered);
             } else {
-                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                List<RecentLoginDTO> filtered = new ArrayList<>(originalData);
                 filtered.removeIf(account -> !account.getFullName().toLowerCase().contains(searchKey)
                         && !account.getUsername().toLowerCase().contains(searchKey));
                 filtered.removeIf(filter);
@@ -281,30 +285,112 @@ public class SceneController implements Initializable {
             }
         }
 
-        public void setFilterPredicate(Predicate<AccountDTO> filter) {
-            this.filter = filter;
-            List<AccountDTO> filtered = new ArrayList<>(originalData);
-            filtered.removeIf(filter);
-            accounts.clear();
-            accounts.addAll(filtered);
-            search(searchKey);
-        }
+        // public void setFilterPredicate(Predicate<RecentLoginDTO> filter) {
+        //     this.filter = filter;
+        //     List<AccountDTO> filtered = new ArrayList<>(originalData);
+        //     filtered.removeIf(filter);
+        //     accounts.clear();
+        //     accounts.addAll(filtered);
+        //     search(searchKey);
+        // }
     }
 
     @FXML
-    private TableView<AccountDTO> activeTable;
+    private TableView<ActivityDTO> activeTable;
     @FXML
-    private TableColumn<AccountDTO, String> activeFull;
+    private TextField activeSearch;
     @FXML
-    private TableColumn<AccountDTO, String> activeUser;
+    private DatePicker activeStart;
     @FXML
-    private TableColumn<AccountDTO, String> activeCreation;
+    private DatePicker activeEnd;
     @FXML
-    private TableColumn<AccountDTO, String> activeOpen;
+    private TableColumn<ActivityDTO, String> activeFull;
     @FXML
-    private TableColumn<AccountDTO, String> activeChat;
+    private TableColumn<ActivityDTO, String> activeUser;
     @FXML
-    private TableColumn<AccountDTO, String> activeGroup;
+    private TableColumn<ActivityDTO, String> activeCreation;
+    @FXML
+    private TableColumn<ActivityDTO, String> activeOpen;
+    @FXML
+    private TableColumn<ActivityDTO, String> activeChat;
+    @FXML
+    private TableColumn<ActivityDTO, String> activeGroup;
+    class ActivityTable {
+        private TableView<ActivityDTO> activeTable;
+        private TableColumn<ActivityDTO, String> activeFull;
+        private TableColumn<ActivityDTO, String> activeUser;
+        private TableColumn<ActivityDTO, String> activeCreation;
+        private TableColumn<ActivityDTO, String> activeOpen;
+        private TableColumn<ActivityDTO, String> activeChat;
+        private TableColumn<ActivityDTO, String> activeGroup;
+        
+        ObservableList<ActivityDTO> activities = FXCollections.observableArrayList();
+        List<ActivityDTO> originalData = null;
+        
+        Predicate<ActivityDTO> filter = activity -> false;
+        String searchKey = "";
+        
+        @SuppressWarnings("unchecked")
+        ActivityTable(TableView<ActivityDTO> table) {
+            activeTable = table;
+            activeFull = (TableColumn<ActivityDTO, String>) activeTable.getColumns().get(0);
+            activeUser = (TableColumn<ActivityDTO, String>) activeTable.getColumns().get(1);
+            activeCreation = (TableColumn<ActivityDTO, String>) activeTable.getColumns().get(2);
+            activeOpen = (TableColumn<ActivityDTO, String>) activeTable.getColumns().get(3);
+            activeChat = (TableColumn<ActivityDTO, String>) activeTable.getColumns().get(4);
+            activeGroup = (TableColumn<ActivityDTO, String>) activeTable.getColumns().get(5);
+            
+            activeUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+            activeFull.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+            activeCreation.setCellValueFactory(new PropertyValueFactory<>("creationDate"));
+            activeOpen.setCellValueFactory(new PropertyValueFactory<>("timeOpened"));
+            activeChat.setCellValueFactory(new PropertyValueFactory<>("privateChat"));
+            activeGroup.setCellValueFactory(new PropertyValueFactory<>("groupChat"));
+            activeTable.setItems(activities);
+        }
+        
+        public void updateOriginal(List<ActivityDTO> list) {
+            originalData = new ArrayList<>(list);
+            activities.clear();
+            activities.addAll(list);
+        }
+        
+        public void updateOriginal() {
+            activities.clear();
+            activities.addAll(originalData);
+        }
+        
+        public void updateContent(List<ActivityDTO> list) {
+            activities.clear();
+            activities.addAll(list);
+        }
+        
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<ActivityDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                activeTable.getItems().clear();
+                activeTable.getItems().addAll(filtered);
+            } else {
+                List<ActivityDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(activity -> !activity.getFullName().toLowerCase().contains(searchKey)
+                        && !activity.getUsername().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                activeTable.getItems().clear();
+                activeTable.getItems().addAll(filtered);
+            }
+        }
+        
+        public void setFilterPredicate(Predicate<ActivityDTO> filter) {
+            this.filter = filter;
+            List<ActivityDTO> filtered = new ArrayList<>(originalData);
+            filtered.removeIf(filter);
+            activities.clear();
+            activities.addAll(filtered);
+            search(searchKey);
+        }
+    }
 
     // Report
     @FXML
@@ -637,25 +723,25 @@ public class SceneController implements Initializable {
         friendIndirect.setCellValueFactory(new PropertyValueFactory<AccountDTO, Integer>("indirectFriends"));
         friendCount.setItems(accTable.accounts);
 
-        loginTime.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("recentLogin"));
-        loginUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
-        loginFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
-        loginTable.setItems(accTable.accounts);
+        // loginTime.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("recentLogin"));
+        // loginUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
+        // loginFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
+        // loginTable.setItems(accTable.accounts);
 
-        activeFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
-        activeUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
-        activeCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
-        Random random = new Random(1);
-        activeOpen.setCellValueFactory(cellData -> {
-            return new SimpleStringProperty(String.valueOf(random.nextInt(20) + 2));
-        });
-        activeChat.setCellValueFactory(cellData -> {
-            return new SimpleStringProperty(String.valueOf(random.nextInt(10) + 1));
-        });
-        activeGroup.setCellValueFactory(cellData -> {
-            return new SimpleStringProperty(String.valueOf(random.nextInt(5)));
-        });
-        activeTable.setItems(accTable.accounts);
+        // activeFull.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("fullName"));
+        // activeUser.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("username"));
+        // activeCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO, String>("createdAt"));
+        // Random random = new Random(1);
+        // activeOpen.setCellValueFactory(cellData -> {
+        //     return new SimpleStringProperty(String.valueOf(random.nextInt(20) + 2));
+        // });
+        // activeChat.setCellValueFactory(cellData -> {
+        //     return new SimpleStringProperty(String.valueOf(random.nextInt(10) + 1));
+        // });
+        // activeGroup.setCellValueFactory(cellData -> {
+        //     return new SimpleStringProperty(String.valueOf(random.nextInt(5)));
+        // });
+        // activeTable.setItems(accTable.accounts);
 
         // ----------------- Report data -----------------
         ReportBUS reportBUS = new ReportBUS();
@@ -751,9 +837,62 @@ public class SceneController implements Initializable {
             });
         });
         
-        // 
+        // ----------------- Login Table -----------------
         LoginTable lginTable = new LoginTable(loginTable);
-        lginTable.updateOriginal(userBUS.getAllUsers());
+        lginTable.updateOriginal(usageBUS.getAllRecentLogin());
+        
+        loginSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            lginTable.search(newValue);
+        });
+        
+        
+        // 
+        ActivityTable ctivTable = new ActivityTable(activeTable);
+        ctivTable.updateOriginal(usageBUS.getAllActivity());
+        
+        activeSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            ctivTable.search(newValue);
+        });
+        
+        choiceFriend.getSelectionModel().select(0);
+        choiceActiveAct.getSelectionModel().select(0);
+        choiceActiveCon.getSelectionModel().select(0);
+        choiceStatus.getSelectionModel().select(0);
+        
+        activeStart.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDateTime start = activeStart.getValue().atTime(0, 0);
+            LocalDateTime end = activeEnd.getValue().atTime(23, 59);
+            System.out.println("Start: " + start + " End: " + end);
+            if (start != null && end != null) {
+                Predicate<ActivityDTO> filter = activity -> {
+                    LocalDateTime date = activity.getCreationDate();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                ctivTable.setFilterPredicate(filter);
+            } else {
+                Predicate<ActivityDTO> filter = activity -> false;
+                ctivTable.setFilterPredicate(filter);
+            }
+        });
+        
+        activeEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDateTime start = activeStart.getValue().atTime(0, 0);
+            LocalDateTime end = activeEnd.getValue().atTime(23, 59);
+            if (start != null && end != null) {
+                Predicate<ActivityDTO> filter = activity -> {
+                    LocalDateTime date = activity.getCreationDate();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                ctivTable.setFilterPredicate(filter);
+            } else {
+                Predicate<ActivityDTO> filter = activity -> false;
+                ctivTable.setFilterPredicate(filter);
+            }
+        });
+        
+        // cho
+        
+        
         
         
 

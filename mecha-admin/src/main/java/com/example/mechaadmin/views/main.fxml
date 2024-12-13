@@ -534,7 +534,7 @@
                   <TextField layoutX="323.0" layoutY="143.0" prefHeight="26.0" prefWidth="64.0" text="0" />
                   <Group layoutX="1.0" layoutY="71.0">
                      <children>
-                        <TextField accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
+                        <TextField fx:id="activeSearch" accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />
                         <Label text="Tìm tài khoản">
                            <font>
                               <Font name="Inter Regular" size="16.0" />
@@ -543,7 +543,7 @@
                      </children>
                   </Group>
                   <ChoiceBox fx:id="choiceActiveCon" layoutX="162.0" layoutY="144.0" prefWidth="150.0" />
-                  <DatePicker layoutX="32.0" layoutY="28.0" />
+                  <DatePicker fx:id="activeStart" layoutX="32.0" layoutY="28.0" />
                   <Label layoutY="30.0" text="Từ">
                      <font>
                         <Font name="Inter Regular" size="16.0" />
@@ -554,7 +554,7 @@
                         <Font name="Inter Regular" size="16.0" />
                      </font>
                   </Label>
-                  <DatePicker layoutX="251.0" layoutY="28.0" />
+                  <DatePicker fx:id="activeEnd" layoutX="251.0" layoutY="28.0" />
                </children>
             </Group>
             <TableView fx:id="newTable" layoutX="80.0" layoutY="1236.0" prefHeight="282.0" prefWidth="483.0">
