@@ -75,6 +75,9 @@ public class LoginScreenController implements ServerMessageListener{
         Scene scene = new Scene(homeScreen, 800, 600);
         Stage stage = (Stage) usernameField.getScene().getWindow();
         stage.setScene(scene);
+        stage.setOnCloseRequest(event -> {
+            UserSession.getInstance().Logout();
+        });
         UserSession.getInstance().removeMessageListener(this);
     }
 
@@ -86,6 +89,9 @@ public class LoginScreenController implements ServerMessageListener{
         Scene scene = new Scene(homeScreen, 800, 600);
         Stage stage = (Stage) usernameField.getScene().getWindow();
         stage.setScene(scene);
+        stage.setOnCloseRequest(event -> {
+            UserSession.getInstance().Logout();
+        });
         System.out.println("loading home screen complete");
         
     }
@@ -98,17 +104,18 @@ public class LoginScreenController implements ServerMessageListener{
                 int userId = (int) UserSession.in.readObject();
                 String username = (String) UserSession.in.readObject();
                 String fullname = (String) UserSession.in.readObject();
-                
+                int logId = (int) UserSession.in.readObject();
+
                 UserSession.getInstance().setUsername(username);
                 UserSession.getInstance().setUserId(userId);
                 UserSession.getInstance().setFullname(fullname);
+                UserSession.getInstance().logId = logId;
 
                 System.out.println("processing login complete!");
                 Platform.runLater(() -> {
                     try {
                         loadHomeScreen();
                     } catch (IOException e) {
-                        // TODO Auto-generated catch block
                         System.out.println("can not load home screen");
                         e.printStackTrace();
                     }

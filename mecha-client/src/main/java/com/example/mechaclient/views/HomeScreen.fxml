@@ -81,7 +81,7 @@
             </VBox.margin>
         </ListView>
         <HBox fx:id="messageFieldFrame" alignment="CENTER" spacing="10" style="-fx-padding: 10; -fx-background-color: white;">
-            <TextField fx:id="messageField" promptText="Aa" style="-fx-background-radius: 50;" HBox.hgrow="ALWAYS" />
+            <TextField fx:id="messageField" promptText="Aa" style="-fx-background-radius: 50;" HBox.hgrow="ALWAYS"/>
             <Button onAction="#handleSendMessage" style="-fx-background-radius: 100;" text="➜" />
         </HBox>
     </VBox>

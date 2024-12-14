@@ -1,8 +1,12 @@
 package com.example.mecha_server;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -110,8 +114,9 @@ public class ChatServer {
                 in = new ObjectInputStream(clientSocket.getInputStream());
 
                 while (true) {
-                    String action = (String) in.readObject();
-                    try {
+                    String action = (String) in.readObject(); 
+                    System.out.println("request: "+ action);
+                    try {                  
                         handleAction(action);
                     } catch (IOException | ClassNotFoundException | SQLException e) {
                         e.printStackTrace();
@@ -147,11 +152,13 @@ public class ChatServer {
                     int userId = Integer.parseInt(userInfo.get(0));
                     String fullname = userInfo.get(1);
                     connectedClients.put(userId, this);
-                    System.out.println("login client " + userInfo.get(1) + " successfully: ");
+                    System.out.println("login client " + userInfo.get(1) + " successfully: " );
+                    int logId = createNewLog(userId);
                     out.writeObject("SUCCESS");
                     out.writeObject(userId);
                     out.writeObject(username);
                     out.writeObject(fullname);
+                    out.writeObject(logId);
                     System.out.println("all current active user: " + connectedClients.size());
                 } else {
                     out.writeObject("FAILURE");
@@ -170,13 +177,12 @@ public class ChatServer {
 
                 out.writeObject("respond_GET_FRIEND_LIST");
                 out.writeObject(friendList);
-                System.out.println("friendlist sent");
             } else if ("LOGOUT".equals(action)) {
                 int userId = (int) in.readObject();
-
+                int logId = (int) in.readObject();
                 connectedClients.remove(userId);
-                System.out.println(
-                        "userId: " + userId + "logged out. Current num of active user: " + connectedClients.size());
+                updateLogSectionEnd(logId);
+                System.out.println("userId: " + userId + " logged out. Current num of active user: " + connectedClients.size());
             } else if ("GET_CHAT_MESSAGES".equals(action)) {
                 int chatId = Integer.parseInt((String) in.readObject());
 
@@ -249,9 +255,144 @@ public class ChatServer {
                 String subject = (String) in.readObject();
                 String content = (String) in.readObject();
                 sendEmail(email, subject, content);
+            } else if ("GET_USER_PROFILE".equals(action)){
+                int userId = (int) in.readObject();
+
+                List <String> userInfo = getUserInfo(userId);
+                out.writeObject("respond_GET_USER_PROFILE");
+                out.writeObject(userInfo);
+            } else if ("UPDATE_USER_PROFILE".equals(action)){
+                // info order: user_id, fullname, gender, address, email, date_of_birth 
+                int userId = (int) in.readObject();
+                String fullname = (String) in.readObject();
+                String gender = (String) in.readObject();
+                String address = (String) in.readObject();
+                String email = (String) in.readObject();
+                String dob = (String) in.readObject();
+
+                LocalDate localDate = LocalDate.parse(dob);
+                Date sqlDate = Date.valueOf(localDate);
+
+                updateUserInfo(userId, fullname, gender, address, email, sqlDate);
+            } else if ("CHECK_PASSWORD".equals(action)){
+                int userId = (int) in.readObject();
+                String password = (String) in.readObject();
+                out.writeObject("respond_CHECK_PASSWORD");
+                if (password.equals(getPassword(userId))){
+                    out.writeObject("PASSWORD_CORRECT");
+                } else {
+                    out.writeObject("PASSWORD_WRONG");
+                }    
+            } else if ("UPDATE_PASSWORD".equals(action)){
+                int userId = (int) in.readObject();
+                String oldPassword = (String) in.readObject();
+                String newPassword = (String) in.readObject();
+                out.writeObject("respond_UPDATE_PASSWORD");
+                if (oldPassword.equals(getPassword(userId))){
+                    updatePassword(userId, newPassword);
+                    out.writeObject("SUCCESS");
+                } else {
+                    out.writeObject("FAILURE");
+                }
             }
         }
 
+        private void updatePassword(int userId, String newPassword) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                UPDATE users 
+                SET password_hash = ?
+                WHERE user_id = ?
+            """);
+            stmt.setString(1, newPassword);
+            stmt.setInt(2, userId);
+
+            stmt.executeUpdate();
+        }
+
+        private String getPassword(int userId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT password_hash FROM users WHERE user_id = ?
+            """);
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            return rs.getString("password_hash");
+        }
+
+        private void updateUserInfo(int userId, String fullname, String gender, String address, String email, Date dob) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                UPDATE users
+                SET full_name = ?, gender = ?, address = ?, email = ?, date_of_birth = ?
+                WHERE user_id = ?
+            """);
+
+            stmt.setString(1, fullname);
+            stmt.setString(2, gender);
+            stmt.setString(3, address);
+            stmt.setString(4, email);
+            stmt.setDate(5, dob);
+            stmt.setInt(6, userId);
+
+            stmt.executeUpdate();
+            System.out.println("update info complete");
+        }
+        private void updateLogSectionEnd(int logID) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                UPDATE log_history 
+                SET section_end = NOW()
+                WHERE log_id = ?
+            """);
+            stmt.setInt(1, logID);
+
+            stmt.executeUpdate();
+        }
+
+        private int createNewLog(int userId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                INSERT INTO log_history (user_id, section_start) VALUES (?, NOW())
+            """);
+            stmt.setInt(1, userId);
+            stmt.executeUpdate();
+
+            stmt = conn.prepareStatement("SELECT LAST_INSERT_ID() as newLogId");
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            int logId = rs.getInt("newLogId");
+
+            return logId;
+        }
+
+        private List<String> getUserInfo(int userId) throws SQLException {
+            List<String> userInfo = new ArrayList<>();
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT * FROM users WHERE user_id = ?
+            """);
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()){
+                String fullname = rs.getString("full_name");
+                String email = rs.getString("email");
+                String gender = rs.getString("gender");
+                Date dob = rs.getDate("date_of_birth");
+                String address = rs.getString("address");
+
+                String dobFormatted = dob != null ? new SimpleDateFormat("yyyy-MM-dd").format(dob) : "N/A";
+
+                Collections.addAll(userInfo, fullname, email, gender, dobFormatted, address);
+            } else {
+                System.out.println("error fetch user data");
+            }
+
+            return userInfo;
+        }
         private void sendEmail(String email, String subject, String content) {
 
         }
@@ -491,7 +632,6 @@ public class ChatServer {
                     String friendUsername = rs.getString("u.full_name");
                     messages.add(new String[] { friendId, friendUsername });
                 }
-                System.out.println("get friend request to user complete");
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -507,7 +647,6 @@ public class ChatServer {
                 stmt.setInt(2, receiverId);
 
                 stmt.executeUpdate();
-                System.out.println("insert friend request complete");
             } catch (SQLException e) {
                 e.printStackTrace();
             }

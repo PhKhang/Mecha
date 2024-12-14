@@ -57,7 +57,9 @@ public class SignupScreenController implements ServerMessageListener{
     
             // Get the current stage (window)
             Stage stage = (Stage) usernameField.getScene().getWindow();
-
+            stage.setOnCloseRequest(event -> {
+                UserSession.getInstance().Logout();
+            });
             stage.setScene(scene);   
             UserSession.getInstance().removeMessageListener(this);
             

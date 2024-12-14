@@ -7,6 +7,8 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+import com.example.mechaclient.models.UserSession;
+
 public class ChatApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
@@ -14,6 +16,9 @@ public class ChatApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
         stage.setTitle("User Chat Application");
         stage.setScene(scene);
+        stage.setOnCloseRequest(event -> {
+            UserSession.getInstance().Logout();
+        });
         stage.show();
     }
 

@@ -21,14 +21,16 @@ CREATE TABLE users (
     full_name VARCHAR(100),
     status ENUM('online', 'offline') NOT NULL DEFAULT 'offline',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    date_of_birth DATE,
+    gender ENUM("Male", "Female", "Other")
 );
 
 -- User Log
 CREATE TABLE log_history (
-	log_id INT PRIMARY KEY,
+	log_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     section_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    section_end TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    section_end TIMESTAMP,
     
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );

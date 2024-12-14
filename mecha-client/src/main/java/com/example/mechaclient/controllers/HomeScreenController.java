@@ -3,6 +3,7 @@ package com.example.mechaclient.controllers;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -11,6 +12,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
@@ -64,7 +67,14 @@ public class HomeScreenController implements ServerMessageListener{
     // private boolean threadAlive = true;
 
     public void initialize() {
-        
+        messageField.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent ke) {
+                if (ke.getCode().equals(KeyCode.ENTER)){
+                    handleSendMessage();
+                }      
+            } 
+        });
         fullnameLabel.setText(UserSession.getInstance().getFullname());
         messageFieldFrame.setVisible(false);
         chatOption.setVisible(false);
@@ -165,50 +175,50 @@ public class HomeScreenController implements ServerMessageListener{
     }
 
     private HBox createChatEntry(ChatBox chat) {
-    // Create name label
-    Label nameLabel = new Label(chat.name);
-    nameLabel.setStyle("-fx-font-weight: bold;");
+        // Create name label
+        Label nameLabel = new Label(chat.name);
+        nameLabel.setStyle("-fx-font-weight: bold;");
 
-    // Create status label
-    Label statusLabel = new Label(chat.status);
-    statusLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666666;");
+        // Create status label
+        Label statusLabel = new Label(chat.status);
+        statusLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666666;");
 
-    // Create status indicator (green or grey dot)
-    Circle statusIndicator = new Circle(5); // 5 is the radius of the circle
-    if (chat.status.equalsIgnoreCase("online")) {
-        statusIndicator.setFill(Paint.valueOf("green"));
-    } else {
-        statusIndicator.setFill(Paint.valueOf("grey"));
+        // Create status indicator (green or grey dot)
+        Circle statusIndicator = new Circle(5); // 5 is the radius of the circle
+        if (chat.status.equalsIgnoreCase("online")) {
+            statusIndicator.setFill(Paint.valueOf("green"));
+        } else {
+            statusIndicator.setFill(Paint.valueOf("grey"));
+        }
+
+        // Create horizontal box for name and status
+        HBox nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel); // 5px spacing
+        nameStatusBox.setAlignment(Pos.CENTER_LEFT);
+
+        // Create last message label
+        Label lastMessageLabel = new Label(chat.lastMessage);
+        lastMessageLabel.setStyle("-fx-font-size: 12px;");
+
+        // Vertical box to combine name/status and last message
+        VBox infoBox = new VBox(2, nameStatusBox, lastMessageLabel);
+
+        // Main horizontal box for the chat entry
+        HBox chatEntry = new HBox(10, infoBox);
+        chatEntry.setPadding(new Insets(5));
+        chatEntry.setAlignment(Pos.CENTER_LEFT);
+        chatEntry.getStyleClass().add("friend-entry");
+        chatEntry.setStyle("-fx-background-radius: 10");
+
+        // Add click event for selecting the chat
+        chatEntry.setOnMouseClicked(event -> {
+            messageFieldFrame.setVisible(true);
+            this.currentChat = chat;
+            updateChat(chat);
+            updateSelectedFriend(chatEntry);
+        });
+
+        return chatEntry;
     }
-
-    // Create horizontal box for name and status
-    HBox nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel); // 5px spacing
-    nameStatusBox.setAlignment(Pos.CENTER_LEFT);
-
-    // Create last message label
-    Label lastMessageLabel = new Label(chat.lastMessage);
-    lastMessageLabel.setStyle("-fx-font-size: 12px;");
-
-    // Vertical box to combine name/status and last message
-    VBox infoBox = new VBox(2, nameStatusBox, lastMessageLabel);
-
-    // Main horizontal box for the chat entry
-    HBox chatEntry = new HBox(10, infoBox);
-    chatEntry.setPadding(new Insets(5));
-    chatEntry.setAlignment(Pos.CENTER_LEFT);
-    chatEntry.getStyleClass().add("friend-entry");
-    chatEntry.setStyle("-fx-background-radius: 10");
-
-    // Add click event for selecting the chat
-    chatEntry.setOnMouseClicked(event -> {
-        messageFieldFrame.setVisible(true);
-        this.currentChat = chat;
-        updateChat(chat);
-        updateSelectedFriend(chatEntry);
-    });
-
-    return chatEntry;
-}
 
     private void updateChat(ChatBox chat) {
         curUserName.setText(chat.name);
@@ -219,7 +229,7 @@ public class HomeScreenController implements ServerMessageListener{
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        messageField.requestFocus();
         chatOption.setVisible(true);
     }
 
@@ -261,6 +271,9 @@ public class HomeScreenController implements ServerMessageListener{
         }
 
         messageBox.getChildren().add(textFlow);
+        messageBox.setOnMouseClicked(e -> {
+            System.out.println("message clicked");
+        });
         chatListView.getItems().add(messageBox);
         chatListView.scrollTo(chatListView.getItems().size() - 1);
     }
@@ -455,6 +468,9 @@ public class HomeScreenController implements ServerMessageListener{
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
             Stage stage = (Stage) settings.getScene().getWindow();
             stage.setScene(scene);
+            stage.setOnCloseRequest(e -> {
+                UserSession.getInstance().Logout();
+            });
             stage.show();
             UserSession.getInstance().removeMessageListener(this);
             
@@ -469,7 +485,11 @@ public class HomeScreenController implements ServerMessageListener{
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
             stage.setScene(scene);
+            stage.setOnCloseRequest(e -> {
+                UserSession.getInstance().Logout();
+            });
             stage.show();
+            UserSession.getInstance().removeMessageListener(this);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -477,14 +497,15 @@ public class HomeScreenController implements ServerMessageListener{
 
     private void handleLogout(javafx.event.ActionEvent event) {
         try {
-            UserSession.out.writeObject("LOGOUT");
-            UserSession.out.writeObject(UserSession.getInstance().getUserId());
-            UserSession.socket.close();
+            UserSession.getInstance().Logout();
 
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
             stage.setScene(scene);
+            stage.setOnCloseRequest(e -> {
+                UserSession.getInstance().Logout();
+            });
             stage.show();
             UserSession.getInstance().removeMessageListener(this);
         } catch (IOException e) {

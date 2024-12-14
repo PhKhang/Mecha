@@ -153,6 +153,9 @@ public class FriendManagementController implements ServerMessageListener {
 
         stage = (Stage) friendRequestContent.getScene().getWindow(); // get scene based on an element that in the scene, in this case it is friendRequestContent
         stage.setScene(scene);
+        stage.setOnCloseRequest(e -> {
+            UserSession.getInstance().Logout();
+        });
         stage.show();
         UserSession.getInstance().removeMessageListener(this);
     }

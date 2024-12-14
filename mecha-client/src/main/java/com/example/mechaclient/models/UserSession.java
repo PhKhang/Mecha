@@ -21,6 +21,8 @@ public class UserSession {
     private int userId;
     private String fullname;
 
+    public int logId;
+    
     private Thread listenerThread;
     private boolean isListening;
     private final List<ServerMessageListener> listeners = new ArrayList<>();
@@ -110,4 +112,17 @@ public class UserSession {
     public interface ServerMessageListener {
         void onMessageReceived(String message);
     }
+    public void Logout() {
+        try {
+            if (instance != null) {
+                out.writeObject("LOGOUT");
+                out.writeObject(UserSession.getInstance().userId);
+                out.writeObject(UserSession.getInstance().logId);
+            }
+            UserSession.socket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
