@@ -58,3 +58,53 @@
 .friend-entry.selected {
     -fx-background-color: #7bd1e0;
 }
+
+/* Additional styling for SplitPane */
+.split-pane:horizontal > .split-pane-divider:pressed {
+    -fx-background-color: #4A8BAF; /* Darker color when pressed */
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: transparent;
+    -fx-padding: 0 1px;
+}
+
+/* for report dialog layout */
+.dialog-layout {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 20px;
+}
+
+.dialog-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-alignment: center-left;
+}
+
+.dialog-button-confirm {
+    -fx-background-color: #50bcff;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-padding: 5 15;
+}
+
+.dialog-button-confirm:hover {
+    -fx-background-color: #2abdf2;
+}
+
+.dialog-button-cancel {
+    -fx-background-color: #787878;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-padding: 5 15;
+}
+
+.dialog-button-cancel:hover {
+    -fx-background-color: #b8b8b8;
+}

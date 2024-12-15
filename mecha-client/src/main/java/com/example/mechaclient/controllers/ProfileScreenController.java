@@ -49,7 +49,7 @@ public class ProfileScreenController implements ServerMessageListener {
     
     @FXML private GridPane formInfo;
     final Object lock = new Object();
-    private boolean isPassCorrect = false;
+
     @FXML
     public void initialize() {
         UserSession.getInstance().addMessageListener(this);
@@ -105,7 +105,7 @@ public class ProfileScreenController implements ServerMessageListener {
             String formattedDate = dob.format(DateTimeFormatter.ISO_DATE);
             UserSession.out.writeObject(formattedDate);
 
- 
+            UserSession.getInstance().setFullname(fullNameField.getText()); // update this to get the correct name label in homescreen view(fullnameLabel)
             loadUserProfile();
         } catch (IOException e) {
             e.printStackTrace();
@@ -202,34 +202,6 @@ public class ProfileScreenController implements ServerMessageListener {
         dialog.getDialogPane().getStyleClass().add("change-password-dialog");
 
         return dialog;
-    }
-
-    private boolean checkOldPassword(String oldPassword) {
-        // Assume this function checks if the old password is correct
-        try {
-            UserSession.out.writeObject("CHECK_PASSWORD");
-            UserSession.out.writeObject(UserSession.getInstance().getUserId());
-            UserSession.out.writeObject(oldPassword); 
-            // Wait for the response
-            synchronized (lock) {
-                lock.wait(); 
-            }           
-            
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-        return isPassCorrect;
-    }
-
-    private void updatePassword(String newPassword) {
-        try {
-            UserSession.out.writeObject("UPDATE_PASSWORD");
-            UserSession.out.writeObject(UserSession.getInstance().getUserId());
-            UserSession.out.writeObject(newPassword);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("Password updated to: " + newPassword);
     }
     
     private void setEditMode(boolean editMode) {

@@ -36,7 +36,6 @@ public class LoginScreenController implements ServerMessageListener{
         try {
             UserSession.getInstance().connectToServer();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             System.out.println("error while initialize in login screen: " + e.getMessage());
             e.printStackTrace();
         }

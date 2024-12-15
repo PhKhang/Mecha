@@ -111,8 +111,6 @@ public class FriendManagementController implements ServerMessageListener {
         // });
     }
 
-    
-
     @FXML
     private void showFindFriendResults() {
         setActiveSubTab(searchResultList, findFriendSubTab);
@@ -121,7 +119,7 @@ public class FriendManagementController implements ServerMessageListener {
     @FXML
     private void showRequestsSent() {
         setActiveSubTab(requestsSentList, requestsSentSubTab);
-        loadRequestsSent();
+        loadUserFriendRequestsSent();
     }
 
     private void setActiveSubTab(ListView<HBox> listView, Button activeTab) {
@@ -135,7 +133,7 @@ public class FriendManagementController implements ServerMessageListener {
         activeTab.pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), true);
     }
 
-    private void loadRequestsSent() {
+    private void loadUserFriendRequestsSent() {
         try {
             UserSession.out.writeObject("GET_USER_FRIEND_REQUEST");
             UserSession.out.writeObject(UserSession.getInstance().getUserId());
@@ -408,17 +406,6 @@ public class FriendManagementController implements ServerMessageListener {
         item.getChildren().addAll(usernameLabel, spacer, statusLabel, statusValue);
         return item;
     }
-
-    // private ImageView createCircularAvatar(Image image) {
-    //     ImageView avatar = new ImageView(image);
-    //     avatar.setFitHeight(40);
-    //     avatar.setFitWidth(40);
-
-    //     Circle clip = new Circle(20, 20, 20);
-    //     avatar.setClip(clip);
-
-    //     return avatar;
-    // }
 
     @Override
     public void onMessageReceived(String serverMessage) {
