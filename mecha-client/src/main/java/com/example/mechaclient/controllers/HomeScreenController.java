@@ -661,7 +661,7 @@ public class HomeScreenController implements ServerMessageListener{
                         String message = msg[1];
                         String timeSent = msg[2];
                         boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
-                        // Optional: Convert createdAt to LocalDateTime for further processing
+                        
                         Timestamp timestamp = Timestamp.valueOf(timeSent);
                         addMessage(message, isUser, timestamp);
                     }

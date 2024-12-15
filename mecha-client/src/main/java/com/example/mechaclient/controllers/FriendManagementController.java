@@ -12,6 +12,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.List;
 
 import javafx.application.Platform;
@@ -32,24 +33,26 @@ public class FriendManagementController implements ServerMessageListener {
     @FXML private VBox findFriendContent;
     @FXML private VBox blockedListContent;
     @FXML private VBox reportedListContent;
-    
+    private VBox currentContent;
+
     @FXML private ListView<HBox> friendRequestList;
     @FXML private ListView<HBox> searchResultList;
     @FXML private ListView<HBox> blockedList;
     @FXML private ListView<HBox> reportedList;
     @FXML private ListView<HBox> requestsSentList;
+    private ListView<HBox> currentActiveList;
 
-    private ObservableList<HBox> allPossibleFriend = FXCollections.observableArrayList();
+    private ObservableList<HBox> fullList = FXCollections.observableArrayList();
 
     @FXML private Button friendRequestTab;
     @FXML private Button findFriendTab;
     @FXML private Button blockedListTab;
     @FXML private Button reportedListTab;
-
     @FXML private Button findFriendSubTab;
     @FXML private Button requestsSentSubTab;
+    private Button currentActiveTab;
 
-    @FXML private TextField searchField;
+    @FXML private TextField universalSearchField;
 
     public void initialize() {
         UserSession.getInstance().addMessageListener(this);
@@ -64,28 +67,33 @@ public class FriendManagementController implements ServerMessageListener {
         setupListViewBehavior(blockedList);
         setupListViewBehavior(reportedList);
         setupListViewBehavior(requestsSentList);
-
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> filterFriendLists(newValue));
+        Platform.runLater(() -> {
+            universalSearchField.textProperty().addListener((observable, oldValue, newValue) -> filterList(currentActiveTab, currentContent, currentActiveList, newValue));
+        });
+        
     }
 
-    private void filterFriendLists(String query) {
-        filterList(searchResultList, query);
-    }
-
-    private void filterList(ListView<HBox> listView, String query) {
-        ObservableList<HBox> allItems = allPossibleFriend;
+    private void filterList(Button currentActiveTab, VBox currentContent, ListView<HBox> listView, String query) {
+        System.out.println("filter called, list: ");
+        if (currentContent == findFriendContent)
+            System.out.println("content list");
+        if (currentContent == friendRequestContent)
+            System.out.println("friend_request list");
+        System.out.println("list size: " + fullList.size());
+        ObservableList<HBox> allItems = fullList;
         ObservableList<HBox> filteredItems = allItems.filtered(item -> {
             if (item == null || query.isEmpty()) return true;
             Label usernameLabel = (Label) item.lookup(".fullname-label"); 
             if (usernameLabel != null) {
                 String username = usernameLabel.getText();
+                System.out.println("username: " + username);
                 return username.toLowerCase().contains(query.toLowerCase());
             }
             return false;
         });
         listView.setItems(filteredItems);
-        showFindFriendResults();
-        
+        setActiveTab(currentContent);
+        currentActiveTab.setStyle("-fx-background-color: #cccccc;");
     }
 
     private void setupListViewBehavior(ListView<HBox> listView) {
@@ -113,13 +121,29 @@ public class FriendManagementController implements ServerMessageListener {
 
     @FXML
     private void showFindFriendResults() {
+        universalSearchField.clear();
+        try {
+            UserSession.out.writeObject("GET_POTENTIAL_FRIENDS");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         setActiveSubTab(searchResultList, findFriendSubTab);
+
+        currentActiveList = searchResultList;
+        currentContent = findFriendContent;
+        currentActiveTab = findFriendTab;
     }
 
     @FXML
     private void showRequestsSent() {
+        universalSearchField.clear();
         setActiveSubTab(requestsSentList, requestsSentSubTab);
         loadUserFriendRequestsSent();
+
+        currentActiveList = requestsSentList;
+        currentActiveTab = findFriendTab;
     }
 
     private void setActiveSubTab(ListView<HBox> listView, Button activeTab) {
@@ -168,16 +192,13 @@ public class FriendManagementController implements ServerMessageListener {
         }
         setActiveTab(friendRequestContent);
         friendRequestTab.setStyle("-fx-background-color: #cccccc;");
+        currentActiveList = friendRequestList;
+        currentContent = friendRequestContent;
+        currentActiveTab = friendRequestTab;
     }
 
     @FXML
     private void showFindFriend() {
-         try {
-            UserSession.out.writeObject("GET_POTENTIAL_FRIENDS");
-            UserSession.out.writeObject(UserSession.getInstance().getUserId());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         setActiveTab(findFriendContent);
         findFriendTab.setStyle("-fx-background-color: #cccccc;");
         showFindFriendResults();
@@ -193,15 +214,30 @@ public class FriendManagementController implements ServerMessageListener {
         }
         setActiveTab(blockedListContent);
         blockedListTab.setStyle("-fx-background-color: #cccccc;");
+        currentActiveList = blockedList;
+        currentContent = blockedListContent;
+        currentActiveTab = blockedListTab;
     }
 
     @FXML
     private void showReportedList() {
+        try {
+            UserSession.out.writeObject("GET_REPORT_LIST");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+        } catch (IOException e){
+            e.printStackTrace();
+        }
         setActiveTab(reportedListContent);
         reportedListTab.setStyle("-fx-background-color: #cccccc;");
+        currentActiveList = reportedList;
+        currentContent = reportedListContent;
+        currentActiveTab = reportedListTab;
     }
 
     private void setActiveTab(VBox content) {
+        if (content != currentContent){
+            universalSearchField.clear();
+        }
         friendRequestContent.setVisible(false);
         findFriendContent.setVisible(false);
         blockedListContent.setVisible(false);
@@ -235,10 +271,10 @@ public class FriendManagementController implements ServerMessageListener {
     }
     
     private void setupReportedList() {
-        ObservableList<HBox> items = FXCollections.observableArrayList();
-        items.add(createReportedUserItem("Username1", "Pending"));
-        items.add(createReportedUserItem("Username2", "Resolved"));
-        reportedList.setItems(items);
+        // ObservableList<HBox> items = FXCollections.observableArrayList();
+        // items.add(createReportedUserItem("Username1", "Pending"));
+        // items.add(createReportedUserItem("Username2", "Resolved"));
+        // reportedList.setItems(items);
     }
 
     private HBox createFriendRequestItem(int userId, String fullname) {
@@ -251,7 +287,7 @@ public class FriendManagementController implements ServerMessageListener {
         VBox userInfo = new VBox(5);
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
         fullnameLabel.setStyle("-fx-text-fill: black;");
-        fullnameLabel.getStyleClass().add(".fullname-label");
+        fullnameLabel.getStyleClass().add("fullname-label");
         Label timeLabel = new Label("username placeholder");
         timeLabel.getStyleClass().add("time-label");
         userInfo.getChildren().addAll(fullnameLabel, timeLabel);
@@ -331,6 +367,8 @@ public class FriendManagementController implements ServerMessageListener {
         
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
         fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.getStyleClass().add("fullname-label");
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
@@ -365,6 +403,8 @@ public class FriendManagementController implements ServerMessageListener {
         
         Label fullnameLabel = new Label(fullname);
         fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.getStyleClass().add("fullname-label");
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
@@ -386,14 +426,16 @@ public class FriendManagementController implements ServerMessageListener {
         return item;
     }
 
-    private HBox createReportedUserItem(String username, String status) {
+    private HBox createReportedUserItem(int userId, String fullname, String status, Timestamp timeReported) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("box-item");
         
-        Label usernameLabel = new Label(username);
-        usernameLabel.setStyle("-fx-text-fill: black;");
+        Label fullnameLabel = new Label(fullname);
+        fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.getStyleClass().add("fullname-label");
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
@@ -403,7 +445,7 @@ public class FriendManagementController implements ServerMessageListener {
         statusValue.getStyleClass().add(status.toLowerCase() + "-status");
         statusLabel.setStyle("-fx-text-fill: black;");
         statusValue.setStyle("-fx-text-fill: black;");
-        item.getChildren().addAll(usernameLabel, spacer, statusLabel, statusValue);
+        item.getChildren().addAll(fullnameLabel, spacer, statusLabel, statusValue);
         return item;
     }
 
@@ -419,7 +461,7 @@ public class FriendManagementController implements ServerMessageListener {
                     items.add(createSearchResultItem(userId, fullname));  
                 }
                 Platform.runLater(() -> {
-                    allPossibleFriend = items;
+                    fullList = items;
                     searchResultList.setItems(items);
                 });
             } else if ("respond_GET_USER_FRIEND_REQUEST".equals(serverMessage)){
@@ -432,6 +474,7 @@ public class FriendManagementController implements ServerMessageListener {
                     items.add(createUserFriendRequestItem(friendId, friendFullname));   
                 }
                 Platform.runLater(() -> {
+                    fullList = items;
                     requestsSentList.setItems(items);
                 });
             } else if ("respond_GET_FRIEND_REQUEST".equals(serverMessage)){
@@ -443,6 +486,7 @@ public class FriendManagementController implements ServerMessageListener {
                     items.add(createFriendRequestItem(friendId, friendFullname));   
                 }
                 Platform.runLater(() -> {
+                    fullList = items;
                     friendRequestList.setItems(items);
                 });
             } else if ("respond_GET_BLOCKED_LIST".equals(serverMessage)){
@@ -454,8 +498,27 @@ public class FriendManagementController implements ServerMessageListener {
                     items.add(createBlockedUserItem(userId, fullname));   
                 }
                 Platform.runLater(() -> {
+                    fullList = items;
                     blockedList.setItems(items);
                 });
+            } else if ("respond_GET_REPORT_LIST".equals(serverMessage)){
+                List<String[]> reportedUserList = (List<String[]>) UserSession.in.readObject();
+                ObservableList<HBox> items = FXCollections.observableArrayList();
+                // Timestamp timestamp = Timestamp.valueOf(timeSent);
+                for (String[] reportedUser : reportedUserList) {
+                    // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
+                    int userId = Integer.parseInt(reportedUser[0]);
+                    String fullname = reportedUser[1];
+                    String status = reportedUser[2];
+                    String timeReportedString = reportedUser[3];
+
+                    Timestamp timeReported = Timestamp.valueOf(timeReportedString);
+                    items.add(createReportedUserItem(userId, fullname, status, timeReported));   
+                    Platform.runLater(() -> {
+                        fullList = items;
+                        reportedList.setItems(items);
+                    });
+                }
             }
         } catch (Exception e){
             System.out.println("error handling response from friend management controller");

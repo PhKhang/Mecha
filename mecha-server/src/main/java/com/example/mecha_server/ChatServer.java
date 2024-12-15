@@ -300,6 +300,13 @@ public class ChatServer {
                 int chatId = (int) in.readObject();
                 String reason = (String) in.readObject();
                 reportUserInChat(userId, chatId, reason);
+            } else if ("GET_REPORT_LIST".equals(action)){
+                int userId = (int) in.readObject();
+
+                List<String[]> reportedList = getReportedList(userId);
+                out.writeObject("respond_GET_REPORT_LIST");
+                // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
+                out.writeObject(reportedList);
             }
         }
 
@@ -428,9 +435,31 @@ public class ChatServer {
 
         }
 
+        private List<String[]> getReportedList(int userId) throws SQLException {
+            List <String[]> reportedList = new ArrayList<>();
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT r.reported_id, u.full_name, r.status, r.created_at
+                FROM Report r JOIN users u ON r.reported_id = u.user_id
+                WHERE r.reporter_id = ?
+            """);
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()){
+                String reportedUserId = rs.getString("r.reported_id");
+                String reportedUserFullname = rs.getString("u.full_name");
+                String reportedUserStatus = rs.getString("r.status");
+                String reportedTime = rs.getString("r.created_at");
+
+                reportedList.add(new String[] {reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime});
+            }
+            
+            return reportedList;
+        }
+
         private List<String[]> getBlockedList(int userId) throws SQLException {
             List<String[]> blockedList = new ArrayList<>();
-            ;
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
                         SELECT b.blocked_id, u.full_name
