@@ -1,6 +1,7 @@
 module com.example.mechaclient {
     requires javafx.controls;
     requires javafx.fxml;
+    requires java.sql;
     requires javafx.graphics;
 
     opens com.example.mechaclient to javafx.fxml;

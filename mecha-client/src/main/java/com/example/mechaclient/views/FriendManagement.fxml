@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.image.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.mechaclient.controllers.FriendManagementController"
-      stylesheets="@../styles/FriendManagementStyle.css">
+<VBox stylesheets="@../styles/FriendManagementStyle.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.example.mechaclient.controllers.FriendManagementController">
     
     <!-- Header -->
     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header">
         <padding>
-            <Insets top="10" right="10" bottom="10" left="10"/>
+            <Insets bottom="10" left="10" right="10" top="10" />
         </padding>
-        <Button text="←" styleClass="back-button"  onAction="#returnToHomeScreen"/>
-        <Label text="Friend Management" styleClass="header-title"/>
+        <Button onAction="#returnToHomeScreen" styleClass="back-button" text="←" />
+        <Label styleClass="header-title" text="Friend Management" />
     </HBox>
     
     <!-- Main Content -->
@@ -22,48 +25,53 @@
         <!-- Left Sidebar -->
         <VBox spacing="10" styleClass="sidebar">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10"/>
+                <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
-            <Button text="Friend Request" fx:id="friendRequestTab" styleClass="tab-button" onAction="#showFriendRequests"/>
-            <Button text="Find Friend" fx:id="findFriendTab" styleClass="tab-button" onAction="#showFindFriend"/>
-            <Button text="Blocked list" fx:id="blockedListTab" styleClass="tab-button" onAction="#showBlockedList"/>
-            <Button text="Reported list" fx:id="reportedListTab" styleClass="tab-button" onAction="#showReportedList"/>
+            <Button fx:id="friendRequestTab" onAction="#showFriendRequests" styleClass="tab-button" text="Friend Request" />
+            <Button fx:id="findFriendTab" onAction="#showFindFriend" styleClass="tab-button" text="Find Friend" />
+            <Button fx:id="blockedListTab" onAction="#showBlockedList" styleClass="tab-button" text="Blocked list" />
+            <Button fx:id="reportedListTab" onAction="#showReportedList" styleClass="tab-button" text="Reported list" />
         </VBox>
         
-        <!-- Right Content Area -->
-        <StackPane HBox.hgrow="ALWAYS" styleClass="content-area">
-            <!-- Friend Requests Content -->
-            <VBox fx:id="friendRequestContent" visible="false" spacing="10">
-                <!-- <Label text="2 friend requests" styleClass="section-header"/> -->
-                <ListView fx:id="friendRequestList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
-            </VBox>
-            
-            <!-- Find Friend Content -->
-            <VBox fx:id="findFriendContent" visible="false" spacing="5">
-                <TextField fx:id="searchField" promptText="search for friend here..." styleClass="search-field"/>
-                <!-- <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/> -->
+        <VBox spacing="10" style="-fx-background-color: white;" HBox.hgrow="ALWAYS">
+            <!-- Universal Search Field -->
+            <TextField fx:id="universalSearchField" promptText="Search for friend here..." styleClass="search-field">
+            <VBox.margin>
+               <Insets left="5.0" right="5.0" top="10.0" />
+            </VBox.margin></TextField>
 
-                <HBox spacing="0" styleClass="sub-tab-container">
-                    <Button text="Find Friend" fx:id="findFriendSubTab" styleClass="sub-tab-button" onAction="#showFindFriendResults" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                    <Button text="Requests Sent" fx:id="requestsSentSubTab" styleClass="sub-tab-button" onAction="#showRequestsSent" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                </HBox>
-                <StackPane>
-                    <ListView fx:id="searchResultList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
-                    <ListView fx:id="requestsSentList" VBox.vgrow="ALWAYS" styleClass="user-list" visible="false"/>
-                </StackPane>
-            </VBox>
-            
-            <!-- Blocked List Content -->
-            <VBox fx:id="blockedListContent" visible="false" spacing="10">
-                <!-- <Label text="1 User blocked" styleClass="section-header"/> -->
-                <ListView fx:id="blockedList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
-            </VBox>
-            
-            <!-- Reported List Content -->
-            <VBox fx:id="reportedListContent" visible="false" spacing="10">
-                <!-- <Label text="2 Users reported" styleClass="section-header"/> -->
-                <ListView fx:id="reportedList" VBox.vgrow="ALWAYS" styleClass="user-list"/>
-            </VBox>
-        </StackPane>
+            <!-- Right Content Area -->
+            <StackPane fx:id="contentArea" styleClass="content-area" VBox.vgrow="ALWAYS">
+                <!-- Friend Requests Content -->
+                <VBox fx:id="friendRequestContent" spacing="10" visible="false">
+                    <ListView fx:id="friendRequestList" styleClass="user-list" VBox.vgrow="ALWAYS" />
+                </VBox>
+                
+                <!-- Find Friend Content -->
+                <VBox fx:id="findFriendContent" spacing="5" visible="false">
+                    <HBox spacing="0" styleClass="sub-tab-container">
+                        <Button fx:id="findFriendSubTab" maxWidth="Infinity" onAction="#showFindFriendResults" styleClass="sub-tab-button" text="Find Friend" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="requestsSentSubTab" maxWidth="Infinity" onAction="#showRequestsSent" styleClass="sub-tab-button" text="Requests Sent" HBox.hgrow="ALWAYS" />
+                    </HBox>
+                    <StackPane>
+                        <ListView fx:id="searchResultList" styleClass="user-list" VBox.vgrow="ALWAYS" />
+                        <ListView fx:id="requestsSentList" styleClass="user-list" visible="false" VBox.vgrow="ALWAYS" />
+                    </StackPane>
+                </VBox>
+                
+                <!-- Blocked List Content -->
+                <VBox fx:id="blockedListContent" spacing="10" visible="false">
+                    <ListView fx:id="blockedList" styleClass="user-list" VBox.vgrow="ALWAYS" />
+                </VBox>
+                
+                <!-- Reported List Content -->
+                <VBox fx:id="reportedListContent" spacing="10" visible="false">
+                    <ListView fx:id="reportedList" styleClass="user-list" VBox.vgrow="ALWAYS" />
+                </VBox>
+            <VBox.margin>
+               <Insets />
+            </VBox.margin>
+            </StackPane>
+        </VBox>
     </HBox>
 </VBox>

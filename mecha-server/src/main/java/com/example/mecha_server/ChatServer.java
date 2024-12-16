@@ -17,7 +17,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -184,8 +186,8 @@ public class ChatServer {
                 int chatId = (int) in.readObject();
                 String message = (String) in.readObject();
 
-                insertMessageIntoDatabase(chatId, senderId, message);
-                notifyChatParticipants(chatId, senderId, message);
+                Timestamp datetime = insertMessageIntoDatabase(chatId, senderId, message);
+                notifyChatParticipants(chatId, senderId, message, datetime);
             } else if ("GET_FRIEND_LIST".equals(action)) {
                 int requestId = (int) in.readObject();
                 List<String[]> friendList = getFriendForUser(requestId);
@@ -220,7 +222,6 @@ public class ChatServer {
                 List<String[]> potentialFriends = getPotentialFriends(userId);
                 out.writeObject("respond_GET_POTENTIAL_FRIENDS");
                 out.writeObject(potentialFriends);
-                System.out.println("sent potential users" + potentialFriends);
             } else if ("ADD_FRIEND_REQUEST".equals(action)) {
                 int senderId = (int) in.readObject();
                 int receiverId = (int) in.readObject();
@@ -297,9 +298,9 @@ public class ChatServer {
                 if (password.equals(getPassword(userId))) {
                     out.writeObject("PASSWORD_CORRECT");
                 } else {
-                    out.writeObject("PASSWORD_WRONG");
-                }
-            } else if ("UPDATE_PASSWORD".equals(action)) {
+                    out.writeObject("PASSWORD_WRONG");  
+                }    
+            } else if ("UPDATE_PASSWORD".equals(action)){
                 int userId = (int) in.readObject();
                 String oldPassword = (String) in.readObject();
                 String newPassword = (String) in.readObject();
@@ -375,6 +376,44 @@ public class ChatServer {
             System.out.println("update password complete");
             
             return true;
+            } else if ("REPORT_USER".equals(action)) {
+                int userId = (int) in.readObject();
+                int chatId = (int) in.readObject();
+                String reason = (String) in.readObject();
+                reportUserInChat(userId, chatId, reason);
+            } else if ("GET_REPORT_LIST".equals(action)){
+                int userId = (int) in.readObject();
+
+                List<String[]> reportedList = getReportedList(userId);
+                out.writeObject("respond_GET_REPORT_LIST");
+                // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
+                out.writeObject(reportedList);
+            }
+        }
+
+        private void reportUserInChat(int reporterId, int chatId, String reason) throws SQLException{
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT user_id
+                FROM chat_members
+                WHERE chat_id = ? AND user_id != ? 
+            """);
+
+            stmt.setInt(1, chatId);
+            stmt.setInt(2, reporterId);
+
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            int reportedUserId = rs.getInt("user_id");
+
+            stmt = conn.prepareStatement("INSERT INTO Report (reporter_id, reported_id, reason) VALUES (?, ?, ?)");
+            stmt.setInt(1, reporterId);
+            stmt.setInt(2, reportedUserId);
+            stmt.setString(3, reason);
+
+            stmt.executeUpdate();
+
+            System.out.println("User reported!");
         }
 
         private void updatePassword(int userId, String newPassword) throws SQLException {
@@ -480,9 +519,31 @@ public class ChatServer {
 
         }
 
+        private List<String[]> getReportedList(int userId) throws SQLException {
+            List <String[]> reportedList = new ArrayList<>();
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT r.reported_id, u.full_name, r.status, r.created_at
+                FROM Report r JOIN users u ON r.reported_id = u.user_id
+                WHERE r.reporter_id = ?
+            """);
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()){
+                String reportedUserId = rs.getString("r.reported_id");
+                String reportedUserFullname = rs.getString("u.full_name");
+                String reportedUserStatus = rs.getString("r.status");
+                String reportedTime = rs.getString("r.created_at");
+
+                reportedList.add(new String[] {reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime});
+            }
+            
+            return reportedList;
+        }
+
         private List<String[]> getBlockedList(int userId) throws SQLException {
             List<String[]> blockedList = new ArrayList<>();
-            ;
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
                         SELECT b.blocked_id, u.full_name
@@ -654,7 +715,6 @@ public class ChatServer {
 
                 stmt.executeUpdate();
             }
-            System.out.println("add chat mem complete");
         }
 
         // Get all of the users that request to be friend with this user(userId)
@@ -708,7 +768,7 @@ public class ChatServer {
                             WHERE fr.user_id = ?
                             """)) {
                 stmt.setInt(1, userId);
-
+                
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     String friendId = rs.getString("fr.friend_id");
@@ -774,20 +834,21 @@ public class ChatServer {
             return messages;
         }
 
-        private static void insertMessageIntoDatabase(int chatId, int senderId, String message) {
-            String query = "INSERT INTO messages (chat_id, sender_id, content, created_at) VALUES (?, ?, ?, NOW())";
-            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-                    PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setInt(1, chatId);
-                stmt.setInt(2, senderId);
-                stmt.setString(3, message);
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        private static Timestamp insertMessageIntoDatabase(int chatId, int senderId, String message) throws SQLException {
+            String query = "INSERT INTO messages (chat_id, sender_id, content, created_at) VALUES (?, ?, ?, ?)";
+            Timestamp timestamp = Timestamp.from(Instant.now());
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, chatId);
+            stmt.setInt(2, senderId);
+            stmt.setString(3, message);
+            stmt.setTimestamp(4, timestamp);
+            stmt.executeUpdate();
+    
+            return timestamp;
         }
 
-        private void notifyChatParticipants(int chatId, int senderId, String message) {
+        private void notifyChatParticipants(int chatId, int senderId, String message, Timestamp timeSent) {
             String query = "SELECT user_id FROM chat_members WHERE chat_id = ?";
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -805,6 +866,7 @@ public class ChatServer {
                             recipient.out.writeObject(chatId);
                             recipient.out.writeObject(message);
                             recipient.out.writeObject(senderId);
+                            recipient.out.writeObject(timeSent);
                             // System.out.println("send signal to chatid " + chatId + "from userid " +
                             // senderId);
                         } catch (Exception e) {

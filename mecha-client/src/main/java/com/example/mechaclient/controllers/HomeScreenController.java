@@ -14,6 +14,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
@@ -28,9 +29,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.ChatBox;
@@ -62,9 +68,9 @@ public class HomeScreenController implements ServerMessageListener{
     private HBox selectedFriendEntry;
     private ChatBox currentChat;
 
-    // for active listen for new message to live update
-    // private Thread responseListenerThread;
-    // private boolean threadAlive = true;
+    // for report box
+    private Dialog<String> reportDialog;
+    private TextArea reasonField;
 
     public void initialize() {
         messageField.setOnKeyPressed(new EventHandler<KeyEvent>() {
@@ -75,10 +81,10 @@ public class HomeScreenController implements ServerMessageListener{
                 }      
             } 
         });
-        fullnameLabel.setText(UserSession.getInstance().getFullname());
+        
         messageFieldFrame.setVisible(false);
         chatOption.setVisible(false);
-
+        fullnameLabel.setText(UserSession.getInstance().getFullname());
         UserSession.getInstance().addMessageListener(this);
         // startResponseListener();
         setupContextMenus();
@@ -109,7 +115,73 @@ public class HomeScreenController implements ServerMessageListener{
                 ex.printStackTrace();
             }
         });
+
         MenuItem reportUserItem = new MenuItem("Report User");
+        reportUserItem.setOnAction(e -> {
+            Stage reportDialog = new Stage();
+            reportDialog.setTitle("Report User");
+
+            Label reasonLabel = new Label("Report Reason:");
+            reasonLabel.setAlignment(Pos.CENTER_LEFT); 
+            reasonLabel.setMaxWidth(Double.MAX_VALUE); 
+            reasonLabel.getStyleClass().add("dialog-label");
+
+            TextArea reasonField = new TextArea();
+            reasonField.setPromptText("Enter your reason for reporting...");
+            reasonField.setPrefHeight(200);
+            reasonField.setWrapText(true); 
+            // reasonField.getStyleClass().add("dialog-textarea");
+
+            // Confirm and Cancel buttons
+            Button confirmButton = new Button("Confirm");
+            confirmButton.getStyleClass().add("dialog-button-confirm");
+
+            Button cancelButton = new Button("Cancel");
+            cancelButton.getStyleClass().add("dialog-button-cancel");
+
+            // HBox for buttons
+            HBox buttonBox = new HBox(10, confirmButton, cancelButton);
+            buttonBox.setAlignment(Pos.CENTER);
+
+            // VBox to arrange components vertically
+            VBox layout = new VBox(10, reasonLabel, reasonField, buttonBox);
+            layout.setPadding(new Insets(15));
+            layout.setAlignment(Pos.CENTER);
+            layout.getStyleClass().add("dialog-layout");
+
+
+            Scene dialogScene = new Scene(layout, 300, 250); // Adjusted height for TextArea
+            dialogScene.getStylesheets().add(ChatApplication.class.getResource("styles/HomeScreenStyle.css").toExternalForm());
+            reportDialog.setScene(dialogScene);
+            reportDialog.initModality(Modality.APPLICATION_MODAL);
+            reportDialog.show();
+
+            // Handle Confirm button click
+            confirmButton.setOnAction(ev -> {
+                if (!reasonField.getText().trim().isEmpty()) {
+                    // Show confirmation alert
+                    Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirmationAlert.setTitle("Confirm Report");
+                    confirmationAlert.setHeaderText("Do you want to report this user?");
+                    confirmationAlert.setContentText("This will be sent to the administrator for review");
+
+                    // Wait for user response
+                    Optional<ButtonType> result = confirmationAlert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                        reportUser(currentChat.chatId, reasonField.getText().trim());
+                        System.out.println("Report sent: " + reasonField.getText().trim());
+                        reportDialog.close();
+                    }
+                } else {
+                    NotificationUtil.showAlert(Alert.AlertType.ERROR, "Error", "Please enter a reason for reporting.");
+                }
+            });
+
+            // Handle Cancel button click
+            cancelButton.setOnAction(ev -> {
+                reportDialog.close(); // Keep the dialog open
+            });
+        });
         chatOptionMenu.getItems().addAll(blockUserItem, reportUserItem);
 
         chatOption.setOnMouseClicked(event -> chatOptionMenu.show(chatOption, event.getScreenX(), event.getScreenY()));
@@ -127,6 +199,17 @@ public class HomeScreenController implements ServerMessageListener{
         logoutItem.setOnAction(this::handleLogout);
     }
 
+    private void reportUser(int chatId, String reason){
+        try{
+            UserSession.out.writeObject("REPORT_USER");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+            UserSession.out.writeObject(chatId);
+            UserSession.out.writeObject(reason);
+
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
     private void setupChatListView() {
         chatListView.setCellFactory(param -> new ListCell<HBox>() {
             @Override
@@ -243,7 +326,7 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject(currentChat.chatId);
                 UserSession.out.writeObject(message);
     
-                addMessage(message, true);
+                addMessage(message, true, Timestamp.from(Instant.now()));
                 messageField.clear();
     
             } catch (Exception e) {
@@ -252,7 +335,7 @@ public class HomeScreenController implements ServerMessageListener{
         }
     }
 
-    private void addMessage(String message, boolean isUser) {
+    private void addMessage(String message, boolean isUser, Timestamp timeSent) {
         HBox messageBox = new HBox();
         messageBox.setPadding(new Insets(5, 10, 5, 10));
         messageBox.setMaxWidth(Double.MAX_VALUE);
@@ -262,20 +345,46 @@ public class HomeScreenController implements ServerMessageListener{
         textFlow.setStyle("-fx-background-color: " + (isUser ? "#d1e7ff" : "#f0f0f0") + "; " +
                         "-fx-background-radius: 10px;");
 
+        Label timeLabel = new Label(formatTime(timeSent));
+        timeLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 10px;");
+
+        HBox messageContainer = new HBox(5); // 5 is the spacing between the message and time
+
         if (isUser) {
             messageBox.setAlignment(Pos.CENTER_RIGHT);
             textFlow.setMaxWidth(chatListView.getWidth() * 0.75);
+            messageContainer.setAlignment(Pos.CENTER_RIGHT);
+            messageContainer.getChildren().addAll(timeLabel, textFlow);
         } else {
             messageBox.setAlignment(Pos.CENTER_LEFT);
             textFlow.setMaxWidth(chatListView.getWidth() * 0.75);
+            messageContainer.setAlignment(Pos.CENTER_LEFT);
+            messageContainer.getChildren().addAll(textFlow, timeLabel);
         }
 
-        messageBox.getChildren().add(textFlow);
+        messageBox.getChildren().add(messageContainer);
         messageBox.setOnMouseClicked(e -> {
             System.out.println("message clicked");
         });
         chatListView.getItems().add(messageBox);
-        chatListView.scrollTo(chatListView.getItems().size() - 1);
+        if (isUser) // if the user is sending this then redirect to the last message
+            chatListView.scrollTo(chatListView.getItems().size() - 1);
+    }
+
+    private String formatTime(Timestamp timeSent) {
+        LocalDateTime messageTime = timeSent.toLocalDateTime(); // Convert Timestamp to LocalDateTime
+        LocalDateTime now = LocalDateTime.now();
+    
+        if (messageTime.toLocalDate().equals(now.toLocalDate())) {
+            // Same day, show only time
+            return messageTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+        } else if (messageTime.getYear() == now.getYear()) {
+            // Same year, show time and date without year
+            return messageTime.format(DateTimeFormatter.ofPattern("HH:mm, dd/MM"));
+        } else {
+            // Different year, show full date and time
+            return messageTime.format(DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy"));
+        }
     }
 
     // private void startResponseListener() {
@@ -536,10 +645,11 @@ public class HomeScreenController implements ServerMessageListener{
                 int chatId = (int) UserSession.in.readObject();
                 String message = (String) UserSession.in.readObject();
                 int senderId = (int) UserSession.in.readObject();
+                Timestamp timeSent = (Timestamp) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     if (chatId == currentChat.chatId) {
                         boolean isUser = senderId == UserSession.getInstance().getUserId();
-                        addMessage(message, isUser);
+                        addMessage(message, isUser, timeSent);
                     }
                 });
             }
@@ -549,8 +659,11 @@ public class HomeScreenController implements ServerMessageListener{
                     for (String[] msg : messages) {
                         String senderId = msg[0];
                         String message = msg[1];
+                        String timeSent = msg[2];
                         boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
-                        addMessage(message, isUser);
+                        
+                        Timestamp timestamp = Timestamp.valueOf(timeSent);
+                        addMessage(message, isUser, timestamp);
                     }
                 });
             }
