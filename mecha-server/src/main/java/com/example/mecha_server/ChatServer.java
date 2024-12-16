@@ -1,28 +1,41 @@
 package com.example.mecha_server;
 
-import java.sql.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.RandomStringUtils;
+
 import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.Authenticator;
-import jakarta.mail.Message;
-import jakarta.mail.PasswordAuthentication;
-
-import java.io.*;
-import java.net.*;
 
 class EmailSender {
 
@@ -70,18 +83,20 @@ public class ChatServer {
 
     public static void main(String[] args) {
         // EmailSender.sendEmail(
-        //         "tnpkhang22@clc.fitus.edu.vn",
-        //         "Test email",
-        //         "<!doctype html>\r\n" + //
-        //                 "<html>\r\n" + //
-        //                 "  <head>\r\n" + //
-        //                 "    <title>This is the title of the webpage!</title>\r\n" + //
-        //                 "  </head>\r\n" + //
-        //                 "  <body>\r\n" + //
-        //                 "    <p>This is an example paragraph. Anything in the <strong>body</strong> tag will appear on the page, just like this <strong>p</strong> tag and its contents.</p>\r\n"
-        //                 + //
-        //                 "  </body>\r\n" + //
-        //                 "</html>");
+        // "tnpkhang22@clc.fitus.edu.vn",
+        // "Test email",
+        // "<!doctype html>\r\n" + //
+        // "<html>\r\n" + //
+        // " <head>\r\n" + //
+        // " <title>This is the title of the webpage!</title>\r\n" + //
+        // " </head>\r\n" + //
+        // " <body>\r\n" + //
+        // " <p>This is an example paragraph. Anything in the <strong>body</strong> tag
+        // will appear on the page, just like this <strong>p</strong> tag and its
+        // contents.</p>\r\n"
+        // + //
+        // " </body>\r\n" + //
+        // "</html>");
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server is running on port " + PORT);
@@ -114,9 +129,9 @@ public class ChatServer {
                 in = new ObjectInputStream(clientSocket.getInputStream());
 
                 while (true) {
-                    String action = (String) in.readObject(); 
-                    System.out.println("request: "+ action);
-                    try {                  
+                    String action = (String) in.readObject();
+                    System.out.println("request: " + action);
+                    try {
                         handleAction(action);
                     } catch (IOException | ClassNotFoundException | SQLException e) {
                         e.printStackTrace();
@@ -152,7 +167,7 @@ public class ChatServer {
                     int userId = Integer.parseInt(userInfo.get(0));
                     String fullname = userInfo.get(1);
                     connectedClients.put(userId, this);
-                    System.out.println("login client " + userInfo.get(1) + " successfully: " );
+                    System.out.println("login client " + userInfo.get(1) + " successfully: ");
                     int logId = createNewLog(userId);
                     out.writeObject("SUCCESS");
                     out.writeObject(userId);
@@ -182,7 +197,8 @@ public class ChatServer {
                 int logId = (int) in.readObject();
                 connectedClients.remove(userId);
                 updateLogSectionEnd(logId);
-                System.out.println("userId: " + userId + " logged out. Current num of active user: " + connectedClients.size());
+                System.out.println(
+                        "userId: " + userId + " logged out. Current num of active user: " + connectedClients.size());
             } else if ("GET_CHAT_MESSAGES".equals(action)) {
                 int chatId = Integer.parseInt((String) in.readObject());
 
@@ -255,14 +271,14 @@ public class ChatServer {
                 String subject = (String) in.readObject();
                 String content = (String) in.readObject();
                 sendEmail(email, subject, content);
-            } else if ("GET_USER_PROFILE".equals(action)){
+            } else if ("GET_USER_PROFILE".equals(action)) {
                 int userId = (int) in.readObject();
 
-                List <String> userInfo = getUserInfo(userId);
+                List<String> userInfo = getUserInfo(userId);
                 out.writeObject("respond_GET_USER_PROFILE");
                 out.writeObject(userInfo);
-            } else if ("UPDATE_USER_PROFILE".equals(action)){
-                // info order: user_id, fullname, gender, address, email, date_of_birth 
+            } else if ("UPDATE_USER_PROFILE".equals(action)) {
+                // info order: user_id, fullname, gender, address, email, date_of_birth
                 int userId = (int) in.readObject();
                 String fullname = (String) in.readObject();
                 String gender = (String) in.readObject();
@@ -274,36 +290,100 @@ public class ChatServer {
                 Date sqlDate = Date.valueOf(localDate);
 
                 updateUserInfo(userId, fullname, gender, address, email, sqlDate);
-            } else if ("CHECK_PASSWORD".equals(action)){
+            } else if ("CHECK_PASSWORD".equals(action)) {
                 int userId = (int) in.readObject();
                 String password = (String) in.readObject();
                 out.writeObject("respond_CHECK_PASSWORD");
-                if (password.equals(getPassword(userId))){
+                if (password.equals(getPassword(userId))) {
                     out.writeObject("PASSWORD_CORRECT");
                 } else {
                     out.writeObject("PASSWORD_WRONG");
-                }    
-            } else if ("UPDATE_PASSWORD".equals(action)){
+                }
+            } else if ("UPDATE_PASSWORD".equals(action)) {
                 int userId = (int) in.readObject();
                 String oldPassword = (String) in.readObject();
                 String newPassword = (String) in.readObject();
                 out.writeObject("respond_UPDATE_PASSWORD");
-                if (oldPassword.equals(getPassword(userId))){
+                if (oldPassword.equals(getPassword(userId))) {
                     updatePassword(userId, newPassword);
                     out.writeObject("SUCCESS");
                 } else {
                     out.writeObject("FAILURE");
                 }
+            } else if ("FORGOT_PASSWORD".equals(action)) {
+                String email = (String) in.readObject();
+                out.writeObject("respond_FORGOT_PASSWORD");
+                try {
+                    String reponse = updatePasswordRandomly(email) ? "SUCCESS" : "FAILURE";
+                    out.writeObject(reponse);
+                    System.out.println("forgot password complete"); 
+                } catch (NoSuchAlgorithmException | SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Unknown action: " + action);
             }
+        }
+
+        private int getUserIdByEmail(String email) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("SELECT user_id FROM users WHERE email = ?");
+            stmt.setString(1, email);
+
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            userId = rs.getInt("user_id");
+            
+            return userId;
+        }
+        
+        private boolean checkIfEmailExist(String email) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("SELECT user_id FROM users WHERE email = ?");
+            stmt.setString(1, email);
+
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        }
+        
+        private boolean updatePasswordRandomly(String email) throws SQLException, NoSuchAlgorithmException {
+            if (!checkIfEmailExist(email)) {
+                System.out.println("User not found");
+                return false;
+            }
+            
+            SecureRandom random = new SecureRandom();
+            byte[] salt = new byte[16];
+            random.nextBytes(salt);
+
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            md.update(salt);
+
+            String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-_=+[{]}\\|;:\'\",<.>/?";
+            String newPassword = RandomStringUtils.random(15, characters);
+            System.out.println(newPassword);
+
+            byte[] hashedPassword = md.digest(newPassword.getBytes(StandardCharsets.UTF_8));
+
+            int userId = getUserIdByEmail(email);
+            if (userId == 0) {
+                System.out.println("User not found");
+                return false;
+            }
+            updatePassword(userId, hashedPassword.toString());
+            sendEmail(email, "New Password", "Your new password is: " + newPassword);
+            System.out.println("update password complete");
+            
+            return true;
         }
 
         private void updatePassword(int userId, String newPassword) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                UPDATE users 
-                SET password_hash = ?
-                WHERE user_id = ?
-            """);
+                        UPDATE users
+                        SET password_hash = ?
+                        WHERE user_id = ?
+                    """);
             stmt.setString(1, newPassword);
             stmt.setInt(2, userId);
 
@@ -313,8 +393,8 @@ public class ChatServer {
         private String getPassword(int userId) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                SELECT password_hash FROM users WHERE user_id = ?
-            """);
+                        SELECT password_hash FROM users WHERE user_id = ?
+                    """);
             stmt.setInt(1, userId);
 
             ResultSet rs = stmt.executeQuery();
@@ -322,13 +402,14 @@ public class ChatServer {
             return rs.getString("password_hash");
         }
 
-        private void updateUserInfo(int userId, String fullname, String gender, String address, String email, Date dob) throws SQLException {
+        private void updateUserInfo(int userId, String fullname, String gender, String address, String email, Date dob)
+                throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                UPDATE users
-                SET full_name = ?, gender = ?, address = ?, email = ?, date_of_birth = ?
-                WHERE user_id = ?
-            """);
+                        UPDATE users
+                        SET full_name = ?, gender = ?, address = ?, email = ?, date_of_birth = ?
+                        WHERE user_id = ?
+                    """);
 
             stmt.setString(1, fullname);
             stmt.setString(2, gender);
@@ -340,13 +421,14 @@ public class ChatServer {
             stmt.executeUpdate();
             System.out.println("update info complete");
         }
+
         private void updateLogSectionEnd(int logID) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                UPDATE log_history 
-                SET section_end = NOW()
-                WHERE log_id = ?
-            """);
+                        UPDATE log_history
+                        SET section_end = NOW()
+                        WHERE log_id = ?
+                    """);
             stmt.setInt(1, logID);
 
             stmt.executeUpdate();
@@ -355,8 +437,8 @@ public class ChatServer {
         private int createNewLog(int userId) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                INSERT INTO log_history (user_id, section_start) VALUES (?, NOW())
-            """);
+                        INSERT INTO log_history (user_id, section_start) VALUES (?, NOW())
+                    """);
             stmt.setInt(1, userId);
             stmt.executeUpdate();
 
@@ -372,12 +454,12 @@ public class ChatServer {
             List<String> userInfo = new ArrayList<>();
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                SELECT * FROM users WHERE user_id = ?
-            """);
+                        SELECT * FROM users WHERE user_id = ?
+                    """);
             stmt.setInt(1, userId);
 
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()){
+            if (rs.next()) {
                 String fullname = rs.getString("full_name");
                 String email = rs.getString("email");
                 String gender = rs.getString("gender");
@@ -393,6 +475,7 @@ public class ChatServer {
 
             return userInfo;
         }
+
         private void sendEmail(String email, String subject, String content) {
 
         }
