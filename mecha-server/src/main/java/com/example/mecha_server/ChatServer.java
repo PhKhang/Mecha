@@ -15,6 +15,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -321,6 +322,18 @@ public class ChatServer {
                 } catch (NoSuchAlgorithmException | SQLException e) {
                     e.printStackTrace();
                 }
+            } else if ("REPORT_USER".equals(action)) {
+                int userId = (int) in.readObject();
+                int chatId = (int) in.readObject();
+                String reason = (String) in.readObject();
+                reportUserInChat(userId, chatId, reason);
+            } else if ("GET_REPORT_LIST".equals(action)){
+                int userId = (int) in.readObject();
+
+                List<String[]> reportedList = getReportedList(userId);
+                out.writeObject("respond_GET_REPORT_LIST");
+                // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
+                out.writeObject(reportedList);
             } else {
                 System.out.println("Unknown action: " + action);
             }
@@ -376,19 +389,6 @@ public class ChatServer {
             System.out.println("update password complete");
             
             return true;
-            } else if ("REPORT_USER".equals(action)) {
-                int userId = (int) in.readObject();
-                int chatId = (int) in.readObject();
-                String reason = (String) in.readObject();
-                reportUserInChat(userId, chatId, reason);
-            } else if ("GET_REPORT_LIST".equals(action)){
-                int userId = (int) in.readObject();
-
-                List<String[]> reportedList = getReportedList(userId);
-                out.writeObject("respond_GET_REPORT_LIST");
-                // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
-                out.writeObject(reportedList);
-            }
         }
 
         private void reportUserInChat(int reporterId, int chatId, String reason) throws SQLException{
