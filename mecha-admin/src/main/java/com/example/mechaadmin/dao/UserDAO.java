@@ -1,6 +1,6 @@
 package com.example.mechaadmin.dao;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,13 +23,15 @@ public class UserDAO {
     @Column(name = "full_name")
     String fullName;
     String status;
+    @Column(name = "admin_action")
+    String adminAction;
     @Column(name = "created_at")
-    LocalDate createdAt;
+    LocalDateTime createdAt;
 
     public UserDAO() {
     }
 
-    public UserDAO(int userId, String username, String email, String address, String passwordHash, String fullName, String status, LocalDate createdAt) {
+    public UserDAO(int userId, String username, String email, String address, String passwordHash, String fullName, String status, LocalDateTime createdAt) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -97,12 +99,20 @@ public class UserDAO {
         this.status = status;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getAdminAction() {
+        return adminAction;
+    }
+
+    public void setAdminAction(String adminAction) {
+        this.adminAction = adminAction;
     }
 }
 

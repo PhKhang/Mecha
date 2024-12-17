@@ -1,6 +1,8 @@
+#name: mecha
 services:
   db:
-    container_name: mecha_db
+    container_name: mecha_dbb
+    # mysql -u user -p"1234" chat_application
     image: mysql
     restart: always
     ports:

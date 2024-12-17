@@ -30,4 +30,13 @@ public class LoginController implements Initializable {
         stage.setScene(scene);
         stage.show();
     }
+    
+    public void logIn(ActionEvent event) throws IOException {
+        root = FXMLLoader.load(getClass().getResource("views/main.fxml"));
+        stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        scene = new Scene(root);
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());
+        stage.setScene(scene);
+        stage.show();
+    }
 }

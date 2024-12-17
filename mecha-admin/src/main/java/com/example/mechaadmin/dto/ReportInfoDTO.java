@@ -1,6 +1,6 @@
 package com.example.mechaadmin.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class ReportInfoDTO {
     private int reportId;
@@ -10,7 +10,7 @@ public class ReportInfoDTO {
     private String reported;
     private String reason;
     private String status;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     
     public ReportInfoDTO() {
         this.reportId = 0;
@@ -20,10 +20,10 @@ public class ReportInfoDTO {
         this.reported = "";
         this.reason = "";
         this.status = "";
-        this.createdAt = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
     }
     
-    public ReportInfoDTO(int reportId, int reporterId, String repoter, int reportedId, String reported, String reason, String status, LocalDate createdAt) {
+    public ReportInfoDTO(int reportId, int reporterId, String repoter, int reportedId, String reported, String reason, String status, LocalDateTime createdAt) {
         this.reportId = reportId;
         this.reporterId = reporterId;
         this.repoter = repoter;
@@ -90,11 +90,11 @@ public class ReportInfoDTO {
         this.status = status;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
     
