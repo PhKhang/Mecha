@@ -1,10 +1,10 @@
 services:
   db:
-    container_name: mecha_db_test
+    container_name: mecha_db
     image: mysql
     restart: always
     ports:
-      - "6666:3306"
+      - "4321:3306"
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: chat_application
