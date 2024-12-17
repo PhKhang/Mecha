@@ -20,9 +20,10 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
     status ENUM('online', 'offline') NOT NULL DEFAULT 'offline',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_of_birth DATE,
-    gender ENUM("Male", "Female", "Other")
+    gender ENUM("Male", "Female", "Other"),
+    admin_action varchar(100) DEFAULT NULL
 );
 
 -- User Log
