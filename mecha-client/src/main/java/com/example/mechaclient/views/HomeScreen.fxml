@@ -67,7 +67,7 @@
         <!-- Chat View -->
         <VBox HBox.hgrow="ALWAYS">
             <HBox fx:id="chatHeader" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #7AB2D3;">
-                <Label fx:id="curUserName" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                <Label fx:id="curChatName" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
                 <Region HBox.hgrow="ALWAYS" />
                 <Label fx:id="chatOption">
                     <graphic>

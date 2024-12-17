@@ -7,17 +7,19 @@ public class ChatBox {
     public String lastMessage;
     
     public int chatId;
+    public int adminId;
 
     public enum ChatType {
         PRIVATE, GROUP
     }
 
-    public ChatBox(String name, ChatType type, String status, String lastMessage, int chatId) {
+    public ChatBox(String name, ChatType type, String status, String lastMessage, int chatId, int adminId) {
         this.name = name;
         this.type = type;
         this.status = status;
         this.lastMessage = lastMessage;
         this.chatId = chatId;
+        this.adminId = adminId;
     }
 }
 

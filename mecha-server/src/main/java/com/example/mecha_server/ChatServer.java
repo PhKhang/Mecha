@@ -184,17 +184,20 @@ public class ChatServer {
                 }
             } else if ("SEND_MESSAGE".equals(action)) {
                 int senderId = (int) in.readObject();
+                String senderFullname = (String) in.readObject();
                 int chatId = (int) in.readObject();
                 String message = (String) in.readObject();
 
                 Timestamp datetime = insertMessageIntoDatabase(chatId, senderId, message);
-                notifyChatParticipants(chatId, senderId, message, datetime);
+                notifyChatParticipants(chatId, senderId, senderFullname, message, datetime);
             } else if ("GET_FRIEND_LIST".equals(action)) {
                 int requestId = (int) in.readObject();
-                List<String[]> friendList = getFriendForUser(requestId);
-
+                List<String[]> privateChat = new ArrayList<>();
+                privateChat = getPrivateChat(requestId);
+                List<String[]> groupChat = getGroupChat(requestId);
+                privateChat.addAll(groupChat);
                 out.writeObject("respond_GET_FRIEND_LIST");
-                out.writeObject(friendList);
+                out.writeObject(privateChat);
             } else if ("LOGOUT".equals(action)) {
                 int userId = (int) in.readObject();
                 int logId = (int) in.readObject();
@@ -334,6 +337,51 @@ public class ChatServer {
                 out.writeObject("respond_GET_REPORT_LIST");
                 // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
                 out.writeObject(reportedList);
+            } else if ("GET_FRIENDS".equals(action)){
+                int userId = (int) in.readObject();
+                List <String[]> friendList = getFriends(userId);
+
+                out.writeObject("respond_GET_FRIENDS");
+                out.writeObject(friendList);
+            } else if ("CREATE_CHAT_GROUP".equals(action)){
+                String groupName = (String) in.readObject();
+                int adminId = (int) in.readObject();
+                List <Integer> userIdList = (List <Integer>) in.readObject();
+                addNewChat(groupName, false, adminId, userIdList);
+            } else if ("CHANGE_CHAT_NAME".equals(action)){
+                int chatId = (int) in.readObject();
+                String newName = (String) in.readObject();
+
+                changeChatName(chatId, newName);
+            } else if ("GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT".equals(action)){
+                int userId = (int) in.readObject();
+                int chatId = (int) in.readObject();
+
+                List <String[]> possibleMemberList = getPossibleFriendForAddingMember(userId, chatId);
+                out.writeObject("respond_GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT");
+                out.writeObject(possibleMemberList);
+            } else if ("ADD_CHAT_MEMBER".equals(action)){
+                int chatId = (int) in.readObject();
+                List <Integer> userIdList = (List <Integer>) in.readObject();
+
+                addMemberToChat(chatId, userIdList);
+            } else if ("GET_CHAT_MEMBERS".equals(action)){
+                int userId = (int) in.readObject();
+                int chatId = (int) in.readObject();
+
+                List <String[]> memberList = getMemberForUser(userId, chatId);
+                out.writeObject("respond_GET_CHAT_MEMBERS");
+                out.writeObject(memberList);
+            } else if ("REMOVE_CHAT_MEMBER".equals(action)){
+                int chatId = (int) in.readObject();
+                List <Integer> userIdList = (List <Integer>) in.readObject();
+                
+                removeMemberFromChat(chatId, userIdList);
+            } else if ("ASSIGN_ADMIN".equals(action)){
+                int chatId = (int) in.readObject();
+                int newAdminId = (int) in.readObject();
+
+                assignNewChatAdmin(chatId, newAdminId);
             } else {
                 System.out.println("Unknown action: " + action);
             }
@@ -389,6 +437,235 @@ public class ChatServer {
             System.out.println("update password complete");
             
             return true;
+        }
+        
+        private void assignNewChatAdmin(int chatId, int newAdminID) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                UPDATE chats
+                SET admin_id = ?
+                WHERE chat_id = ?
+            """);
+
+            stmt.setInt(1, newAdminID);
+            stmt.setInt(2, chatId);
+
+            stmt.executeUpdate();
+
+            System.out.println("change admin complete");
+
+            stmt = conn.prepareStatement("""
+                SELECT * FROM chat_members WHERE chat_id = ?
+            """);
+            stmt.setInt(1, chatId);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()){
+                int userId = rs.getInt("user_id");
+                if (connectedClients.containsKey(userId)) {
+                    ClientHandler recipient = connectedClients.get(userId);
+                    try {
+                        recipient.out.writeObject("CHANGE_ADMIN");
+                        recipient.out.writeObject(chatId);
+                        recipient.out.writeObject(newAdminID);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        private void removeMemberFromChat(int chatId, List<Integer> userIdList) throws SQLException {
+            List <String[]> members = new ArrayList();
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt;
+            for (int userId : userIdList) {
+                stmt = conn.prepareStatement("""
+                            DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?
+                        """);
+                stmt.setInt(1, chatId);
+                stmt.setInt(2, userId);
+
+                stmt.executeUpdate();
+
+                if (connectedClients.containsKey(userId)) {
+                    ClientHandler recipient = connectedClients.get(userId);
+                    try {
+                        recipient.out.writeObject("REMOVED_MEMBER");
+                        // recipient.out.writeObject(chatId);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            System.out.println("remove member complete");
+        }
+
+        private List <String[]> getMemberForUser(int userId, int chatId) throws SQLException {
+            List <String[]> members = new ArrayList();
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT u.user_id, u.full_name
+                FROM chat_members cm JOIN users u ON cm.user_id = u.user_id 
+                WHERE cm.chat_id = ? and u.user_id != ?
+            """);
+            stmt.setInt(1, chatId);
+            stmt.setInt(2, userId);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String memberId = rs.getString("u.user_id");
+                String memberFullname = rs.getString("u.full_name");
+
+                members.add(new String[]{memberId, memberFullname});
+            }
+            return members;
+        }
+
+        private void addMemberToChat(int chatId, List <Integer> userIdList) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt;
+
+            for (int userId : userIdList) {
+                System.out.println("about to add userid: " + userId);
+                stmt = conn.prepareStatement("""
+                            INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)
+                        """);
+                stmt.setInt(1, chatId);
+                stmt.setInt(2, userId);
+
+                stmt.executeUpdate();
+
+                if (connectedClients.containsKey(userId)) {
+                    ClientHandler recipient = connectedClients.get(userId);
+                    try {
+                        recipient.out.writeObject("ADDED_MEMBER");
+                        // recipient.out.writeObject(chatId);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        private List <String[]> getPossibleFriendForAddingMember(int userId, int chatId) throws SQLException{
+            List <String[]> possibleFriend = new ArrayList();
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT friend.friendId, u.full_name 
+                FROM 
+                (
+                    SELECT user1_id as friendId
+                    FROM friendships
+                    WHERE user2_id = ?
+                    UNION
+                    SELECT user2_id 
+                    FROM friendships
+                    WHERE user1_id = ?
+                ) as friend JOIN users u ON friend.friendId = u.user_id
+                WHERE friendId NOT IN 
+                (
+                    SELECT user_id
+                    FROM chat_members 
+                    WHERE chat_id = ?
+                )
+            """);
+            stmt.setInt(1, userId);
+            stmt.setInt(2, userId);
+            stmt.setInt(3, chatId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()){
+                String friendId = rs.getString("friend.friendId");
+                String frieldName = rs.getString("u.full_name");
+
+                possibleFriend.add(new String[]{friendId, frieldName});
+            }
+            System.out.println("friendsize: " + possibleFriend.size());
+            return possibleFriend;
+        }
+
+        private void changeChatName(int chatId, String chatName) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                UPDATE chats 
+                SET group_name = ?
+                WHERE chat_id = ?
+            """);
+
+            stmt.setString(1, chatName);
+            stmt.setInt(2, chatId);
+
+            stmt.executeUpdate();
+
+            // notify relatedUser
+            stmt = conn.prepareStatement("""
+                SELECT user_id FROM chat_members
+                WHERE chat_id = ?
+            """);
+            stmt.setInt(1, chatId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int participantId = rs.getInt("user_id");
+                if (connectedClients.containsKey(participantId)) {
+                    ClientHandler recipient = connectedClients.get(participantId);
+                    try {
+                        recipient.out.writeObject("CHAT_NAME_CHANGED");
+                        recipient.out.writeObject(chatId);
+                        recipient.out.writeObject(chatName);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        private List<String[]> getGroupChat(int userId) throws SQLException {
+            List<String[]> chatList = new ArrayList<>(); 
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT chat.chat_id, chat.group_name, chat.admin_id
+                FROM chats chat JOIN chat_members cm ON cm.chat_id  = chat.chat_id
+                WHERE chat.chat_type = 'group' AND cm.user_id = ?
+            """);
+            stmt.setInt(1, userId);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()){
+                String chatId = rs.getString("chat.chat_id");
+                String chatName = rs.getString("chat.group_name");
+                String adminId = rs.getString("chat.admin_id");
+                chatList.add(new String[]{chatId, chatName, "active", "group", adminId});
+            }
+            return chatList;
+        }
+
+        private List<String[]> getFriends(int userId) throws SQLException {
+            List<String[]> friendList = new ArrayList<>(); 
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                select * from 
+                (
+                    SELECT user2_id as id FROM friendships 
+                    WHERE user1_id = ?
+                    UNION 
+                    SELECT user1_id FROM friendships
+                    WHERE user2_id = ?
+                ) as friends JOIN users u ON (friends.id = u.user_id)
+            """);
+            stmt.setInt(1, userId);
+            stmt.setInt(2, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()){
+                String friendId = rs.getString("id");
+                String frieldName = rs.getString("full_name");
+
+                friendList.add(new String[]{friendId, frieldName});
+            }
+            System.out.println("friendsize: " + friendList.size());
+            return friendList;
         }
 
         private void reportUserInChat(int reporterId, int chatId, String reason) throws SQLException{
@@ -691,12 +968,7 @@ public class ChatServer {
 
             stmt = conn.prepareStatement("SELECT LAST_INSERT_ID() as newChatId");
             ResultSet rs = null;
-            try {
-                rs = stmt.executeQuery();
-            } catch (SQLException e) {
-                System.out.println("cant get last insert id");
-                e.printStackTrace();
-            }
+            rs = stmt.executeQuery();
             int chatId;
             if (rs.next())
                 chatId = rs.getInt("newChatId");
@@ -712,8 +984,18 @@ public class ChatServer {
                         """);
                 stmt.setInt(1, chatId);
                 stmt.setInt(2, userId);
-
+                
                 stmt.executeUpdate();
+                if (connectedClients.containsKey(userId)) {
+                    ClientHandler recipient = connectedClients.get(userId);
+                    try {
+                        recipient.out.writeObject("NEW_CHAT");
+                        // recipient.out.writeObject(chatId);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                
             }
         }
 
@@ -848,15 +1130,19 @@ public class ChatServer {
             return timestamp;
         }
 
-        private void notifyChatParticipants(int chatId, int senderId, String message, Timestamp timeSent) {
-            String query = "SELECT user_id FROM chat_members WHERE chat_id = ?";
+        private void notifyChatParticipants(int chatId, int senderId, String senderFullname, String message, Timestamp timeSent) {
+            String query = """
+                SELECT u.user_id, u.full_name FROM chat_members cm
+                JOIN users u ON u.user_id = cm.user_id 
+                WHERE chat_id = ?
+            """;
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, chatId);
                 ResultSet rs = stmt.executeQuery();
 
                 while (rs.next()) {
-                    int participantId = rs.getInt("user_id");
+                    int participantId = rs.getInt("u.user_id");
                     if (participantId != senderId && connectedClients.containsKey(participantId)) {
                         // System.out.println("userid: " + participantId + ": " +
                         // connectedClients.get(participantId).clientSocket);
@@ -866,6 +1152,7 @@ public class ChatServer {
                             recipient.out.writeObject(chatId);
                             recipient.out.writeObject(message);
                             recipient.out.writeObject(senderId);
+                            recipient.out.writeObject(senderFullname);
                             recipient.out.writeObject(timeSent);
                             // System.out.println("send signal to chatid " + chatId + "from userid " +
                             // senderId);
@@ -884,19 +1171,20 @@ public class ChatServer {
 
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement("""
-                                SELECT sender_id, content, created_at
-                                FROM messages
-                                WHERE chat_id = ?
-                                ORDER BY created_at;
-                            """)) {
+                            SELECT m.sender_id, u.full_name, m.content, m.created_at
+                            FROM messages m JOIN users u on sender_id = user_id
+                            WHERE chat_id = ?
+                            ORDER BY created_at
+                    """)) {
                 stmt.setInt(1, chatId);
                 ResultSet rs = stmt.executeQuery();
 
                 while (rs.next()) {
-                    String sender_id = rs.getString("sender_id");
-                    String content = rs.getString("content");
-                    String created_at = rs.getString("created_at");
-                    messages.add(new String[] { sender_id, content, created_at });
+                    String sender_id = rs.getString("m.sender_id");
+                    String sender_fullname = rs.getString("u.full_name");
+                    String content = rs.getString("m.content");
+                    String created_at = rs.getString("m.created_at");
+                    messages.add(new String[] { sender_id, sender_fullname, content, created_at });
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -949,28 +1237,32 @@ public class ChatServer {
             return false;
         }
 
-        private static List<String[]> getFriendForUser(int userId) {
+        private static List<String[]> getPrivateChat(int userId) {
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement("""
-                                SELECT c.chat_id, u.full_name, u.status
-                                FROM users u
-                                JOIN friendships f ON (u.user_id = f.user1_id OR u.user_id = f.user2_id)
-                                JOIN chat_members c ON (c.user_id IN(f.user1_id, f.user2_id))
-                                WHERE (f.user1_id = ? OR f.user2_id = ?) AND u.user_id != ?
-                                GROUP BY c.chat_id, u.user_id
-                                HAVING COUNT(c.chat_id) = 2;
+                                SELECT c.chat_id, u.full_name, u.status, c.admin_id
+                                FROM chats c 
+                                JOIN chat_members cm ON c.chat_id  = cm.chat_id 
+                                JOIN users u ON u.user_id  = cm.user_id 
+                                WHERE c.chat_id IN
+                                (
+                                    select c.chat_id
+                                    FROM chats c 
+                                    JOIN chat_members cm ON c.chat_id = cm.chat_id 
+                                    WHERE cm.user_id = ? AND c.chat_type = 'private' 
+                                ) AND cm.user_id != ?
                             """)) {
 
                 stmt.setInt(1, userId);
                 stmt.setInt(2, userId);
-                stmt.setInt(3, userId);
-                List<String[]> friendList = new ArrayList<>();
+
+                List<String[]> chatList = new ArrayList<>();
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    friendList.add(new String[] { rs.getString("c.chat_id"), rs.getString("u.full_name"),
-                            rs.getString("u.status") });
+                    chatList.add(new String[] { rs.getString("c.chat_id"), rs.getString("u.full_name"),
+                                rs.getString("u.status"), "private", rs.getString("c.admin_id")});
                 }
-                return friendList;
+                return chatList;
             } catch (SQLException e) {
                 e.printStackTrace();
             }

@@ -36,7 +36,9 @@ import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.ChatBox;
@@ -48,8 +50,7 @@ import com.example.mechaclient.models.ChatBox.ChatType;
 public class HomeScreenController implements ServerMessageListener{
 
     @FXML private HBox chatHeader;
-    // @FXML private ImageView curUserAva;
-    @FXML private Label curUserName;
+    @FXML private Label curChatName;
     @FXML private Label chatOption;
     @FXML private ListView<HBox> chatListView;
     @FXML private TextField messageField;
@@ -68,9 +69,18 @@ public class HomeScreenController implements ServerMessageListener{
     private HBox selectedFriendEntry;
     private ChatBox currentChat;
 
-    // for report box
-    private Dialog<String> reportDialog;
-    private TextArea reasonField;
+    // for create group feature
+    ListView<HBox> friendListView = new ListView<>();
+    ObservableList<Friend> friendList = FXCollections.observableArrayList();
+    List<Friend> addedFriends = new ArrayList<>();
+    // for add members feature
+    ListView<HBox> possibleMemberView = new ListView<>();
+    ObservableList<Friend> possibleMemberList = FXCollections.observableArrayList();
+    List<Friend> addedPossibleMember = new ArrayList<>();
+    // for remove member feature
+    ListView<HBox> memberListView = new ListView<>();
+    ObservableList<Friend> memberList = FXCollections.observableArrayList();
+    List<Friend> removedMembers = new ArrayList<>();
 
     public void initialize() {
         messageField.setOnKeyPressed(new EventHandler<KeyEvent>() {
@@ -106,6 +116,7 @@ public class HomeScreenController implements ServerMessageListener{
                         UserSession.out.writeObject("BLOCK_USER");
                         UserSession.out.writeObject(UserSession.getInstance().getUserId());
                         UserSession.out.writeObject(currentChat.chatId);
+                        UserSession.getInstance().getUserId();
                     }
                     initializeChatData();
                     chatListView.getItems().clear();
@@ -182,9 +193,317 @@ public class HomeScreenController implements ServerMessageListener{
                 reportDialog.close(); // Keep the dialog open
             });
         });
-        chatOptionMenu.getItems().addAll(blockUserItem, reportUserItem);
 
-        chatOption.setOnMouseClicked(event -> chatOptionMenu.show(chatOption, event.getScreenX(), event.getScreenY()));
+        MenuItem changeChatNameItem = new MenuItem("Change Chat Name");
+        changeChatNameItem.setOnAction(e -> {
+            TextInputDialog dialog = new TextInputDialog(currentChat.name);
+            dialog.setTitle("Change Chat Name");
+            dialog.setHeaderText("Update the chat name");
+            dialog.setContentText("Enter the new chat name:");
+
+            Optional<String> result = dialog.showAndWait();
+
+            result.ifPresent(newName -> {
+                if (newName.trim().isEmpty()) {
+                    NotificationUtil.showAlert(Alert.AlertType.INFORMATION, "Empty chat name", "Chat name cannot be empty.");
+                } else {
+                    try {
+                        UserSession.out.writeObject("CHANGE_CHAT_NAME");
+                        UserSession.out.writeObject(currentChat.chatId);
+                        UserSession.out.writeObject(newName);
+                        // currentChat.name = newName;
+                        // updateChat(currentChat);
+                        // displayChats(filteredChats);
+                    } catch (IOException ex){
+                        ex.printStackTrace();
+                    }
+                    NotificationUtil.showAlert(Alert.AlertType.INFORMATION, "Success", "Change chat name successfully");
+                }
+            });
+        });
+
+        MenuItem addMemberItem = new MenuItem("Add Member");
+        addMemberItem.setOnAction(e -> {
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.NONE);
+            popupStage.setTitle("Add Members");
+        
+            // UI Components
+            Label friendSearchLabel = new Label("Search for friends:");
+            TextField friendSearchField = new TextField();
+            friendSearchField.setPromptText("Search...");
+        
+            possibleMemberView = new ListView<>();
+            possibleMemberView.setMaxHeight(150); 
+
+            VBox addedFriendsBox = new VBox(5);
+            ScrollPane addedFriendsScrollPane = new ScrollPane(addedFriendsBox);
+            addedFriendsScrollPane.setFitToWidth(true);
+            addedFriendsScrollPane.setPrefHeight(150);
+        
+            // Fetching friends from the server
+            try {
+                UserSession.out.writeObject("GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(currentChat.chatId);
+                // Replace with logic to receive the friend list and populate `friendList`
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        
+            possibleMemberView.setItems(possibleMemberList.stream()
+                    .map(this::createFriendListItem)
+                    .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+        
+            // Filtering friend list
+            friendSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                String filter = newValue.toLowerCase();
+                possibleMemberView.setItems(possibleMemberList.stream()
+                        .filter(friend -> friend.fullName.toLowerCase().contains(filter))
+                        .map(this::createFriendListItem)
+                        .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+            });
+        
+            // Handle friend selection
+            possibleMemberView.setOnMouseClicked(event -> {
+                HBox selectedItem = possibleMemberView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null) {
+                    Friend selectedFriend = (Friend) selectedItem.getUserData();
+                    addedPossibleMember.add(selectedFriend);
+        
+                    HBox addedFriendItem = createAddedFriendItem(possibleMemberView, possibleMemberList, selectedFriend, addedPossibleMember);
+                    addedFriendsBox.getChildren().add(addedFriendItem);
+                    
+                    friendSearchField.clear();
+                    possibleMemberList.remove(selectedFriend);
+                    possibleMemberView.setItems(possibleMemberList.stream()
+                            .map(this::createFriendListItem)
+                            .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                }
+            });
+        
+            // Confirm and Cancel buttons
+            Button confirmButton = new Button("Confirm");
+            confirmButton.setOnAction(event -> {
+                // Pass the added friends list for server processing
+                System.out.println("Added Friends: " + addedPossibleMember);
+                if (addedPossibleMember.size() < 1){
+                    NotificationUtil.showAlert(Alert.AlertType.INFORMATION,"", "Please add at least 1 person.");
+                } else {
+                    addMemberToChat(currentChat.chatId, addedPossibleMember);
+                    popupStage.close();
+                }
+                
+            });
+        
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setOnAction(event -> popupStage.close());
+        
+            // Layout
+            HBox buttonBox = new HBox(10, confirmButton, cancelButton);
+            buttonBox.setAlignment(Pos.CENTER);
+        
+            VBox layout = new VBox(10,
+                    friendSearchLabel, friendSearchField,
+                    possibleMemberView,
+                    new Label("Added Members:"), addedFriendsScrollPane,
+                    buttonBox);
+            layout.setPadding(new Insets(20));
+        
+            Scene scene = new Scene(layout, 300, 500);
+            popupStage.setScene(scene);
+            popupStage.showAndWait();
+        });
+
+        MenuItem removeMemberItem = new MenuItem("Remove Member");
+        removeMemberItem.setOnAction(e -> {
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.NONE);
+            popupStage.setTitle("Remove Member");
+
+            // UI Elements
+            Label memberSearchLabel = new Label("Search Members:");
+            TextField memberSearchField = new TextField();
+            memberSearchField.setPromptText("Search current members");
+            memberListView.setMaxHeight(150);
+            // Fetching current members from the server
+            try {
+                UserSession.out.writeObject("GET_CHAT_MEMBERS");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(currentChat.chatId);
+                // Server response logic will populate 'memberList' (handled by you)
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            memberListView.setItems(memberList.stream()
+                    .map(this::createFriendListItem)
+                    .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+
+            // Filtering current members based on search
+            memberSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                String lowerCaseFilter = newValue.toLowerCase();
+                memberListView.setItems(memberList.stream()
+                        .filter(member -> member.fullName.toLowerCase().contains(lowerCaseFilter))
+                        .map(this::createFriendListItem)
+                        .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+            });
+
+            // Handle member removal
+            VBox removedMembersBox = new VBox(5);
+            removedMembersBox.setStyle("-fx-padding: 10;");
+            ScrollPane scrollPane = new ScrollPane(removedMembersBox);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setPrefHeight(150);
+
+            memberListView.setOnMouseClicked(event -> {
+                HBox selectedItem = memberListView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null) {
+                    Friend selectedMember = (Friend) selectedItem.getUserData();
+                    removedMembers.add(selectedMember);
+
+                    HBox removedMemberItem = createAddedFriendItem(memberListView, memberList, selectedMember, removedMembers);
+                    removedMembersBox.getChildren().add(removedMemberItem);
+
+                    memberList.remove(selectedMember);
+                    memberListView.setItems(memberList.stream()
+                            .map(this::createFriendListItem)
+                            .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                }
+            });
+
+            // Confirm and Cancel buttons
+            Button confirmButton = new Button("Confirm");
+            confirmButton.setStyle("-fx-background-color: red; -fx-text-fill: white;");
+            confirmButton.setOnAction(event -> {
+                // Send the removed members back to the server
+                if (removedMembers.isEmpty()) {
+                    NotificationUtil.showAlert(Alert.AlertType.INFORMATION, "No Members Selected", "Please select members to remove.");
+                } else {
+                    // Pass removedMembers list for handling
+                    // handleRemovedMembers(removedMembers);
+                    System.out.println("removed member " + removedMembers);
+                    removeMemberFromChat(currentChat.chatId, removedMembers);
+                    popupStage.close();
+                }
+            });
+
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+            cancelButton.setOnAction(event -> popupStage.close());
+
+            HBox buttonBox = new HBox(10, confirmButton, cancelButton);
+            buttonBox.setAlignment(Pos.CENTER);
+
+            // Main layout
+            VBox layout = new VBox(10,
+                    memberSearchLabel, memberSearchField,
+                    memberListView,
+                    new Label("Removed Members:"), scrollPane,
+                    buttonBox
+            );
+            layout.setPadding(new Insets(20));
+            layout.setAlignment(Pos.TOP_CENTER);
+
+            Scene scene = new Scene(layout, 300, 500);
+            popupStage.setScene(scene);
+            popupStage.showAndWait();
+        });
+
+        MenuItem assignAdminItem = new MenuItem("Assign Admin");
+        assignAdminItem.setOnAction(e -> {
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.setTitle("Assign Admin");
+        
+            // UI Elements
+            Label memberLabel = new Label("Select a Member to assign as Admin:");
+            ComboBox<Friend> memberComboBox = new ComboBox<>();
+            memberComboBox.setPromptText("Select a member");
+        
+            Button confirmButton = new Button("Confirm");
+            confirmButton.setStyle("-fx-background-color: green; -fx-text-fill: white;");
+        
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
+        
+
+            ObservableList<Friend> memberToAssignAdminList = FXCollections.observableArrayList();
+            try {
+                UserSession.out.writeObject("GET_CHAT_MEMBERS");
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(currentChat.chatId);
+        
+                memberToAssignAdminList = memberList; // reuse from memberList in remove member function
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        
+            memberComboBox.setItems(memberToAssignAdminList);
+            memberComboBox.setCellFactory(param -> new ListCell<Friend>() {
+                @Override
+                protected void updateItem(Friend friend, boolean empty) {
+                    super.updateItem(friend, empty);
+                    setText((friend == null || empty) ? "" : friend.fullName);
+                }
+            });
+            memberComboBox.setButtonCell(new ListCell<Friend>() {
+                @Override
+                protected void updateItem(Friend friend, boolean empty) {
+                    super.updateItem(friend, empty);
+                    setText((friend == null || empty) ? "" : friend.fullName);
+                }
+            });
+        
+            // Confirmation logic
+            confirmButton.setOnAction(event -> {
+                Friend selectedMember = memberComboBox.getSelectionModel().getSelectedItem();
+                if (selectedMember == null) {
+                    NotificationUtil.showAlert(Alert.AlertType.WARNING, "No Member Selected", "Please select a member to assign as admin.");
+                } else {
+                    // Send selected member to the server for admin assignment
+                    try {
+                        UserSession.out.writeObject("ASSIGN_ADMIN");
+                        UserSession.out.writeObject(currentChat.chatId);
+                        UserSession.out.writeObject(selectedMember.userId);
+        
+                        NotificationUtil.showAlert(Alert.AlertType.INFORMATION, "Admin Assigned", selectedMember.fullName + " is now an admin.");
+                        popupStage.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                        NotificationUtil.showAlert(Alert.AlertType.ERROR, "Error", "Failed to assign admin role.");
+                    }
+                }
+            });
+        
+            cancelButton.setOnAction(event -> popupStage.close());
+        
+            // Layout
+            HBox buttonBox = new HBox(10, confirmButton, cancelButton);
+            buttonBox.setAlignment(Pos.CENTER);
+        
+            VBox layout = new VBox(15, memberLabel, memberComboBox, buttonBox);
+            layout.setPadding(new Insets(20));
+            layout.setAlignment(Pos.CENTER);
+        
+            Scene scene = new Scene(layout, 300, 200);
+            popupStage.setScene(scene);
+            popupStage.showAndWait();
+        });
+        chatOption.setOnMouseClicked(event -> {
+            chatOptionMenu.getItems().clear();
+            if (currentChat != null) {
+                if (currentChat.type == ChatBox.ChatType.PRIVATE) {
+                    chatOptionMenu.getItems().addAll(blockUserItem, reportUserItem);
+                } else if (currentChat.type == ChatBox.ChatType.GROUP) {
+                    chatOptionMenu.getItems().addAll(changeChatNameItem, addMemberItem);
+                    if (isUserAdmin()) {
+                        chatOptionMenu.getItems().addAll(removeMemberItem, assignAdminItem);
+                    }
+                }
+            }
+            chatOptionMenu.show(chatOption, event.getScreenX(), event.getScreenY());
+        });
 
         ContextMenu settingsMenu = new ContextMenu();
         MenuItem friendManagementItem = new MenuItem("Friend Management");
@@ -199,13 +518,43 @@ public class HomeScreenController implements ServerMessageListener{
         logoutItem.setOnAction(this::handleLogout);
     }
 
+    private void removeMemberFromChat(int chatId, List<Friend> removedUser){
+        try {
+            UserSession.out.writeObject("REMOVE_CHAT_MEMBER");
+            UserSession.out.writeObject(chatId);
+            List<Integer> userIds = removedUser.stream()
+                                  .map(friend -> friend.userId)
+                                  .collect(Collectors.toList());
+            UserSession.out.writeObject(userIds);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void addMemberToChat(int chatId, List <Friend> addedUser){
+        try {
+            UserSession.out.writeObject("ADD_CHAT_MEMBER");
+            UserSession.out.writeObject(chatId);
+            List<Integer> userIds = addedUser.stream()
+                                  .map(friend -> friend.userId)
+                                  .collect(Collectors.toList());
+            // System.out.println("chat " + groupName +" created, member num: " + userIds.size());
+            UserSession.out.writeObject(userIds);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+    
+    private boolean isUserAdmin() {
+        return currentChat.adminId == UserSession.getInstance().getUserId();
+    }
+
     private void reportUser(int chatId, String reason){
         try{
             UserSession.out.writeObject("REPORT_USER");
             UserSession.out.writeObject(UserSession.getInstance().getUserId());
             UserSession.out.writeObject(chatId);
             UserSession.out.writeObject(reason);
-
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -253,6 +602,11 @@ public class HomeScreenController implements ServerMessageListener{
         friendListVBox.getChildren().clear();
         for (ChatBox chat : chats) {
             HBox chatEntry = createChatEntry(chat);
+            if (currentChat != null && chat.chatId == currentChat.chatId){
+                chatEntry.getStyleClass().add("selected");
+                curChatName.setText(chat.name);
+                selectedFriendEntry = chatEntry;
+            }
             friendListVBox.getChildren().add(chatEntry);
         }
     }
@@ -304,7 +658,7 @@ public class HomeScreenController implements ServerMessageListener{
     }
 
     private void updateChat(ChatBox chat) {
-        curUserName.setText(chat.name);
+        curChatName.setText(chat.name);
         chatListView.getItems().clear();
         try {
             UserSession.out.writeObject("GET_CHAT_MESSAGES");
@@ -323,10 +677,11 @@ public class HomeScreenController implements ServerMessageListener{
             try {
                 UserSession.out.writeObject("SEND_MESSAGE");
                 UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(UserSession.getInstance().getFullname());
                 UserSession.out.writeObject(currentChat.chatId);
                 UserSession.out.writeObject(message);
     
-                addMessage(message, true, Timestamp.from(Instant.now()));
+                addMessage(message, UserSession.getInstance().getUserId(), UserSession.getInstance().getFullname(), Timestamp.from(Instant.now()));
                 messageField.clear();
     
             } catch (Exception e) {
@@ -335,39 +690,49 @@ public class HomeScreenController implements ServerMessageListener{
         }
     }
 
-    private void addMessage(String message, boolean isUser, Timestamp timeSent) {
+    private void addMessage(String message, int senderId, String senderFullname, Timestamp timeSent) {
         HBox messageBox = new HBox();
+        if (currentChat.type == ChatType.PRIVATE)
+            System.out.println("this message is for private chat");
+        else 
+            System.out.println("this message is for group chat");
         messageBox.setPadding(new Insets(5, 10, 5, 10));
         messageBox.setMaxWidth(Double.MAX_VALUE);
 
         TextFlow textFlow = new TextFlow(new Text(message));
         textFlow.setPadding(new Insets(5, 10, 5, 10));
-        textFlow.setStyle("-fx-background-color: " + (isUser ? "#d1e7ff" : "#f0f0f0") + "; " +
+        textFlow.setStyle("-fx-background-color: " + (senderId == UserSession.getInstance().getUserId() ? "#d1e7ff" : "#f0f0f0") + "; " +
                         "-fx-background-radius: 10px;");
 
         Label timeLabel = new Label(formatTime(timeSent));
         timeLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 10px;");
 
-        HBox messageContainer = new HBox(5); // 5 is the spacing between the message and time
+        VBox fullMessageContainer = new VBox(2);
+        HBox messageContainer = new HBox(5);
 
-        if (isUser) {
+        if (senderId == UserSession.getInstance().getUserId()) {
             messageBox.setAlignment(Pos.CENTER_RIGHT);
             textFlow.setMaxWidth(chatListView.getWidth() * 0.75);
             messageContainer.setAlignment(Pos.CENTER_RIGHT);
             messageContainer.getChildren().addAll(timeLabel, textFlow);
         } else {
+            if (currentChat.type == ChatType.GROUP){
+                Text senderNameText = new Text(senderFullname);
+                senderNameText.setStyle("-fx-fill: #888888;"); // Set sender's name to grey
+                fullMessageContainer.getChildren().add(senderNameText);
+            }
             messageBox.setAlignment(Pos.CENTER_LEFT);
             textFlow.setMaxWidth(chatListView.getWidth() * 0.75);
             messageContainer.setAlignment(Pos.CENTER_LEFT);
             messageContainer.getChildren().addAll(textFlow, timeLabel);
         }
-
-        messageBox.getChildren().add(messageContainer);
+        fullMessageContainer.getChildren().add(messageContainer);
+        messageBox.getChildren().add(fullMessageContainer);
         messageBox.setOnMouseClicked(e -> {
             System.out.println("message clicked");
         });
         chatListView.getItems().add(messageBox);
-        if (isUser) // if the user is sending this then redirect to the last message
+        if (senderId == UserSession.getInstance().getUserId()) // if the user is sending this then redirect to the last message
             chatListView.scrollTo(chatListView.getItems().size() - 1);
     }
 
@@ -387,20 +752,6 @@ public class HomeScreenController implements ServerMessageListener{
         }
     }
 
-    // private void startResponseListener() {
-    //     responseListenerThread = new Thread(() -> {
-    //         try {
-    //             while (threadAlive) {
-                    
-    //             }
-    //         } catch (IOException | ClassNotFoundException e) {
-    //             System.out.println("Error reading from server or connection lost: " + e.getMessage());
-    //         }
-    //     });
-    //     responseListenerThread.start(); 
-        
-    // }
-
     private void updateSelectedFriend(HBox newSelection) {
         if (selectedFriendEntry != null) {
             selectedFriendEntry.getStyleClass().remove("selected");
@@ -409,60 +760,8 @@ public class HomeScreenController implements ServerMessageListener{
         selectedFriendEntry = newSelection;
     }
 
-
-    // @FXML
-    // private void showCreateGroupPopup() {
-    //     Stage popupStage = new Stage();
-    //     popupStage.initModality(Modality.NONE);
-    //     popupStage.setTitle("Create Group");
-    
-    //     // Group name input
-    //     Label groupNameLabel = new Label("Group Name:");
-    //     TextField groupNameField = new TextField();
-    //     groupNameField.setPromptText("Enter group name");
-    
-    //     // Friend search bar
-    //     Label friendSearchLabel = new Label("Add Friends:");
-    //     TextField friendSearchField = new TextField();
-    //     friendSearchField.setPromptText("Search for friends");
-    
-    //     // Added friends display
-    //     Label addedFriendsLabel = new Label("Added Friends:");
-    //     TextArea addedFriendsField = new TextArea();
-    //     addedFriendsField.setEditable(false);
-    //     addedFriendsField.setPrefHeight(80);
-    
-    //     // Confirm and Cancel buttons
-    //     Button confirmButton = new Button("Confirm");
-    //     confirmButton.setStyle("-fx-background-color: blue; -fx-text-fill: white;");
-    //     confirmButton.setOnAction(e -> popupStage.close());
-    
-    //     Button cancelButton = new Button("Cancel");
-    //     cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
-    //     cancelButton.setOnAction(e -> popupStage.close());
-    
-    //     // Layout for buttons
-    //     HBox buttonBox = new HBox(10, confirmButton, cancelButton);
-    //     buttonBox.setAlignment(Pos.CENTER);
-    
-    //     // Main layout
-    //     VBox layout = new VBox(10,
-    //             groupNameLabel, groupNameField,
-    //             friendSearchLabel, friendSearchField,
-    //             addedFriendsLabel, addedFriendsField,
-    //             buttonBox
-    //     );
-    //     layout.setPadding(new Insets(20));
-    //     layout.setAlignment(Pos.TOP_CENTER);
-    
-    //     // Scene and show
-    //     Scene scene = new Scene(layout, 300, 400);
-    //     popupStage.setScene(scene);
-    //     popupStage.showAndWait();
-    // }
     @FXML
     private void showCreateGroupPopup() {
-        // Create a new stage for the popup
         Stage popupStage = new Stage();
         popupStage.initModality(Modality.NONE);
         popupStage.setTitle("Create Group");
@@ -475,47 +774,69 @@ public class HomeScreenController implements ServerMessageListener{
         TextField friendSearchField = new TextField();
         friendSearchField.setPromptText("Search for friends");
 
-        ListView<String> friendListView = new ListView<>();
-        friendListView.setMaxHeight(100); // Limit the dropdown height
+        friendListView = new ListView<>();
+        friendListView.setMaxHeight(150);
+        // getting friend for display in the server
+        try {
+            UserSession.out.writeObject("GET_FRIENDS");
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
 
-        ObservableList<String> friendList = FXCollections.observableArrayList("Alice", "Bob", "Charlie", "David");
-        friendListView.setItems(friendList);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        friendListView.setItems(friendList.stream()
+            .map(this::createFriendListItem)
+            .collect(Collectors.toCollection(FXCollections::observableArrayList)));
 
         Label addedFriendsLabel = new Label("Added Friends:");
-        VBox addedFriendsBox = new VBox(5); // Holds the added friends dynamically
-
+        VBox addedFriendsBox = new VBox(5); 
+        addedFriendsBox.setStyle("-fx-padding: 10;");
+        ScrollPane scrollPane = new ScrollPane(addedFriendsBox);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(150);
 
         friendSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
             String lowerCaseFilter = newValue.toLowerCase();
-            if (lowerCaseFilter.isEmpty()) {
-                friendListView.setItems(friendList);
-            } else {
-                friendListView.setItems(friendList.filtered(friend -> friend.toLowerCase().contains(lowerCaseFilter)));
-            }
+            friendListView.setItems(friendList.stream()
+                .filter(friend -> friend.fullName.toLowerCase().contains(lowerCaseFilter))
+                .map(this::createFriendListItem)
+                .collect(Collectors.toCollection(FXCollections::observableArrayList)));
         });
 
         // Handle friend selection from the dropdown
         friendListView.setOnMouseClicked(event -> {
-            String selectedFriend = friendListView.getSelectionModel().getSelectedItem();
-            if (selectedFriend != null) {
-                HBox addedFriendItem = new HBox(5);
-                Label friendLabel = new Label(selectedFriend);
-
-                Button removeButton = new Button("x");
-                removeButton.setOnAction(e -> addedFriendsBox.getChildren().remove(addedFriendItem));
-
-                addedFriendItem.getChildren().addAll(friendLabel, removeButton);
+            HBox selectedItem = friendListView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null) {
+                Friend selectedFriend = (Friend) selectedItem.getUserData();
+                addedFriends.add(selectedFriend);
+                HBox addedFriendItem = createAddedFriendItem(friendListView, friendList, selectedFriend, addedFriends);
                 addedFriendsBox.getChildren().add(addedFriendItem);
 
                 friendSearchField.clear();
-                friendListView.setItems(friendList); // Reset the dropdown to show all friends
+                friendList.remove(selectedFriend);
+                friendListView.setItems(friendList.stream()
+                    .map(this::createFriendListItem)
+                    .collect(Collectors.toCollection(FXCollections::observableArrayList)));
             }
         });
 
         // Confirm and Cancel buttons
         Button confirmButton = new Button("Confirm");
         confirmButton.setStyle("-fx-background-color: blue; -fx-text-fill: white;");
-        confirmButton.setOnAction(e -> popupStage.close());
+        confirmButton.setOnAction(e -> {
+            String groupName = groupNameField.getText().trim();
+            // System.out.println("addedFriend size before the function: " + addedFriends + ", friendList: " + friendList.size());
+            if (groupName.isEmpty()) {
+                NotificationUtil.showAlert(Alert.AlertType.INFORMATION,"Empty group name", "Please enter a group name.");
+            } else if (addedFriends.size() < 2){
+                NotificationUtil.showAlert(Alert.AlertType.INFORMATION,"Not enough people", "Please add at least 2 friend.");
+            } else {
+                System.out.println("created group, member: " + addedFriends);
+                createGroupChat(groupName, addedFriends);
+                popupStage.close();
+            }
+            // popupStage.close();
+        });
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setStyle("-fx-background-color: grey; -fx-text-fill: white;");
@@ -524,24 +845,80 @@ public class HomeScreenController implements ServerMessageListener{
         // Layout for buttons
         HBox buttonBox = new HBox(10, confirmButton, cancelButton);
         buttonBox.setAlignment(Pos.CENTER);
-
+        
         // Main layout
         VBox layout = new VBox(10,
                 groupNameLabel, groupNameField,
                 friendSearchLabel, friendSearchField,
                 friendListView,
-                addedFriendsLabel, addedFriendsBox,
+                addedFriendsLabel, scrollPane,
                 buttonBox
         );
         layout.setPadding(new Insets(20));
         layout.setAlignment(Pos.TOP_CENTER);
 
-        // Set the scene and show the popup
         Scene scene = new Scene(layout, 300, 500);
         popupStage.setScene(scene);
         popupStage.showAndWait();
     }
+
+    private HBox createFriendListItem(Friend friend) {
+        if (friend == null)
+            System.out.println("This Friend is null!");
+        Label nameLabel = new Label(friend.fullName);
+        HBox item = new HBox(10, nameLabel);
+        item.setAlignment(Pos.CENTER_LEFT);
+        item.setUserData(friend);
+        return item;
+    }
     
+    private HBox createAddedFriendItem(ListView<HBox> _friendListView, ObservableList<Friend> _friendList, Friend friend, List<Friend> AddedList) {
+        Label friendLabel = new Label(friend.fullName);
+        Button removeButton = new Button("×");
+        removeButton.setStyle("-fx-background-radius: 50%; -fx-min-width: 20px; -fx-min-height: 20px; -fx-max-width: 20px; -fx-max-height: 20px; -fx-font-size: 14px; -fx-padding: 0;");
+    
+
+        HBox addedFriendItem = new HBox(5, friendLabel, removeButton);
+        addedFriendItem.setAlignment(Pos.CENTER_LEFT);
+        
+        removeButton.setOnAction(e -> {
+            AddedList.remove(friend);
+            ((VBox) addedFriendItem.getParent()).getChildren().remove(addedFriendItem);
+            _friendList.add(friend);
+            _friendListView.setItems(_friendList.stream()
+                .map(this::createFriendListItem)
+                .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+        });
+        
+        return addedFriendItem;
+    }
+
+    private class Friend {
+        public String fullName;
+        public int userId;
+    
+        Friend(String fullName, int userId) {
+            this.fullName = fullName;
+            this.userId = userId;
+        }
+    }
+
+    private void createGroupChat(String groupName, List<Friend> friendList){
+        try {
+            UserSession.out.writeObject("CREATE_CHAT_GROUP");
+            UserSession.out.writeObject(groupName);
+            UserSession.out.writeObject(UserSession.getInstance().getUserId());
+            List<Integer> userIds = friendList.stream()
+                                  .map(friend -> friend.userId)
+                                  .collect(Collectors.toList());
+                                  userIds.add(UserSession.getInstance().getUserId());
+            // System.out.println("chat " + groupName +" created, member num: " + userIds.size());
+            UserSession.out.writeObject(userIds);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void getAllChat() {
         filteredChats.setPredicate(chat -> true);
@@ -626,14 +1003,18 @@ public class HomeScreenController implements ServerMessageListener{
     public void onMessageReceived(String serverMessage) {
         try {
             if ("respond_GET_FRIEND_LIST".equals(serverMessage)) {
-                System.out.println("process friendlist...");
                 List<String[]> friendList = (List<String[]>) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     for (String[] friend : friendList) {
                         int chatId = Integer.parseInt(friend[0]);
                         String fullname = friend[1];
                         String status = friend[2];
-                        allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId));
+                        String chatType = friend[3];
+                        int adminId = Integer.parseInt(friend[4]);
+                        if (chatType.equals("private"))
+                            allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId, adminId));
+                        else
+                            allChats.add(new ChatBox(fullname, ChatType.GROUP, status, "none", chatId, adminId));
                     }
                     Platform.runLater(() -> {
                         displayChats(filteredChats);
@@ -645,11 +1026,11 @@ public class HomeScreenController implements ServerMessageListener{
                 int chatId = (int) UserSession.in.readObject();
                 String message = (String) UserSession.in.readObject();
                 int senderId = (int) UserSession.in.readObject();
+                String senderFullname = (String) UserSession.in.readObject();
                 Timestamp timeSent = (Timestamp) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     if (chatId == currentChat.chatId) {
-                        boolean isUser = senderId == UserSession.getInstance().getUserId();
-                        addMessage(message, isUser, timeSent);
+                        addMessage(message, senderId, senderFullname, timeSent);
                     }
                 });
             }
@@ -657,16 +1038,83 @@ public class HomeScreenController implements ServerMessageListener{
                 List<String[]> messages = (List<String[]>) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     for (String[] msg : messages) {
-                        String senderId = msg[0];
-                        String message = msg[1];
-                        String timeSent = msg[2];
-                        boolean isUser = senderId.equals(String.valueOf(UserSession.getInstance().getUserId()));
+                        int senderId = Integer.parseInt(msg[0]);
+                        String senderFullname = msg[1];
+                        String message = msg[2];
+                        String timeSent = msg[3];
                         
                         Timestamp timestamp = Timestamp.valueOf(timeSent);
-                        addMessage(message, isUser, timestamp);
+                        addMessage(message, senderId, senderFullname, timestamp);
                     }
                 });
             }
+            if ("respond_GET_FRIENDS".equals(serverMessage)){
+                List<String[]> receivedFriendList = (List<String[]>) UserSession.in.readObject();
+                
+                Platform.runLater(() -> {
+                    friendList.clear();
+                    for (String[] friend : receivedFriendList) {
+                        friendList.add(new Friend(friend[1], Integer.parseInt(friend[0])));
+                    }
+                    
+                    friendListView.setItems(friendList.stream()
+                        .map(this::createFriendListItem)
+                        .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                });
+            }
+            if ("respond_GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT".equals(serverMessage)){
+                List<String[]> possibleFriend = (List<String[]>) UserSession.in.readObject();
+
+                Platform.runLater(() -> {
+                    possibleMemberList.clear();
+                    for (String[] friend : possibleFriend) {
+                        possibleMemberList.add(new Friend(friend[1], Integer.parseInt(friend[0])));
+                    }
+                    
+                    possibleMemberView.setItems(possibleMemberList.stream()
+                        .map(this::createFriendListItem)
+                        .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                });
+            }
+            if ("respond_GET_CHAT_MEMBERS".equals(serverMessage)){
+                List<String[]> receivedMemberList = (List<String[]>) UserSession.in.readObject(); 
+
+                Platform.runLater(() -> {
+                    memberList.clear();
+                    for (String[] friend : receivedMemberList) {
+                        memberList.add(new Friend(friend[1], Integer.parseInt(friend[0])));
+                    }
+                    
+                    memberListView.setItems(memberList.stream()
+                        .map(this::createFriendListItem)
+                        .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                });
+            }
+            if ("CHAT_NAME_CHANGED".equals(serverMessage)){
+                int chatId = (int) UserSession.in.readObject();
+                String chatName = (String) UserSession.in.readObject();
+
+                initializeChatData();
+            }
+            if ("NEW_CHAT".equals(serverMessage)){
+                initializeChatData();
+            }
+            if ("REMOVED_MEMBER".equals(serverMessage)){
+                int chatId = (int) UserSession.in.readObject();
+                if (chatId == currentChat.chatId)
+                    messageFieldFrame.setVisible(false);
+                    
+                initializeChatData();
+            }
+            if ("ADDED_MEMBER".equals(serverMessage)){
+                initializeChatData();
+            } else if ("CHANGE_ADMIN".equals(serverMessage)){
+                int chatId = (int) UserSession.in.readObject();
+                int newAdminId = (int) UserSession.in.readObject();
+                initializeChatData();
+                if (chatId == currentChat.chatId)
+                    currentChat.adminId = newAdminId;
+            } 
         } catch (Exception e){
             System.out.println("error handling response from server in home controller: ");
             e.printStackTrace();
