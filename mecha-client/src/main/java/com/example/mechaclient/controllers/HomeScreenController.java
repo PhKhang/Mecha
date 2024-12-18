@@ -26,6 +26,7 @@ import javafx.stage.Modality;
 import javafx.application.Platform;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -36,6 +37,7 @@ import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,6 +59,7 @@ public class HomeScreenController implements ServerMessageListener{
     @FXML private ImageView settings;
     @FXML private VBox friendListVBox;
     @FXML private TextField searchField;
+    @FXML private HBox searchMessageOption;
 
     @FXML private Button allButton;
     @FXML private Button privateButton;
@@ -82,6 +85,9 @@ public class HomeScreenController implements ServerMessageListener{
     ObservableList<Friend> memberList = FXCollections.observableArrayList();
     List<Friend> removedMembers = new ArrayList<>();
 
+    // for finding message
+    private boolean isDirectingMessage = false;
+    private int directedmMessageId = -1;
     public void initialize() {
         messageField.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
@@ -96,6 +102,9 @@ public class HomeScreenController implements ServerMessageListener{
         chatOption.setVisible(false);
         fullnameLabel.setText(UserSession.getInstance().getFullname());
         UserSession.getInstance().addMessageListener(this);
+
+        searchMessageOption.setVisible(false);
+        searchMessageOption.setManaged(false);
         // startResponseListener();
         setupContextMenus();
         setupChatListView();
@@ -150,7 +159,6 @@ public class HomeScreenController implements ServerMessageListener{
             Button cancelButton = new Button("Cancel");
             cancelButton.getStyleClass().add("dialog-button-cancel");
 
-            // HBox for buttons
             HBox buttonBox = new HBox(10, confirmButton, cancelButton);
             buttonBox.setAlignment(Pos.CENTER);
 
@@ -170,13 +178,11 @@ public class HomeScreenController implements ServerMessageListener{
             // Handle Confirm button click
             confirmButton.setOnAction(ev -> {
                 if (!reasonField.getText().trim().isEmpty()) {
-                    // Show confirmation alert
                     Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
                     confirmationAlert.setTitle("Confirm Report");
                     confirmationAlert.setHeaderText("Do you want to report this user?");
                     confirmationAlert.setContentText("This will be sent to the administrator for review");
 
-                    // Wait for user response
                     Optional<ButtonType> result = confirmationAlert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.OK) {
                         reportUser(currentChat.chatId, reasonField.getText().trim());
@@ -228,7 +234,6 @@ public class HomeScreenController implements ServerMessageListener{
             popupStage.initModality(Modality.NONE);
             popupStage.setTitle("Add Members");
         
-            // UI Components
             Label friendSearchLabel = new Label("Search for friends:");
             TextField friendSearchField = new TextField();
             friendSearchField.setPromptText("Search...");
@@ -241,12 +246,10 @@ public class HomeScreenController implements ServerMessageListener{
             addedFriendsScrollPane.setFitToWidth(true);
             addedFriendsScrollPane.setPrefHeight(150);
         
-            // Fetching friends from the server
             try {
                 UserSession.out.writeObject("GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT");
                 UserSession.out.writeObject(UserSession.getInstance().getUserId());
                 UserSession.out.writeObject(currentChat.chatId);
-                // Replace with logic to receive the friend list and populate `friendList`
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -285,7 +288,6 @@ public class HomeScreenController implements ServerMessageListener{
             // Confirm and Cancel buttons
             Button confirmButton = new Button("Confirm");
             confirmButton.setOnAction(event -> {
-                // Pass the added friends list for server processing
                 System.out.println("Added Friends: " + addedPossibleMember);
                 if (addedPossibleMember.size() < 1){
                     NotificationUtil.showAlert(Alert.AlertType.INFORMATION,"", "Please add at least 1 person.");
@@ -331,7 +333,6 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject("GET_CHAT_MEMBERS");
                 UserSession.out.writeObject(UserSession.getInstance().getUserId());
                 UserSession.out.writeObject(currentChat.chatId);
-                // Server response logic will populate 'memberList' (handled by you)
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -538,7 +539,6 @@ public class HomeScreenController implements ServerMessageListener{
             List<Integer> userIds = addedUser.stream()
                                   .map(friend -> friend.userId)
                                   .collect(Collectors.toList());
-            // System.out.println("chat " + groupName +" created, member num: " + userIds.size());
             UserSession.out.writeObject(userIds);
         } catch (IOException e){
             e.printStackTrace();
@@ -584,8 +584,36 @@ public class HomeScreenController implements ServerMessageListener{
                 }
                 return chat.name.toLowerCase().contains(newValue.toLowerCase());
             });
+
             displayChats(filteredChats);
+
+            // Add or update the "Send message" option
+            if (!newValue.isEmpty()) {
+                searchMessageOption.getChildren().clear();
+                Label optionLabel = new Label("Search message for \"" + newValue + "\"");
+                searchMessageOption.getChildren().add(optionLabel);
+                searchMessageOption.setVisible(true);
+                searchMessageOption.setManaged(true);
+
+                searchMessageOption.setOnMouseClicked(event -> {
+                    System.out.println("search message for: " + newValue);
+                    // TODO: implement search message
+                    try {
+                        UserSession.out.writeObject("SEARCH_MESSAGE");
+                        UserSession.out.writeObject(newValue);
+                        UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                    } catch (IOException e){
+                        e.printStackTrace();
+                    }
+                });
+
+            } else {
+                searchMessageOption.setVisible(false);
+                searchMessageOption.setManaged(false);
+            }
         });
+
+        
     }
 
     private void initializeChatData() {
@@ -621,7 +649,7 @@ public class HomeScreenController implements ServerMessageListener{
         statusLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666666;");
 
         // Create status indicator (green or grey dot)
-        Circle statusIndicator = new Circle(5); // 5 is the radius of the circle
+        Circle statusIndicator = new Circle(5);
         if (chat.status.equalsIgnoreCase("online")) {
             statusIndicator.setFill(Paint.valueOf("green"));
         } else {
@@ -629,7 +657,7 @@ public class HomeScreenController implements ServerMessageListener{
         }
 
         // Create horizontal box for name and status
-        HBox nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel); // 5px spacing
+        HBox nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel);
         nameStatusBox.setAlignment(Pos.CENTER_LEFT);
 
         // Create last message label
@@ -680,8 +708,9 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject(UserSession.getInstance().getFullname());
                 UserSession.out.writeObject(currentChat.chatId);
                 UserSession.out.writeObject(message);
-    
-                addMessage(message, UserSession.getInstance().getUserId(), UserSession.getInstance().getFullname(), Timestamp.from(Instant.now()));
+                
+                updateChat(currentChat);
+                // addMessage(message, UserSession.getInstance().getUserId(), UserSession.getInstance().getFullname(), Timestamp.from(Instant.now()));
                 messageField.clear();
     
             } catch (Exception e) {
@@ -690,51 +719,72 @@ public class HomeScreenController implements ServerMessageListener{
         }
     }
 
-    private void addMessage(String message, int senderId, String senderFullname, Timestamp timeSent) {
+    private void addMessage(int messageId, String message, int senderId, String senderFullname, Timestamp timeSent) {
         HBox messageBox = new HBox();
-        if (currentChat.type == ChatType.PRIVATE)
-            System.out.println("this message is for private chat");
-        else 
-            System.out.println("this message is for group chat");
+        messageBox.setUserData(messageId);
         messageBox.setPadding(new Insets(5, 10, 5, 10));
         messageBox.setMaxWidth(Double.MAX_VALUE);
-
-        TextFlow textFlow = new TextFlow(new Text(message));
-        textFlow.setPadding(new Insets(5, 10, 5, 10));
-        textFlow.setStyle("-fx-background-color: " + (senderId == UserSession.getInstance().getUserId() ? "#d1e7ff" : "#f0f0f0") + "; " +
-                        "-fx-background-radius: 10px;");
-
+    
+        // Create a TextFlow with selectable text
+        TextFlow messageTextFlow = new TextFlow();
+        Text messageText = new Text(message);
+        messageText.setStyle("-fx-fill: black;"); // Set text color (you can change this)
+        messageTextFlow.getChildren().add(messageText);
+        
+        // Allow text selection for copying
+        messageText.setStyle("-fx-fill: black; -fx-font-size: 14px;"); // Modify font size/style as needed
+    
+        Label messageLabel = new Label();
+        messageLabel.getStyleClass().add("message-label");
+        messageLabel.setGraphic(messageTextFlow); // Set the TextFlow as the graphic content
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(chatListView.getWidth() * 0.68);
+        messageLabel.setStyle("-fx-background-color: " +
+            (senderId == UserSession.getInstance().getUserId() ? "#d1e7ff" : "#f0f0f0") + "; " +
+            "-fx-background-radius: 10px; -fx-padding: 5, 10, 5, 10;");
+    
+        // Prevent the label from changing color when clicked (no flash)
+        messageLabel.setStyle("-fx-background-color: " +
+            (senderId == UserSession.getInstance().getUserId() ? "#d1e7ff" : "#f0f0f0") + "; " +
+            "-fx-background-radius: 10px; -fx-padding: 5, 10, 5, 10;" +
+            "-fx-text-fill: black;"); // Explicitly set text color
+    
+        // Handle the time label
         Label timeLabel = new Label(formatTime(timeSent));
         timeLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 10px;");
-
+    
         VBox fullMessageContainer = new VBox(2);
         HBox messageContainer = new HBox(5);
-
+    
+        // Handle sender's message alignment
         if (senderId == UserSession.getInstance().getUserId()) {
             messageBox.setAlignment(Pos.CENTER_RIGHT);
-            textFlow.setMaxWidth(chatListView.getWidth() * 0.75);
             messageContainer.setAlignment(Pos.CENTER_RIGHT);
-            messageContainer.getChildren().addAll(timeLabel, textFlow);
+            messageContainer.getChildren().addAll(timeLabel, messageLabel);
         } else {
-            if (currentChat.type == ChatType.GROUP){
-                Text senderNameText = new Text(senderFullname);
-                senderNameText.setStyle("-fx-fill: #888888;"); // Set sender's name to grey
-                fullMessageContainer.getChildren().add(senderNameText);
+            if (currentChat.type == ChatType.GROUP) {
+                Label senderNameLabel = new Label(senderFullname);
+                senderNameLabel.setStyle("-fx-text-fill: #888888;");
+                fullMessageContainer.getChildren().add(senderNameLabel);
             }
             messageBox.setAlignment(Pos.CENTER_LEFT);
-            textFlow.setMaxWidth(chatListView.getWidth() * 0.75);
             messageContainer.setAlignment(Pos.CENTER_LEFT);
-            messageContainer.getChildren().addAll(textFlow, timeLabel);
+            messageContainer.getChildren().addAll(messageLabel, timeLabel);
         }
+    
         fullMessageContainer.getChildren().add(messageContainer);
         messageBox.getChildren().add(fullMessageContainer);
+    
         messageBox.setOnMouseClicked(e -> {
             System.out.println("message clicked");
         });
+    
         chatListView.getItems().add(messageBox);
-        if (senderId == UserSession.getInstance().getUserId()) // if the user is sending this then redirect to the last message
+        if (senderId == UserSession.getInstance().getUserId()) // Scroll to the last message if sent by the user
             chatListView.scrollTo(chatListView.getItems().size() - 1);
     }
+    
+    
 
     private String formatTime(Timestamp timeSent) {
         LocalDateTime messageTime = timeSent.toLocalDateTime(); // Convert Timestamp to LocalDateTime
@@ -999,6 +1049,75 @@ public class HomeScreenController implements ServerMessageListener{
         }
     }
 
+    private HBox createMessageItem(int senderId, String senderName, String content, String createdAt) {
+        Label messageLabel = new Label();
+        messageLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #333;");
+    
+        Label timeLabel = new Label(createdAt);
+        timeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #888;");
+    
+        // Set message content and sender name
+        if (senderId == UserSession.getInstance().getUserId()) {
+            messageLabel.setText("You: " + content);
+        } else {
+            messageLabel.setText(senderName + ": " + content);
+        }
+    
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(350); 
+    
+        // Message box styling
+        VBox messageContainer = new VBox(5, messageLabel, timeLabel);
+        HBox messageBox = new HBox(5, messageContainer);
+        messageBox.setAlignment(Pos.CENTER_LEFT);
+        messageBox.setPadding(new Insets(10));
+    
+        messageBox.setStyle("-fx-background-color: #f0f0f0; " +
+                            "-fx-background-radius: 5px; " +
+                            "-fx-padding: 10px; " +
+                            "-fx-border-radius: 5px; " +
+                            "-fx-border-color: #ddd; " +
+                            "-fx-border-width: 1px;");
+    
+        // Hover effect 
+        messageBox.setOnMouseEntered(e -> {
+            messageBox.setStyle("-fx-background-color: #e6f7ff; " +
+                                "-fx-background-radius: 5px; " +
+                                "-fx-padding: 10px; " +
+                                "-fx-border-radius: 5px; " +
+                                "-fx-border-color: #0077cc; " +
+                                "-fx-border-width: 2px;");
+        });
+    
+        messageBox.setOnMouseExited(e -> {
+            messageBox.setStyle("-fx-background-color: #f0f0f0; " +
+                                "-fx-background-radius: 5px; " +
+                                "-fx-padding: 10px; " +
+                                "-fx-border-radius: 5px; " +
+                                "-fx-border-color: #ddd; " +
+                                "-fx-border-width: 1px;");
+        });
+        return messageBox;
+    }
+    
+    private void redirectToMessage(int chatId, int messageId, String content, String createdAt) {        
+        if (currentChat != null) {     
+            // try{Thread.sleep(1000);} catch (Exception e){e.printStackTrace();}       
+            System.out.println("curr number of message: " + chatListView.getItems().size());
+            Platform.runLater(() -> {
+                Optional<HBox> foundItem = chatListView.getItems().stream()
+                        .filter(item -> (int) item.getUserData() == messageId) // Filter by messageId stored in userData
+                        .findFirst();
+
+                if (foundItem.isPresent()) {
+                    chatListView.scrollTo(foundItem.get());
+                } else {
+                    System.out.println("No message found with the specified messageId.");
+                }
+            });
+            
+        }
+    }
     @Override
     public void onMessageReceived(String serverMessage) {
         try {
@@ -1022,33 +1141,49 @@ public class HomeScreenController implements ServerMessageListener{
                 });
                 
             } 
-            if ("NEW_MESSAGE".equals(serverMessage)) {
+            else if ("NEW_MESSAGE".equals(serverMessage)) {
                 int chatId = (int) UserSession.in.readObject();
+                int messageId = (int) UserSession.in.readObject();
                 String message = (String) UserSession.in.readObject();
                 int senderId = (int) UserSession.in.readObject();
                 String senderFullname = (String) UserSession.in.readObject();
                 Timestamp timeSent = (Timestamp) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     if (chatId == currentChat.chatId) {
-                        addMessage(message, senderId, senderFullname, timeSent);
+                        addMessage(messageId, message, senderId, senderFullname, timeSent);
                     }
                 });
             }
-            if ("respond_GET_CHAT_MESSAGES".equals(serverMessage)) {
+            else if ("respond_GET_CHAT_MESSAGES".equals(serverMessage)) {
                 List<String[]> messages = (List<String[]>) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     for (String[] msg : messages) {
-                        int senderId = Integer.parseInt(msg[0]);
-                        String senderFullname = msg[1];
-                        String message = msg[2];
-                        String timeSent = msg[3];
+                        int messageId = Integer.parseInt(msg[0]);
+                        int senderId = Integer.parseInt(msg[1]);
+                        String senderFullname = msg[2];
+                        String message = msg[3];
+                        String timeSent = msg[4];
                         
                         Timestamp timestamp = Timestamp.valueOf(timeSent);
-                        addMessage(message, senderId, senderFullname, timestamp);
+                        addMessage(messageId, message, senderId, senderFullname, timestamp);
+                    }
+
+                    if (isDirectingMessage){
+                        Optional<HBox> foundItem = chatListView.getItems().stream()
+                        .filter(item -> (int) item.getUserData() == directedmMessageId) // Filter by messageId stored in userData
+                        .findFirst();
+
+                        if (foundItem.isPresent()) {
+                            chatListView.scrollTo(foundItem.get());
+                        } else {
+                            System.out.println("No message found with the specified messageId.");
+                        }
+                        isDirectingMessage = false;
+                        directedmMessageId = -1;
                     }
                 });
             }
-            if ("respond_GET_FRIENDS".equals(serverMessage)){
+            else if ("respond_GET_FRIENDS".equals(serverMessage)){
                 List<String[]> receivedFriendList = (List<String[]>) UserSession.in.readObject();
                 
                 Platform.runLater(() -> {
@@ -1062,7 +1197,7 @@ public class HomeScreenController implements ServerMessageListener{
                         .collect(Collectors.toCollection(FXCollections::observableArrayList)));
                 });
             }
-            if ("respond_GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT".equals(serverMessage)){
+            else if ("respond_GET_POSSIBLE_FRIEND_FOR_ADDING_TO_CHAT".equals(serverMessage)){
                 List<String[]> possibleFriend = (List<String[]>) UserSession.in.readObject();
 
                 Platform.runLater(() -> {
@@ -1076,7 +1211,7 @@ public class HomeScreenController implements ServerMessageListener{
                         .collect(Collectors.toCollection(FXCollections::observableArrayList)));
                 });
             }
-            if ("respond_GET_CHAT_MEMBERS".equals(serverMessage)){
+            else if ("respond_GET_CHAT_MEMBERS".equals(serverMessage)){
                 List<String[]> receivedMemberList = (List<String[]>) UserSession.in.readObject(); 
 
                 Platform.runLater(() -> {
@@ -1090,23 +1225,23 @@ public class HomeScreenController implements ServerMessageListener{
                         .collect(Collectors.toCollection(FXCollections::observableArrayList)));
                 });
             }
-            if ("CHAT_NAME_CHANGED".equals(serverMessage)){
+            else if ("CHAT_NAME_CHANGED".equals(serverMessage)){
                 int chatId = (int) UserSession.in.readObject();
                 String chatName = (String) UserSession.in.readObject();
 
                 initializeChatData();
             }
-            if ("NEW_CHAT".equals(serverMessage)){
+            else if ("NEW_CHAT".equals(serverMessage)){
                 initializeChatData();
             }
-            if ("REMOVED_MEMBER".equals(serverMessage)){
+            else if ("REMOVED_MEMBER".equals(serverMessage)){
                 int chatId = (int) UserSession.in.readObject();
                 if (chatId == currentChat.chatId)
                     messageFieldFrame.setVisible(false);
                     
                 initializeChatData();
             }
-            if ("ADDED_MEMBER".equals(serverMessage)){
+            else if ("ADDED_MEMBER".equals(serverMessage)){
                 initializeChatData();
             } else if ("CHANGE_ADMIN".equals(serverMessage)){
                 int chatId = (int) UserSession.in.readObject();
@@ -1114,7 +1249,65 @@ public class HomeScreenController implements ServerMessageListener{
                 initializeChatData();
                 if (chatId == currentChat.chatId)
                     currentChat.adminId = newAdminId;
-            } 
+            } else if ("respond_SEARCH_MESSAGE".equals(serverMessage)){
+                Map<Integer, List<String[]>> chatData = (Map<Integer, List<String[]>>) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    friendListVBox.getChildren().clear();
+                    for (Map.Entry<Integer, List<String[]>> entry : chatData.entrySet()) {
+                        int chatId = entry.getKey();
+                        List<String[]> messages = entry.getValue();
+                    
+                        System.out.println("Chat ID: " + chatId);
+                        // Get the chat name from the first message (all messages have the same chat name)
+                        String chatName = messages.get(0)[0];
+                        int messageCount = messages.size();
+                        
+                        VBox chatItem = new VBox();
+                        chatItem.setSpacing(5);
+                        
+                        Label chatNameLabel = new Label(chatName);
+                        chatNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+                        
+                        Label messageCountLabel = new Label(messageCount + " messages matched");
+                        messageCountLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+                        
+                        chatItem.getChildren().addAll(chatNameLabel, messageCountLabel);
+                        
+                        // add click event to select the chat
+                        chatItem.setOnMouseClicked(event -> {
+                            System.out.println("Selected Chat ID: " + chatId);
+                            friendListVBox.getChildren().clear();
+                            
+                            ListView<HBox> messagesListView = new ListView<>();
+                            messagesListView.setStyle("-fx-background-color: transparent; -fx-border-width: 0;");
+
+                            // Populate messages
+                            for (String[] message : messages) {
+                                int messageId = Integer.parseInt(message[1]);
+                                int senderId = Integer.parseInt(message[2]);
+                                String senderName = message[3];
+                                String content = message[4];
+                                String createdAt = message[5];
+
+                                HBox messageItem = createMessageItem(senderId, senderName, content, createdAt);
+                                messageItem.setOnMouseClicked(msgEvent -> {
+                                    isDirectingMessage = true;
+                                    directedmMessageId = messageId;
+                                    currentChat = allChats.stream().filter(chat -> chat.chatId == chatId).findFirst().orElse(null);
+                                    updateChat(currentChat);
+                                    System.out.println("Message clicked: " + content);
+                                    // redirectToMessage(chatId, messageId, content, createdAt);
+                                });
+
+                                messagesListView.getItems().add(messageItem);
+                            }
+
+                            friendListVBox.getChildren().add(messagesListView);
+                        });
+                        friendListVBox.getChildren().add(chatItem);
+                    }
+                });
+            }
         } catch (Exception e){
             System.out.println("error handling response from server in home controller: ");
             e.printStackTrace();

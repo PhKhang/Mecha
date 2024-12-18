@@ -17,6 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,10 +25,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -136,7 +140,7 @@ public class ChatServer {
                     System.out.println("request: " + action);
                     try {
                         handleAction(action);
-                    } catch (IOException | ClassNotFoundException | SQLException e) {
+                    } catch (IOException | ClassNotFoundException | SQLException | ParseException e) {
                         e.printStackTrace();
                     }
                 }
@@ -159,7 +163,7 @@ public class ChatServer {
             }
         }
 
-        private void handleAction(String action) throws IOException, ClassNotFoundException, SQLException {
+        private void handleAction(String action) throws IOException, ClassNotFoundException, SQLException, ParseException {
             if ("LOGIN".equals(action)) {
                 String username = (String) in.readObject();
                 String password = (String) in.readObject();
@@ -188,8 +192,13 @@ public class ChatServer {
                 int chatId = (int) in.readObject();
                 String message = (String) in.readObject();
 
-                Timestamp datetime = insertMessageIntoDatabase(chatId, senderId, message);
-                notifyChatParticipants(chatId, senderId, senderFullname, message, datetime);
+                String[] data = insertMessageIntoDatabase(chatId, senderId, message);
+                int messageId = Integer.parseInt(data[0]);
+                String timestamp = data[1];
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                java.util.Date date = sdf.parse(timestamp);
+             
+                notifyChatParticipants(chatId, messageId, senderId, senderFullname, message, new Timestamp(date.getTime()));
             } else if ("GET_FRIEND_LIST".equals(action)) {
                 int requestId = (int) in.readObject();
                 List<String[]> privateChat = new ArrayList<>();
@@ -214,11 +223,15 @@ public class ChatServer {
             } else if ("SIGNUP".equals(action)) {
                 String username = (String) in.readObject();
                 String fullname = (String) in.readObject();
+                String gender = (String) in.readObject();
+                String dob = (String) in.readObject();
+                Timestamp dobTimestamp = Timestamp.valueOf(dob + " 00:00:00");
+                
                 String address = (String) in.readObject();
                 String email = (String) in.readObject();
                 String passwordHash = (String) in.readObject();
 
-                boolean success = registerUser(username, fullname, email, address, passwordHash);
+                boolean success = registerUser(username, fullname, gender, dobTimestamp, email, address, passwordHash);
                 out.writeObject(success ? "SUCCESS" : "FAILURE");
             } else if ("GET_POTENTIAL_FRIENDS".equals(action)) {
                 int userId = (int) in.readObject();
@@ -382,9 +395,61 @@ public class ChatServer {
                 int newAdminId = (int) in.readObject();
 
                 assignNewChatAdmin(chatId, newAdminId);
-            } else {
+            } else if ("SEARCH_MESSAGE".equals(action)){
+                String searchContent = (String) in.readObject();
+                int userId = (int) in.readObject();
+                Map<Integer, List<String[]>> searchResults = searchMessages(userId, searchContent);
+                out.writeObject("respond_SEARCH_MESSAGE");
+                out.writeObject(searchResults);
+
+            } 
+            else {
                 System.out.println("Unknown action: " + action);
             }
+        }
+
+        private Map<Integer, List<String[]>> searchMessages(int userId, String searchContent) throws SQLException {
+            Map<Integer, List<String[]>> chatData = new HashMap<>();
+
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            
+            String query = """
+                SELECT DISTINCT c.chat_id, COALESCE(c.group_name, u.full_name) as chat_name, m.message_id, m.sender_id, sender.full_name as sender_name, m.content, m.created_at 
+                FROM chats c 
+                JOIN chat_members cm ON cm.chat_id  = c.chat_id 
+                JOIN users u ON (u.user_id = cm.user_id) 
+                JOIN messages m ON c.chat_id = m.chat_id
+                JOIN users sender ON sender.user_id = m.sender_id 
+                WHERE  c.chat_id  IN (
+                    SELECT chat_id
+                    FROM chat_members WHERE user_id = ?
+                ) AND m.content LIKE ? AND cm.user_id != ?
+                ORDER BY c.chat_id, m.created_at DESC
+            """;
+            
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, userId);
+            stmt.setString(2, "%" + searchContent + "%");
+            stmt.setInt(3, userId);
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                int chatId = rs.getInt("c.chat_id");
+                String chatName = rs.getString("chat_name");
+                String messageId = rs.getString("m.message_id");
+                String senderId = rs.getString("m.sender_id");
+                String senderName = rs.getString("sender_name");
+                String content = rs.getString("m.content");
+                String createdAt = rs.getString("m.created_at");
+            
+                // Combine chatName and message details into one String[]
+                String[] message = {chatName, messageId, senderId, senderName, content, createdAt};
+            
+                // Add the message to the appropriate chatId in the map
+                chatData.computeIfAbsent(chatId, k -> new ArrayList<>()).add(message);
+            }
+            return chatData;
         }
 
         private int getUserIdByEmail(String email) throws SQLException {
@@ -955,7 +1020,7 @@ public class ChatServer {
             if (!groupName.isEmpty())
                 stmt.setString(1, groupName);
             else
-                stmt.setInt(1, Types.NULL);
+                stmt.setNull(1, Types.NULL);
 
             if (isPrivate)
                 stmt.setString(2, "private");
@@ -1116,7 +1181,7 @@ public class ChatServer {
             return messages;
         }
 
-        private static Timestamp insertMessageIntoDatabase(int chatId, int senderId, String message) throws SQLException {
+        private static String[] insertMessageIntoDatabase(int chatId, int senderId, String message) throws SQLException {
             String query = "INSERT INTO messages (chat_id, sender_id, content, created_at) VALUES (?, ?, ?, ?)";
             Timestamp timestamp = Timestamp.from(Instant.now());
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
@@ -1126,11 +1191,19 @@ public class ChatServer {
             stmt.setString(3, message);
             stmt.setTimestamp(4, timestamp);
             stmt.executeUpdate();
-    
-            return timestamp;
+            stmt = conn.prepareStatement(
+                """
+                SELECT LAST_INSERT_ID();
+                """
+            );
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            String messageId = rs.getString("message_id");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+            return new String[]{messageId, sdf.format(timestamp)};
         }
 
-        private void notifyChatParticipants(int chatId, int senderId, String senderFullname, String message, Timestamp timeSent) {
+        private void notifyChatParticipants(int chatId, int messageId, int senderId, String senderFullname, String message, Timestamp timeSent) {
             String query = """
                 SELECT u.user_id, u.full_name FROM chat_members cm
                 JOIN users u ON u.user_id = cm.user_id 
@@ -1150,6 +1223,7 @@ public class ChatServer {
                         try {
                             recipient.out.writeObject("NEW_MESSAGE");
                             recipient.out.writeObject(chatId);
+                            recipient.out.writeObject(messageId);
                             recipient.out.writeObject(message);
                             recipient.out.writeObject(senderId);
                             recipient.out.writeObject(senderFullname);
@@ -1171,7 +1245,7 @@ public class ChatServer {
 
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement("""
-                            SELECT m.sender_id, u.full_name, m.content, m.created_at
+                            SELECT m.message_id, m.sender_id, u.full_name, m.content, m.created_at
                             FROM messages m JOIN users u on sender_id = user_id
                             WHERE chat_id = ?
                             ORDER BY created_at
@@ -1180,11 +1254,12 @@ public class ChatServer {
                 ResultSet rs = stmt.executeQuery();
 
                 while (rs.next()) {
+                    String messageId = rs.getString("m.message_id");
                     String sender_id = rs.getString("m.sender_id");
                     String sender_fullname = rs.getString("u.full_name");
                     String content = rs.getString("m.content");
                     String created_at = rs.getString("m.created_at");
-                    messages.add(new String[] { sender_id, sender_fullname, content, created_at });
+                    messages.add(new String[] {messageId, sender_id, sender_fullname, content, created_at });
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -1215,19 +1290,21 @@ public class ChatServer {
             return null;
         }
 
-        private static boolean registerUser(String username, String fullname, String email, String address,
+        private static boolean registerUser(String username, String fullname, String gender, Timestamp dob, String email, String address,
                 String passwordHash) {
             System.out.println("Registering user: " + username);
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement(
-                            "INSERT INTO users (username, email, address, password_hash, full_name, status) " +
-                                    "VALUES (?, ?, ?, ?, ?, 'offline')")) {
+                            "INSERT INTO users (username, email, address, password_hash, full_name, status, date_of_birth, gender) " +
+                                    "VALUES (?, ?, ?, ?, ?, 'offline', ?, ?)")) {
 
                 stmt.setString(1, username);
                 stmt.setString(2, email);
                 stmt.setString(3, address);
                 stmt.setString(4, passwordHash);
                 stmt.setString(5, fullname);
+                stmt.setTimestamp(6, dob);
+                stmt.setString(7, gender);   
 
                 int rowsInserted = stmt.executeUpdate();
                 return rowsInserted > 0;

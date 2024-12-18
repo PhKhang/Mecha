@@ -108,3 +108,7 @@
 .dialog-button-cancel:hover {
     -fx-background-color: #b8b8b8;
 }
+
+.search-message-option:hover{
+    -fx-background-color: #7f7e7e;
+}
