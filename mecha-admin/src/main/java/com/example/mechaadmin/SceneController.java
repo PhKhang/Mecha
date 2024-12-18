@@ -847,48 +847,48 @@ public class SceneController implements Initializable {
         
         
         // 
-        ActivityTable ctivTable = new ActivityTable(activeTable);
-        ctivTable.updateOriginal(usageBUS.getAllActivity());
+        // ActivityTable ctivTable = new ActivityTable(activeTable);
+        // ctivTable.updateOriginal(usageBUS.getAllActivity());
         
-        activeSearch.textProperty().addListener((observable, oldValue, newValue) -> {
-            ctivTable.search(newValue);
-        });
+        // activeSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+        //     ctivTable.search(newValue);
+        // });
         
-        choiceFriend.getSelectionModel().select(0);
-        choiceActiveAct.getSelectionModel().select(0);
-        choiceActiveCon.getSelectionModel().select(0);
-        choiceStatus.getSelectionModel().select(0);
+        // choiceFriend.getSelectionModel().select(0);
+        // choiceActiveAct.getSelectionModel().select(0);
+        // choiceActiveCon.getSelectionModel().select(0);
+        // choiceStatus.getSelectionModel().select(0);
         
-        activeStart.valueProperty().addListener((observable, oldValue, newValue) -> {
-            LocalDateTime start = activeStart.getValue().atTime(0, 0);
-            LocalDateTime end = activeEnd.getValue().atTime(23, 59);
-            System.out.println("Start: " + start + " End: " + end);
-            if (start != null && end != null) {
-                Predicate<ActivityDTO> filter = activity -> {
-                    LocalDateTime date = activity.getCreationDate();
-                    return date.isBefore(start) || date.isAfter(end);
-                };
-                ctivTable.setFilterPredicate(filter);
-            } else {
-                Predicate<ActivityDTO> filter = activity -> false;
-                ctivTable.setFilterPredicate(filter);
-            }
-        });
+        // activeStart.valueProperty().addListener((observable, oldValue, newValue) -> {
+        //     LocalDateTime start = activeStart.getValue().atTime(0, 0);
+        //     LocalDateTime end = activeEnd.getValue().atTime(23, 59);
+        //     System.out.println("Start: " + start + " End: " + end);
+        //     if (start != null && end != null) {
+        //         Predicate<ActivityDTO> filter = activity -> {
+        //             LocalDateTime date = activity.getCreationDate();
+        //             return date.isBefore(start) || date.isAfter(end);
+        //         };
+        //         ctivTable.setFilterPredicate(filter);
+        //     } else {
+        //         Predicate<ActivityDTO> filter = activity -> false;
+        //         ctivTable.setFilterPredicate(filter);
+        //     }
+        // });
         
-        activeEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
-            LocalDateTime start = activeStart.getValue().atTime(0, 0);
-            LocalDateTime end = activeEnd.getValue().atTime(23, 59);
-            if (start != null && end != null) {
-                Predicate<ActivityDTO> filter = activity -> {
-                    LocalDateTime date = activity.getCreationDate();
-                    return date.isBefore(start) || date.isAfter(end);
-                };
-                ctivTable.setFilterPredicate(filter);
-            } else {
-                Predicate<ActivityDTO> filter = activity -> false;
-                ctivTable.setFilterPredicate(filter);
-            }
-        });
+        // activeEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
+        //     LocalDateTime start = activeStart.getValue().atTime(0, 0);
+        //     LocalDateTime end = activeEnd.getValue().atTime(23, 59);
+        //     if (start != null && end != null) {
+        //         Predicate<ActivityDTO> filter = activity -> {
+        //             LocalDateTime date = activity.getCreationDate();
+        //             return date.isBefore(start) || date.isAfter(end);
+        //         };
+        //         ctivTable.setFilterPredicate(filter);
+        //     } else {
+        //         Predicate<ActivityDTO> filter = activity -> false;
+        //         ctivTable.setFilterPredicate(filter);
+        //     }
+        // });
         
         // cho
         
