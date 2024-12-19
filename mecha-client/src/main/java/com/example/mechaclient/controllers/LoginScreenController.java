@@ -118,32 +118,38 @@ public class LoginScreenController implements ServerMessageListener {
     public void onMessageReceived(String serverMessage) {
         try {
             System.out.println("Login Screen receive message: " + serverMessage);
-            if ("SUCCESS".equals(serverMessage)) {
-                int userId = (int) UserSession.in.readObject();
-                String username = (String) UserSession.in.readObject();
-                String fullname = (String) UserSession.in.readObject();
-                int logId = (int) UserSession.in.readObject();
+            if ("respond_LOGIN".equals(serverMessage)) {
+                String status = (String) UserSession.in.readObject();
+                if ("SUCCESS".equals(status)){
+                    int userId = (int) UserSession.in.readObject();
+                    String username = (String) UserSession.in.readObject();
+                    String fullname = (String) UserSession.in.readObject();
+                    int logId = (int) UserSession.in.readObject();
 
-                UserSession.getInstance().setUsername(username);
-                UserSession.getInstance().setUserId(userId);
-                UserSession.getInstance().setFullname(fullname);
-                UserSession.getInstance().logId = logId;
+                    UserSession.getInstance().setUsername(username);
+                    UserSession.getInstance().setUserId(userId);
+                    UserSession.getInstance().setFullname(fullname);
+                    UserSession.getInstance().logId = logId;
 
-                System.out.println("processing login complete!");
-                Platform.runLater(() -> {
-                    try {
-                        loadHomeScreen();
-                    } catch (IOException e) {
-                        System.out.println("can not load home screen");
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                Platform.runLater(() -> {
-                    NotificationUtil.showNotification("Login failed", "Invalid username or password");
-                    System.out.println("Invalid username or password");
-                });
-            }
+                    System.out.println("processing login complete!");
+                    Platform.runLater(() -> {
+                        try {
+                            loadHomeScreen();
+                        } catch (IOException e) {
+                            System.out.println("can not load home screen");
+                            e.printStackTrace();
+                        }
+                    });
+                } else if ("LOCKED".equals(status)){
+                    Platform.runLater(() -> {
+                        NotificationUtil.showNotification("Account locked", "This account has been locked by the administrator.");
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        NotificationUtil.showNotification("Login failed", "Invalid username or password");
+                    });
+                }
+        }
         } catch (Exception e) {
             System.out.println("error handling response from server in login screen: " + e.getMessage());
         }

@@ -46,22 +46,30 @@
 }
 
 .friend-entry {
-    -fx-background-color: transparent;
-    -fx-padding: 5;
-    -fx-cursor: hand;
+    -fx-background-color: #f0f0f0; 
+    -fx-background-radius: 10px; 
+    -fx-border-color: #ddd; 
+    -fx-border-width: 1px; 
+    -fx-border-radius: 10px;
 }
 
 .friend-entry:hover {
-    -fx-background-color: #b7b7b7;
+    -fx-background-color: #e6f7ff; 
+    -fx-background-radius: 10px; 
+    -fx-border-color: #0077cc; 
+    -fx-border-width: 1px; 
+    -fx-border-radius: 10px;
 }
 
 .friend-entry.selected {
     -fx-background-color: #7bd1e0;
+    -fx-border-width: 1px; 
+    -fx-border-radius: 10px;
 }
 
 /* Additional styling for SplitPane */
 .split-pane:horizontal > .split-pane-divider:pressed {
-    -fx-background-color: #4A8BAF; /* Darker color when pressed */
+    -fx-background-color: #4A8BAF;
 }
 
 .split-pane:horizontal > .split-pane-divider {
@@ -109,6 +117,14 @@
     -fx-background-color: #b8b8b8;
 }
 
-.search-message-option:hover{
-    -fx-background-color: #7f7e7e;
+
+.search-message-option {
+    -fx-background-color: #f0f0f0;
+    -fx-padding: 5 10;
+    -fx-background-radius: 5;
+    -fx-cursor: hand; /* Change cursor to a pointer when hovering */
+}
+
+.search-message-option:hover {
+    -fx-background-color: #e0e0ff; /* Light blue color on hover */
 }

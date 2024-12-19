@@ -167,10 +167,11 @@ public class ChatServer {
             if ("LOGIN".equals(action)) {
                 String username = (String) in.readObject();
                 String password = (String) in.readObject();
-
+                List<String> userInfo = new ArrayList<>(); 
                 // User info is user_id and fullname
-                List<String> userInfo = authenticateUser(username, password);
-                if (userInfo != null) {
+                String loginStatus = authenticateUser(username, password, userInfo);
+                out.writeObject("respond_LOGIN");
+                if (loginStatus.equals("success")) {
                     int userId = Integer.parseInt(userInfo.get(0));
                     String fullname = userInfo.get(1);
                     connectedClients.put(userId, this);
@@ -182,6 +183,8 @@ public class ChatServer {
                     out.writeObject(fullname);
                     out.writeObject(logId);
                     System.out.println("all current active user: " + connectedClients.size());
+                } else if (loginStatus.equals("locked")){
+                    out.writeObject("LOCKED");
                 } else {
                     out.writeObject("FAILURE");
 
@@ -402,10 +405,91 @@ public class ChatServer {
                 out.writeObject("respond_SEARCH_MESSAGE");
                 out.writeObject(searchResults);
 
-            } 
+            } else if ("DELETE_MESSAGE".equals(action)){
+                int messageId = (int) in.readObject();
+                int chatId = (int) in.readObject();
+                deleteMessage(messageId, chatId);
+                
+                out.writeObject("respond_DELETE_MESSAGE");
+                out.writeObject(chatId);
+            } else if ("DELETE_ALL_CHAT_MESSAGE".equals(action)){
+                int chatId = (int) in.readObject();
+
+                deleteAllChatMessage(chatId);
+            } else if ("UNFRIEND".equals(action)){
+                int userId = (int) in.readObject();
+                int chatID = (int) in.readObject();
+
+                unfriend(userId, chatID);
+            }
             else {
                 System.out.println("Unknown action: " + action);
             }
+        }
+
+        private void unfriend(int userId, int chatId) throws SQLException{
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                SELECT * 
+                FROM chat_members
+                WHERE chat_id = ? AND user_id != ?
+            """
+            );
+            stmt.setInt(1, chatId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            int friendId = rs.getInt("user_id");
+            stmt = conn.prepareStatement("""
+                DELETE FROM friendships
+                WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
+            """
+            );
+            stmt.setInt(1, userId);
+            stmt.setInt(2, friendId);
+            stmt.setInt(3, friendId);
+            stmt.setInt(4, userId);
+
+            stmt.executeUpdate();
+            System.out.println("unfriend complete");
+            // remove chats and chat_members related info
+            deleteAllChatMessage(chatId);
+            
+            stmt = conn.prepareStatement("""
+                DELETE FROM chat_members
+                WHERE chat_id = ?
+            """);
+            stmt.setInt(1, chatId);
+            stmt.executeUpdate();
+
+            stmt = conn.prepareStatement("""
+                DELETE FROM chats
+                WHERE chat_id = ?
+            """);
+            stmt.setInt(1, chatId);
+            stmt.executeUpdate();
+        }
+
+        private void deleteAllChatMessage(int chatId) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM messages WHERE chat_id = ?
+            """
+            );
+            stmt.setInt(1, chatId);
+
+            stmt.executeUpdate();
+        }
+
+        private void deleteMessage(int messageId, int chatId) throws SQLException{
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("""
+                DELETE FROM messages WHERE message_id = ?
+            """
+            );
+
+            stmt.setInt(1, messageId);
+            stmt.executeUpdate();
         }
 
         private Map<Integer, List<String[]>> searchMessages(int userId, String searchContent) throws SQLException {
@@ -1191,6 +1275,7 @@ public class ChatServer {
             stmt.setString(3, message);
             stmt.setTimestamp(4, timestamp);
             stmt.executeUpdate();
+            System.out.println("Message stored");
             stmt = conn.prepareStatement(
                 """
                 SELECT LAST_INSERT_ID();
@@ -1268,27 +1353,26 @@ public class ChatServer {
             return messages;
         }
 
-        private static List<String> authenticateUser(String username, String password) {
-            List<String> userInfo = new ArrayList<>();
-            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-                    PreparedStatement stmt = conn
-                            .prepareStatement("SELECT * FROM users WHERE BINARY username = ? AND password_hash = ?")) {
-                stmt.setString(1, username);
-                stmt.setString(2, password);
-                ResultSet rs = stmt.executeQuery();
-                if (rs.next()) {
-                    String userId = rs.getString("user_id");
-                    String fullname = rs.getString("full_name");
+        private static String authenticateUser(String username, String password, List<String> userInfo) throws SQLException {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE BINARY username = ? AND password_hash = ?");
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String userId = rs.getString("user_id");
+                String fullname = rs.getString("full_name");
+                String adminAction = rs.getString("admin_action");
+                if (!"locked".equals(adminAction)){
                     userInfo.add(userId);
                     userInfo.add(fullname);
-                    return userInfo;
-                } else
-                    return null;
-            } catch (SQLException e) {
-                e.printStackTrace();
+                    return "success";
+                } else {
+                    return "locked"; 
+                }
+            } else
+                return "fail";
             }
-            return null;
-        }
 
         private static boolean registerUser(String username, String fullname, String gender, Timestamp dob, String email, String address,
                 String passwordHash) {

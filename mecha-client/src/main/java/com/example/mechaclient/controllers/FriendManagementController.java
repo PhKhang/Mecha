@@ -56,11 +56,6 @@ public class FriendManagementController implements ServerMessageListener {
 
     public void initialize() {
         UserSession.getInstance().addMessageListener(this);
-        // showFriendRequests();   
-        setupFriendRequests();
-        setupSearchResults();
-        setupBlockedList();
-        setupReportedList();
         
         setupListViewBehavior(friendRequestList);
         setupListViewBehavior(searchResultList);
@@ -249,32 +244,6 @@ public class FriendManagementController implements ServerMessageListener {
         reportedListTab.setStyle("");
         
         content.setVisible(true);
-    }
-
-    private void setupFriendRequests() {
-        // ObservableList<HBox> items = FXCollections.observableArrayList();
-        // items.add(createFriendRequestItem("Username1", "40 minutes ago"));
-        // items.add(createFriendRequestItem("Username2", "40 minutes ago"));
-        // friendRequestList.setItems(items);
-    }
-
-    private void setupSearchResults() {
-        // ObservableList<HBox> items = FXCollections.observableArrayList();
-        // items.add(createSearchResultItem("Username1"));
-        // searchResultList.setItems(items);
-    }
-
-    private void setupBlockedList() {
-        // ObservableList<HBox> items = FXCollections.observableArrayList();
-        // items.add(createBlockedUserItem("Username1"));
-        // blockedList.setItems(items);
-    }
-    
-    private void setupReportedList() {
-        // ObservableList<HBox> items = FXCollections.observableArrayList();
-        // items.add(createReportedUserItem("Username1", "Pending"));
-        // items.add(createReportedUserItem("Username2", "Resolved"));
-        // reportedList.setItems(items);
     }
 
     private HBox createFriendRequestItem(int userId, String fullname) {
