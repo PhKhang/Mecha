@@ -15,19 +15,23 @@ import com.example.mechaadmin.dto.AccountDTO;
 import com.example.mechaadmin.dto.GroupChatDTO;
 
 public class UserBUS {
-    Configuration configuration = null;
-    SessionFactory sessionFactory = null;
-    Session session = null;
+    // Configuration configuration = null;
+    // SessionFactory sessionFactory = null;
+    // Session session = null;
 
     public UserBUS() {
-        configuration = new Configuration();
-        configuration.configure("hibernate.cfg.xml");
-        sessionFactory = configuration.buildSessionFactory();
+        // configuration = new Configuration();
+        // configuration.configure("hibernate.cfg.xml");
+        // sessionFactory = configuration.buildSessionFactory();
 
-        session = sessionFactory.openSession();
+        // session = sessionFactory.openSession();
     }
 
     public List<AccountDTO> getAllUsers() {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         List<Object[]> users = session
@@ -51,17 +55,23 @@ public class UserBUS {
 
         return accounts;
     }
-    
-    public List<AccountDTO> getByIdList(List<Integer> ids){
+
+    public List<AccountDTO> getByIdList(List<Integer> ids) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
-        
+
         List<Object[]> users = session
-                .createQuery("select u, l.sectionStart from UserDAO u left join LogDAO l on u.userId = l.userId where u.userId in :ids", Object[].class)
+                .createQuery(
+                        "select u, l.sectionStart from UserDAO u left join LogDAO l on u.userId = l.userId where u.userId in :ids",
+                        Object[].class)
                 .setParameter("ids", ids)
                 .getResultList();
-        
+
         session.getTransaction().commit();
-        
+
         List<AccountDTO> accounts = new ArrayList<AccountDTO>();
         for (Object[] user : users) {
             AccountDTO account = new AccountDTO();
@@ -74,61 +84,84 @@ public class UserBUS {
             account.setEmail(((UserDAO) user[0]).getEmail());
             accounts.add(account);
         }
-        
+
         return accounts;
     }
-    
+
     public void lockAccount(int userId) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
-        
+
         UserDAO user = session.get(UserDAO.class, userId);
         user.setStatus("locked");
-        
+
         session.getTransaction().commit();
     }
-    
+
     public void warnAccount(int userId) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
-        
+
         UserDAO user = session.get(UserDAO.class, userId);
         user.setStatus("warned");
-        
+
         session.getTransaction().commit();
     }
-    
+
     public void unlockAccount(int userId) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
-        
+
         UserDAO user = session.get(UserDAO.class, userId);
         user.setStatus("active");
-        
+
         session.getTransaction().commit();
     }
-    
+
     public void deleteAccount(int userId) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
-        
+
         UserDAO user = session.get(UserDAO.class, userId);
         session.remove(user);
-        
+
         session.getTransaction().commit();
     }
 
     public List<GroupChatDTO> getAllGroups() {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         List<Object[]> groups = session
                 // .createQuery("select g from GroupDAO g", Object[].class)
                 // .createQuery("select c from ChatDAO c ", Object[].class)
-                .createQuery("select c, group_concat(u.username) as memebers, count(u.username) as amount, group_concat(u.userId) as ids, u2.username as admin from ChatDAO c \r\n" + //
-                        "join MemberDAO cm on c.chatId = cm.chatId\r\n" + //
-                        "join UserDAO u on cm.userId = u.userId \r\n" + //
-                        "left join UserDAO u2 on c.adminId = u2.userId \r\n" + //
-                        "group by c.chatId ", Object[].class)
+                .createQuery(
+                        "select c, group_concat(u.username) as memebers, count(u.username) as amount, group_concat(u.userId) as ids, u2.username as admin from ChatDAO c \r\n"
+                                + //
+                                "join MemberDAO cm on c.chatId = cm.chatId\r\n" + //
+                                "join UserDAO u on cm.userId = u.userId \r\n" + //
+                                "left join UserDAO u2 on c.adminId = u2.userId \r\n" + //
+                                "group by c.chatId ",
+                        Object[].class)
                 .getResultList();
 
         session.getTransaction().commit();
-        
+
         List<GroupChatDTO> groupChats = new ArrayList<GroupChatDTO>();
         for (Object[] group : groups) {
             GroupChatDTO groupChat = new GroupChatDTO();
