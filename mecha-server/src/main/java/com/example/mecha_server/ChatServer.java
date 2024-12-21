@@ -1069,6 +1069,8 @@ public class ChatServer {
             stmt.setInt(2, blockedId);
             stmt.executeUpdate();
             removeFriendShip(blockerId, blockedId);
+
+            // remove the chat
             removeChat(chatId);
         }
 
@@ -1238,7 +1240,7 @@ public class ChatServer {
             List<String[]> messages = new ArrayList<>();
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement("""
-                            SELECT fr.friend_id, u.full_name
+                            SELECT u.*, fr.created_at 
                             FROM friend_request fr
                             JOIN users u ON (fr.friend_id = u.user_id)
                             WHERE fr.user_id = ?
@@ -1247,9 +1249,14 @@ public class ChatServer {
                 
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
-                    String friendId = rs.getString("fr.friend_id");
-                    String friendUsername = rs.getString("u.full_name");
-                    messages.add(new String[] { friendId, friendUsername });
+                    messages.add(new String[] { rs.getString("user_id"), 
+                                            rs.getString("full_name"),
+                                            rs.getString("username"),
+                                            rs.getString("address"),
+                                            rs.getString("gender"),
+                                            rs.getString("date_of_birth"),
+                                            rs.getString("fr.created_at")
+                                        });
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
