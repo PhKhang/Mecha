@@ -68,6 +68,7 @@ public class LoginScreenController implements ServerMessageListener {
 
     @FXML
     private void handleForgot() {
+        UserSession.getInstance().removeMessageListener(this);
         System.out.println("from login screen: forgot password pressed");
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(
@@ -80,7 +81,7 @@ public class LoginScreenController implements ServerMessageListener {
             System.out.println("can not load forgot password screen");
             e.printStackTrace();
         }
-        UserSession.getInstance().removeMessageListener(this);
+        
     }
     
 
