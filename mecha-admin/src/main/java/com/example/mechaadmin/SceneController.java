@@ -521,8 +521,14 @@ public class SceneController implements Initializable {
         public void updateChart(List<AccountDTO> list) {
             XYChart.Series<String, Integer> series = new XYChart.Series<>();
             series.setName("New accounts");
+            LocalDateTime startDate = list.stream()
+                    .map(account -> account.getCreatedAt().toLocalDate().atStartOfDay())
+                    .min(LocalDateTime::compareTo)
+                    .orElse(LocalDateTime.now());
+
+            LocalDateTime endDate = LocalDateTime.now();
             Map<LocalDateTime, Long> dateCountMap = list.stream()
-                    .collect(Collectors.groupingBy(AccountDTO::getCreatedAt, Collectors.counting()))
+                    .collect(Collectors.groupingBy(account -> account.getCreatedAt().toLocalDate().atStartOfDay(), Collectors.counting()))
                     .entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .collect(Collectors.toMap(
@@ -530,6 +536,11 @@ public class SceneController implements Initializable {
                             Map.Entry::getValue,
                             (e1, e2) -> e1,
                             LinkedHashMap::new));
+
+            while (!startDate.isAfter(endDate)) {
+                dateCountMap.putIfAbsent(startDate, 0L);
+                startDate = startDate.plusDays(1);
+            }
 
             for (LocalDateTime date : dateCountMap.keySet()) {
                 series.getData().add(new XYChart.Data<>(date.toString(), dateCountMap.get(date).intValue()));
@@ -697,15 +708,15 @@ public class SceneController implements Initializable {
                     accTable.updateOriginal(userBUS.getAllUsers());
                     System.out.println("Reload account tabel");
                     try {
-                        Thread.sleep(2000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    
+
                     // Platform.runLater(new Runnable() {
-                    //     public void run() {
-                            
-                    //     }
+                    // public void run() {
+
+                    // }
                     // });
                 }
             }
@@ -1084,7 +1095,15 @@ public class SceneController implements Initializable {
     }
 
     public void switchToProfile(ActionEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("views/profile.fxml"));
+        AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
+        
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("views/profile.fxml"));
+        ProfileController profileController = loader.getController();
+        profileController.setAccount(account);
+        root = loader.load();
+        
+        System.out.println("Sent account to profile: " + account.getUsername());
+        
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);

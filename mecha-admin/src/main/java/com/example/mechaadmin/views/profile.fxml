@@ -25,25 +25,15 @@
                         <Font name="Inter Regular" size="14.0" />
                      </font>
                   </Label>
-                  <TextField />
+                  <TextField fx:id="full" />
                   <Label text="Username">
                      <font>
                         <Font name="Inter Regular" size="14.0" />
                      </font>
                   </Label>
-                  <TextField />
+                  <TextField fx:id="username" />
                   <HBox prefHeight="46.0" prefWidth="342.0" spacing="5.0">
                      <children>
-                        <VBox prefHeight="46.0" prefWidth="166.0">
-                           <children>
-                              <Label text="Full name">
-                                 <font>
-                                    <Font name="Inter Regular" size="14.0" />
-                                 </font>
-                              </Label>
-                              <TextField />
-                           </children>
-                        </VBox>
                         <VBox>
                            <children>
                               <Label text="Giới tính">
@@ -51,7 +41,7 @@
                                     <Font name="Inter Regular" size="14.0" />
                                  </font>
                               </Label>
-                              <TextField />
+                              <TextField fx:id="gender" />
                            </children>
                         </VBox>
                      </children>
@@ -61,7 +51,7 @@
                         <Font name="Inter Regular" size="14.0" />
                      </font>
                   </Label>
-                  <TextField />
+                  <TextField fx:id="address" />
                   <HBox prefHeight="46.0" prefWidth="342.0" spacing="5.0">
                      <children>
                         <VBox prefHeight="46.0" prefWidth="166.0">
@@ -71,7 +61,7 @@
                                     <Font name="Inter Regular" size="14.0" />
                                  </font>
                               </Label>
-                              <TextField />
+                              <TextField fx:id="dob" />
                            </children>
                         </VBox>
                         <VBox>
@@ -91,7 +81,7 @@
                         <Font name="Inter Regular" size="14.0" />
                      </font>
                   </Label>
-                  <TextField />
+                  <TextField fx:id="email" />
                   <HBox spacing="5.0">
                      <children>
                         <Button mnemonicParsing="false" prefHeight="28.0" prefWidth="58.0" text="Lưu">

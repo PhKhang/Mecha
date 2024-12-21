@@ -17,7 +17,7 @@
         <!-- Set Driver Name -->
         <property name = "hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
 
-        <property name = "hibernate.show_sql">true</property>
+        <property name = "hibernate.show_sql">false</property>
 
         <!-- Optional: Auto-generate schema -->
         <!-- <property name = "hibernate.hbm2ddl.auto">create</property> -->
