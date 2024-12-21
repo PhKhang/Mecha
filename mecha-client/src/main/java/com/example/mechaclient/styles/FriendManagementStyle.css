@@ -165,3 +165,67 @@
     -fx-background-insets: 0;
     -fx-padding: 10;
 }
+
+/* styles for searchTypeChoiceBox */
+.search-type-choice {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.search-type-choice .label {
+    -fx-text-fill: #333333;
+}
+
+.search-type-choice .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.search-type-choice .arrow {
+    -fx-background-color: #666666;
+}
+
+.search-type-choice:hover {
+    -fx-background-color: #e8e8e8;
+}
+
+.search-type-choice:showing {
+    -fx-background-color: #d8d8d8;
+}
+
+.search-type-choice .context-menu {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);
+}
+
+.search-type-choice .menu-item:focused {
+    -fx-background-color: #f0f0f0;
+}
+
+.search-type-choice .menu-item > .label {
+    -fx-text-fill: #333333;
+}
+
+.search-type-choice .menu-item:focused > .label {
+    -fx-text-fill: #000000;
+}
+
+/* Style for the search field to match the modern look */
+.search-field {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.search-field:focused {
+    -fx-border-color: #666666;
+}

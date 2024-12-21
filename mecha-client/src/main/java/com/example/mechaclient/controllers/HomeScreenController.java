@@ -89,8 +89,6 @@ public class HomeScreenController implements ServerMessageListener{
     private boolean isDirectingMessage = false;
     private int directedmMessageId = -1;
 
-    // for message option
-    private boolean isMessageMenuOpen = false;
     public void initialize() {
         messageField.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
@@ -822,7 +820,6 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject("DELETE_MESSAGE");
                 UserSession.out.writeObject(messageId);
                 UserSession.out.writeObject(currentChat.chatId);
-                isMessageMenuOpen = false;
                 chatListView.getItems().remove(messageBox);
             } catch (IOException ex){
                 ex.printStackTrace();

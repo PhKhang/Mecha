@@ -55,10 +55,14 @@ public class FriendManagementController implements ServerMessageListener {
     private Button currentActiveTab;
 
     @FXML private TextField universalSearchField;
+    @FXML private ChoiceBox<String> searchTypeChoiceBox;
 
     public void initialize() {
         UserSession.getInstance().addMessageListener(this);
         
+        searchTypeChoiceBox.setItems(FXCollections.observableArrayList("Search by full name", "Search by @username"));
+        searchTypeChoiceBox.setValue("Search by full name");
+
         setupListViewBehavior(friendRequestList);
         setupListViewBehavior(searchResultList);
         setupListViewBehavior(blockedList);
@@ -80,11 +84,21 @@ public class FriendManagementController implements ServerMessageListener {
         ObservableList<HBox> allItems = fullList;
         ObservableList<HBox> filteredItems = allItems.filtered(item -> {
             if (item == null || query.isEmpty()) return true;
-            Label usernameLabel = (Label) item.lookup(".fullname-label"); 
-            if (usernameLabel != null) {
-                String username = usernameLabel.getText();
-                System.out.println("username: " + username);
-                return username.toLowerCase().contains(query.toLowerCase());
+            String searchType = searchTypeChoiceBox.getValue();
+            if ("Search by full name".equals(searchType)) {
+                Label fullnameLabel = (Label) item.lookup(".fullname-label");
+                if (fullnameLabel != null) {
+                    String fullname = fullnameLabel.getText();
+                    System.out.println("fullname: " + fullname);
+                    return fullname.toLowerCase().contains(query.toLowerCase());
+                }
+            } else if ("Search by @username".equals(searchType)) {
+                Label usernameLabel = (Label) item.lookup(".username-label");
+                if (usernameLabel != null) {
+                    String username = usernameLabel.getText();
+                    System.out.println("username: " + username);
+                    return username.toLowerCase().contains(query.toLowerCase());
+                }
             }
             return false;
         });
@@ -265,6 +279,7 @@ public class FriendManagementController implements ServerMessageListener {
 
         Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
         usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        usernameLabel.getStyleClass().add("username-label");
         nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
 
         // Gender (Second Line)
@@ -348,6 +363,7 @@ public class FriendManagementController implements ServerMessageListener {
 
         Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
         usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        usernameLabel.getStyleClass().add("username-label");
         nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
     
         // Gender (second line)
@@ -386,20 +402,43 @@ public class FriendManagementController implements ServerMessageListener {
         return item;
     }
 
-    private HBox createUserFriendRequestItem(int userId, String fullname) {
+    private HBox createUserFriendRequestItem(int userId, String fullname, String username, String address, String gender, String dob, String timeSent) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("box-item");
     
+        VBox userInfo = new VBox(5);
         
+        // Fullname and username
+        HBox nameRow = new HBox(5);
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
-        fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: black;");
         fullnameLabel.getStyleClass().add("fullname-label");
 
+        Label usernameLabel = new Label("@" + username);
+        usernameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
+        usernameLabel.getStyleClass().add("username-label");
+        nameRow.getChildren().addAll(fullnameLabel, usernameLabel);
+        
+        // Gender
+        Label genderLabel = new Label("Gender: " + (gender != null ? gender : "N/A"));
+        genderLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+        
+        // Date of birth and address
+        Label dobAddressLabel = new Label((dob != null ? dob : "N/A") + ", " + (address != null ? address : "N/A"));
+        dobAddressLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        userInfo.getChildren().addAll(nameRow, genderLabel, dobAddressLabel);
+    
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
+
+        // Time sent
+        String formattedTime = formatTime(timeSent);
+        Label timeLabel = new Label("Request sent: " + formattedTime);
+        timeLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 10px;");
+    
         Button cancelButton = new Button("Cancel request");
         cancelButton.getStyleClass().add("cancel-button");
         cancelButton.setOnAction(event -> {
@@ -412,13 +451,13 @@ public class FriendManagementController implements ServerMessageListener {
                     showFindFriend();
                     showRequestsSent();
                 });
-                
+    
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-            event.getTarget();
         });
-        item.getChildren().addAll(fullnameLabel, spacer, cancelButton);
+    
+        item.getChildren().addAll(userInfo, spacer, timeLabel, cancelButton);
         return item;
     }
 
@@ -440,6 +479,7 @@ public class FriendManagementController implements ServerMessageListener {
 
         Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
         usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        usernameLabel.getStyleClass().add("username-label");
         nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
     
         // Gender (Second Line)
@@ -498,6 +538,7 @@ public class FriendManagementController implements ServerMessageListener {
         
         Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
         usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        usernameLabel.getStyleClass().add("username-label");
         nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
     
         // Gender (Second Line)
@@ -556,8 +597,13 @@ public class FriendManagementController implements ServerMessageListener {
                 System.out.println("got friend request");
                 for (String[] friend : friendRequests) {
                     int friendId = Integer.parseInt(friend[0]);
-                    String friendFullname = friend[1];
-                    items.add(createUserFriendRequestItem(friendId, friendFullname));   
+                    String fullname = friend[1];
+                    String username = friend[2];
+                    String address = friend[3];
+                    String gender = friend[4];
+                    String dob = friend[5];
+                    String timeSent = friend[6];
+                    items.add(createUserFriendRequestItem(friendId, fullname, username, address, gender, dob, timeSent));   
                 }
                 Platform.runLater(() -> {
                     fullList = items;
