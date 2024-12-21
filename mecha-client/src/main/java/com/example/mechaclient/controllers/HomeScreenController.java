@@ -1129,7 +1129,8 @@ public class HomeScreenController implements ServerMessageListener{
     private void handleLogout(javafx.event.ActionEvent event) {
         try {
             UserSession.getInstance().Logout();
-
+            UserSession.getInstance().removeMessageListener(this);
+            UserSession.socket.close();
             FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
             Stage stage = (Stage) ((MenuItem) event.getSource()).getParentPopup().getOwnerWindow();
@@ -1138,7 +1139,7 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.getInstance().Logout();
             });
             stage.show();
-            UserSession.getInstance().removeMessageListener(this);
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
