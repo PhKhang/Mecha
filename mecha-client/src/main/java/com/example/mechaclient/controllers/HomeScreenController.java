@@ -638,8 +638,6 @@ public class HomeScreenController implements ServerMessageListener{
                 searchMessageOption.setManaged(true);
 
                 searchMessageOption.setOnMouseClicked(event -> {
-                    System.out.println("search message for: " + newValue);
-                    // TODO: implement search message
                     try {
                         UserSession.out.writeObject("SEARCH_MESSAGE");
                         UserSession.out.writeObject(newValue);
@@ -661,7 +659,7 @@ public class HomeScreenController implements ServerMessageListener{
     private void initializeChatData() {
         allChats.clear();
         try {
-            UserSession.out.writeObject("GET_FRIEND_LIST");
+            UserSession.out.writeObject("GET_CHAT_LIST");
             UserSession.out.writeObject(UserSession.getInstance().getUserId());
         } catch (Exception e) {
             e.printStackTrace();
@@ -677,6 +675,7 @@ public class HomeScreenController implements ServerMessageListener{
                 curChatName.setText(chat.name);
                 selectedFriendEntry = chatEntry;
             }
+            // chatEntry.setUserData(chat.chatId);
             friendListVBox.getChildren().add(chatEntry);
         }
     }
@@ -692,6 +691,7 @@ public class HomeScreenController implements ServerMessageListener{
     
         // Create status indicator (green or grey dot)
         Circle statusIndicator = new Circle(5);
+        
         if (chat.status.equalsIgnoreCase("online")) {
             statusIndicator.setFill(Paint.valueOf("green"));
         } else {
@@ -699,11 +699,24 @@ public class HomeScreenController implements ServerMessageListener{
         }
     
         // Create horizontal box for name and status
-        HBox nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel);
+        HBox nameStatusBox;
+        if (chat.type == ChatType.PRIVATE)
+            nameStatusBox = new HBox(5, nameLabel, statusIndicator, statusLabel);
+        else 
+            nameStatusBox = new HBox(5, nameLabel);
         nameStatusBox.setAlignment(Pos.CENTER_LEFT);
     
         // Create last message label
-        Label lastMessageLabel = new Label(chat.lastMessage);
+        String lastMessage;
+        if (chat.lastSenderId != -1){
+            if (chat.lastSenderId == UserSession.getInstance().getUserId())
+                lastMessage = "You: " + chat.lastMessage;
+            else
+                lastMessage = chat.lastSenderFullname + ": " + chat.lastMessage; 
+        } else {
+            lastMessage = "";
+        }
+        Label lastMessageLabel = new Label(lastMessage);
         lastMessageLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #555;");
     
         // Vertical box to combine name/status and last message
@@ -751,7 +764,7 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject(message);
                 
                 updateChat(currentChat);
-                // addMessage(message, UserSession.getInstance().getUserId(), UserSession.getInstance().getFullname(), Timestamp.from(Instant.now()));
+                initializeChatData();
                 messageField.clear();
     
             } catch (Exception e) {
@@ -815,6 +828,7 @@ public class HomeScreenController implements ServerMessageListener{
                 ex.printStackTrace();
             } 
         });
+
         messageMenu.getItems().add(deleteOption);
 
         
@@ -822,22 +836,14 @@ public class HomeScreenController implements ServerMessageListener{
         // Show context menu on option icon click
         optionIcon.setOnMouseClicked(e -> {
             System.out.println("Icon clicked");
-            isMessageMenuOpen = true; // Mark that the context menu is open
-        
-            // Position the ContextMenu relative to optionIcon
-            double iconX = optionIcon.localToScene(optionIcon.getBoundsInLocal()).getMinX();
-            double iconY = optionIcon.localToScene(optionIcon.getBoundsInLocal()).getMinY();
-            
-            double offsetY = 20;  // Position the context menu below the optionIcon
-        
-            if (!messageMenu.isShowing()) {
-                System.out.println("Showing context menu at " + iconX + ", " + (iconY + offsetY));
-                messageMenu.show(optionIcon, iconX, iconY + offsetY);
-            } else {
-                messageMenu.hide();
-                isMessageMenuOpen = false; // Reset the flag when hiding
-            }
+            messageMenu.show(optionIcon, e.getScreenX() + 2, e.getScreenY());
+       
         });
+        messageMenu.setOnAutoHide(null);
+        // messageMenu.setOnHiding(e -> {
+        //     // Optionally, reset visibility of optionIcon
+        //     optionIcon.setVisible(false);
+        // });
         VBox fullMessageContainer = new VBox(2);
         HBox messageContainer = new HBox(5);
     
@@ -861,14 +867,11 @@ public class HomeScreenController implements ServerMessageListener{
         messageBox.getChildren().add(fullMessageContainer);
         
         messageBox.setOnMouseEntered(e -> {
-            if (!isMessageMenuOpen) {
                 optionIcon.setVisible(true);
-            }
         });
         messageBox.setOnMouseExited(e -> {
-            if (!isMessageMenuOpen) {
+            if (!messageMenu.isFocused())
                 optionIcon.setVisible(false);
-            }
         });
         
         chatListView.getItems().add(messageBox);
@@ -1213,7 +1216,7 @@ public class HomeScreenController implements ServerMessageListener{
     @Override
     public void onMessageReceived(String serverMessage) {
         try {
-            if ("respond_GET_FRIEND_LIST".equals(serverMessage)) {
+            if ("respond_GET_CHAT_LIST".equals(serverMessage)) {
                 List<String[]> friendList = (List<String[]>) UserSession.in.readObject();
                 Platform.runLater(() -> {
                     for (String[] friend : friendList) {
@@ -1222,10 +1225,19 @@ public class HomeScreenController implements ServerMessageListener{
                         String status = friend[2];
                         String chatType = friend[3];
                         int adminId = Integer.parseInt(friend[4]);
+                        String lastMessage = friend[5];
+                        String senderId_string = friend[6];
+                        int senderId;
+                        if (senderId_string != null){
+                            senderId = Integer.parseInt(senderId_string);
+                        } else {
+                            senderId = -1;
+                        }
+                        String senderFullname = friend[7];
                         if (chatType.equals("private"))
-                            allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, "none", chatId, adminId));
+                            allChats.add(new ChatBox(fullname, ChatType.PRIVATE, status, lastMessage, senderId, senderFullname, chatId, adminId));
                         else
-                            allChats.add(new ChatBox(fullname, ChatType.GROUP, status, "none", chatId, adminId));
+                            allChats.add(new ChatBox(fullname, ChatType.GROUP, status, lastMessage, senderId, senderFullname, chatId, adminId));
                     }
                     Platform.runLater(() -> {
                         displayChats(filteredChats);
@@ -1244,6 +1256,7 @@ public class HomeScreenController implements ServerMessageListener{
                     if (chatId == currentChat.chatId) {
                         addMessage(messageId, message, senderId, senderFullname, timeSent);
                     }
+                    initializeChatData();
                 });
             }
             else if ("respond_GET_CHAT_MESSAGES".equals(serverMessage)) {
@@ -1425,6 +1438,17 @@ public class HomeScreenController implements ServerMessageListener{
                 //     chatListView.scrollTo(chatId);
                 // });
                 
+            } else if ("FRIEND_ONLINE".equals(serverMessage)){
+                int friendId = (int) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    initializeChatData();
+                });
+                
+            } else if ("FRIEND_OFFLINE".equals(serverMessage)){
+                int friendId = (int) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    initializeChatData();
+                });
             }
         } catch (Exception e){
             System.out.println("error handling response from server in home controller: ");

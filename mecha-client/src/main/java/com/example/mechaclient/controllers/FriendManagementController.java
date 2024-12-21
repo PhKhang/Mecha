@@ -13,6 +13,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javafx.application.Platform;
@@ -246,66 +248,123 @@ public class FriendManagementController implements ServerMessageListener {
         content.setVisible(true);
     }
 
-    private HBox createFriendRequestItem(int userId, String fullname) {
+    private HBox createFriendRequestItem(int userId, String fullname, String username, String address, String gender, String dob, String timeSent) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("box-item");
-        
-        
+
+        // Left Info Section
         VBox userInfo = new VBox(5);
+
+        // Fullname and Username (First Line)
+        HBox nameLine = new HBox(5);
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
-        fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: black;");
         fullnameLabel.getStyleClass().add("fullname-label");
-        Label timeLabel = new Label("username placeholder");
-        timeLabel.getStyleClass().add("time-label");
-        userInfo.getChildren().addAll(fullnameLabel, timeLabel);
-        
+
+        Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
+        usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
+
+        // Gender (Second Line)
+        Label genderLabel = new Label(gender != null ? gender : "Unknown");
+        genderLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+
+        // Date of Birth and Address (Third Line)
+        Label dobAndAddressLabel = new Label((dob != null ? dob : "Unknown DOB") + ", " + (address != null ? address : "Unknown Address"));
+        dobAndAddressLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+
+        userInfo.getChildren().addAll(nameLine, genderLabel, dobAndAddressLabel);
+
+        // Spacer
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
+
+        // Time Sent
+        String formattedTime = formatTime(timeSent); // format time to: HH:MM, DD/MM/YYYY
+        Label timeLabel = new Label("Sent At: " + formattedTime);
+        timeLabel.setStyle("-fx-text-fill: grey; -fx-font-size: 12px;");
+
+        // Action Buttons
         Button acceptButton = new Button("Accept");
         acceptButton.getStyleClass().add("accept-button");
         acceptButton.setOnAction(e -> {
             try {
                 UserSession.out.writeObject("ACCEPT_FRIEND_REQUEST");
-                UserSession.out.writeObject(UserSession.getInstance().getUserId()); // receiver
-                UserSession.out.writeObject(userId); // sender
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(userId);
                 System.out.println("accepting friend");
                 showFriendRequests();
-
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
+
         Button declineButton = new Button("Decline");
         declineButton.getStyleClass().add("decline-button");
         declineButton.setOnAction(e -> {
             try {
                 UserSession.out.writeObject("DECLINE_FRIEND_REQUEST");
-                UserSession.out.writeObject(UserSession.getInstance().getUserId()); // receiver
-                UserSession.out.writeObject(userId); // sender
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                UserSession.out.writeObject(userId);
                 showFriendRequests();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
-        item.getChildren().addAll(userInfo, spacer, acceptButton, declineButton);
+
+        item.getChildren().addAll(userInfo, spacer, timeLabel, acceptButton, declineButton);
         return item;
     }
 
-    private HBox createSearchResultItem(int userId, String fullname) {
+    // Helper Method to Format Time
+    private String formatTime(String timeSent) {
+        try {
+            LocalDateTime timestamp = LocalDateTime.parse(timeSent, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            return timestamp.format(DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Invalid Time";
+        }
+    }
+
+
+    private HBox createSearchResultItem(int userId, String fullname, String username, String address, String gender, String dob) { 
         HBox item = new HBox(5);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("box-item");
-        
+    
+        // Left Info Section
+        VBox infoBox = new VBox(3);
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+    
+        // Full name and username
+        HBox nameLine = new HBox(5); // Spacing between fullname and username
         Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
-        fullnameLabel.setStyle("-fx-text-fill: black;");
+        fullnameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: black;");
         fullnameLabel.getStyleClass().add("fullname-label");
+
+        Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
+        usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
+    
+        // Gender (second line)
+        Label genderLabel = new Label(gender != null ? gender : "Unknown");
+        genderLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        // Date of Birth and Address (third line)
+        Label dobAndAddressLabel = new Label((dob != null ? dob : "Unknown DOB") + ", " + (address != null ? address : "Unknown Address"));
+        dobAndAddressLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        infoBox.getChildren().addAll(nameLine, genderLabel, dobAndAddressLabel);
+    
+        // Spacer between info and button
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
+    
+        // Add Button
         Button addButton = new Button("Add friend");
         addButton.getStyleClass().add("add-button");
         addButton.setOnAction(event -> {
@@ -317,13 +376,13 @@ public class FriendManagementController implements ServerMessageListener {
                 Platform.runLater(() -> {
                     showFindFriend();
                 });
-                
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
             event.getTarget();
         });
-        item.getChildren().addAll(fullnameLabel, spacer, addButton);
+    
+        item.getChildren().addAll(infoBox, spacer, addButton);
         return item;
     }
 
@@ -363,20 +422,46 @@ public class FriendManagementController implements ServerMessageListener {
         return item;
     }
 
-    private HBox createBlockedUserItem(int userId, String fullname) {
+    private HBox createBlockedUserItem(int userId, String fullname, String username, String address, String gender, String dob, String timeSent) {
         System.out.println("createBlocked user called");
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("box-item");
-        
-        Label fullnameLabel = new Label(fullname);
-        fullnameLabel.setStyle("-fx-text-fill: black;");
+    
+        // User Info Section
+        VBox userInfo = new VBox(5);
+    
+        // Fullname and Username (First Line)
+        HBox nameLine = new HBox(5);
+        Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
+        fullnameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: black;");
         fullnameLabel.getStyleClass().add("fullname-label");
 
+        Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
+        usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
+    
+        // Gender (Second Line)
+        Label genderLabel = new Label(gender != null ? gender : "Unknown");
+        genderLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        // Date of Birth and Address (Third Line)
+        Label dobAndAddressLabel = new Label((dob != null ? dob : "Unknown DOB") + ", " + (address != null ? address : "Unknown Address"));
+        dobAndAddressLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        // Time Sent
+        String formattedTime = formatTime(timeSent);
+        Label timeLabel = new Label("Blocked at: " + formattedTime);
+        timeLabel.setStyle("-fx-text-fill: grey; -fx-font-size: 12px;");
+    
+        userInfo.getChildren().addAll(nameLine, genderLabel, dobAndAddressLabel);
+    
+        // Spacer
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
+    
+        // Remove Block Button
         Button removeButton = new Button("Remove block");
         removeButton.getStyleClass().add("remove-block-button");
         removeButton.setOnAction(e -> {
@@ -387,34 +472,62 @@ public class FriendManagementController implements ServerMessageListener {
                 Platform.runLater(() -> {
                     showBlockedList();
                 });
-            } catch (IOException ex){
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         });
-        item.getChildren().addAll(fullnameLabel, spacer, removeButton);
+    
+        item.getChildren().addAll(userInfo, spacer, timeLabel, removeButton);
         return item;
     }
 
-    private HBox createReportedUserItem(int userId, String fullname, String status, Timestamp timeReported) {
+    private HBox createReportedUserItem(int userId, String fullname, String status, String username, String address, String gender, String dob, String timeSent) {
         HBox item = new HBox(10);
         item.setPadding(new Insets(8, 15, 8, 15));
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("box-item");
-        
-        Label fullnameLabel = new Label(fullname);
-        fullnameLabel.setStyle("-fx-text-fill: black;");
+    
+        // User Info Section
+        VBox userInfo = new VBox(5);
+    
+        // Fullname and Username (First Line)
+        HBox nameLine = new HBox(5);
+        Label fullnameLabel = new Label(fullname != null ? fullname : "Unknown");
+        fullnameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: black;");
         fullnameLabel.getStyleClass().add("fullname-label");
-
+        
+        Label usernameLabel = new Label(username != null ? "@" + username : "@unknown");
+        usernameLabel.setStyle("-fx-text-fill: #1f1f1f; -fx-font-size: 14px;");
+        nameLine.getChildren().addAll(fullnameLabel, usernameLabel);
+    
+        // Gender (Second Line)
+        Label genderLabel = new Label(gender != null ? gender : "Unknown");
+        genderLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        // Date of Birth and Address (Third Line)
+        Label dobAndAddressLabel = new Label((dob != null ? dob : "Unknown DOB") + ", " + (address != null ? address : "Unknown Address"));
+        dobAndAddressLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+    
+        userInfo.getChildren().addAll(nameLine, genderLabel, dobAndAddressLabel);
+    
+        // Spacer
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        Label statusLabel = new Label("Status: ");
 
+        // Time Sent
+        String formattedTime = formatTime(timeSent);
+        Label timeLabel = new Label("Reported At: " + formattedTime);
+        timeLabel.setStyle("-fx-text-fill: grey; -fx-font-size: 12px;");
+    
+    
+        // Status Section
+        Label statusLabel = new Label("Status: ");
+        statusLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
         Label statusValue = new Label(status);
         statusValue.getStyleClass().add(status.toLowerCase() + "-status");
-        statusLabel.setStyle("-fx-text-fill: black;");
-        statusValue.setStyle("-fx-text-fill: black;");
-        item.getChildren().addAll(fullnameLabel, spacer, statusLabel, statusValue);
+        statusValue.setStyle("-fx-font-weight: bold; -fx-text-fill: black; -fx-font-size: 12px;");
+   
+        item.getChildren().addAll(userInfo, spacer, timeLabel, statusLabel, statusValue);
         return item;
     }
 
@@ -427,7 +540,11 @@ public class FriendManagementController implements ServerMessageListener {
                 for (String[] friend : potentialFriends) {
                     int userId = Integer.parseInt(friend[0]);
                     String fullname = friend[1];
-                    items.add(createSearchResultItem(userId, fullname));  
+                    String username = friend[2];
+                    String address = friend[3];
+                    String gender = friend[4];
+                    String dob = friend[5];
+                    items.add(createSearchResultItem(userId, fullname, username, address, gender, dob));  
                 }
                 Platform.runLater(() -> {
                     fullList = items;
@@ -452,7 +569,12 @@ public class FriendManagementController implements ServerMessageListener {
                 for (String[] friend : friendRequestToUser) {
                     int friendId = Integer.parseInt(friend[0]);
                     String friendFullname = friend[1];
-                    items.add(createFriendRequestItem(friendId, friendFullname));   
+                    String friendUsername = friend[2];
+                    String address = friend[3];
+                    String gender = friend[4];
+                    String dob = friend[5];
+                    String timeSent = friend[6];
+                    items.add(createFriendRequestItem(friendId, friendFullname, friendUsername, address, gender, dob, timeSent));   
                 }
                 Platform.runLater(() -> {
                     fullList = items;
@@ -464,7 +586,12 @@ public class FriendManagementController implements ServerMessageListener {
                 for (String[] blockedUser : blockedUserList) {
                     int userId = Integer.parseInt(blockedUser[0]);
                     String fullname = blockedUser[1];
-                    items.add(createBlockedUserItem(userId, fullname));   
+                    String username = blockedUser[2];
+                    String address = blockedUser[3];
+                    String gender = blockedUser[4];
+                    String dob = blockedUser[5];
+                    String timeSent = blockedUser[6]; 
+                    items.add(createBlockedUserItem(userId, fullname, username, address, gender, dob, timeSent));   
                 }
                 Platform.runLater(() -> {
                     fullList = items;
@@ -478,11 +605,14 @@ public class FriendManagementController implements ServerMessageListener {
                     // order: reportedUserId, reportedUserFullname, reportedUserStatus, reportedTime
                     int userId = Integer.parseInt(reportedUser[0]);
                     String fullname = reportedUser[1];
-                    String status = reportedUser[2];
-                    String timeReportedString = reportedUser[3];
-
-                    Timestamp timeReported = Timestamp.valueOf(timeReportedString);
-                    items.add(createReportedUserItem(userId, fullname, status, timeReported));   
+                    String username = reportedUser[2];
+                    String address = reportedUser[3];
+                    String gender = reportedUser[4];
+                    String dob = reportedUser[5];
+                    String timeSent = reportedUser[6]; 
+                    String status = reportedUser[7];
+                    
+                    items.add(createReportedUserItem(userId, fullname, status, username, address, gender, dob, timeSent));   
                     Platform.runLater(() -> {
                         fullList = items;
                         reportedList.setItems(items);
