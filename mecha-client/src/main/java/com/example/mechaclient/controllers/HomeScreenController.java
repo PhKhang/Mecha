@@ -816,6 +816,8 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject("DELETE_MESSAGE");
                 UserSession.out.writeObject(messageId);
                 UserSession.out.writeObject(currentChat.chatId);
+                UserSession.out.writeObject(UserSession.getInstance().getUserId());
+                
                 chatListView.getItems().remove(messageBox);
             } catch (IOException ex){
                 ex.printStackTrace();
@@ -1404,10 +1406,9 @@ public class HomeScreenController implements ServerMessageListener{
                 });
             } else if ("respond_DELETE_MESSAGE".equals(serverMessage)){
                 int chatId = (int) UserSession.in.readObject();
-                // Platform.runLater(() -> {
-                //     updateChat(currentChat);
-                //     chatListView.scrollTo(chatId);
-                // });
+                Platform.runLater(() -> {
+                    initializeChatData();
+                });
                 
             } else if ("FRIEND_ONLINE".equals(serverMessage)){
                 int friendId = (int) UserSession.in.readObject();
@@ -1418,6 +1419,15 @@ public class HomeScreenController implements ServerMessageListener{
             } else if ("FRIEND_OFFLINE".equals(serverMessage)){
                 int friendId = (int) UserSession.in.readObject();
                 Platform.runLater(() -> {
+                    initializeChatData();
+                });
+            } else if ("FRIEND_DELETE_MESSAGE".equals(serverMessage)){
+                int friendId = (int) UserSession.in.readObject();
+                int chatId = (int) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    if (currentChat.chatId == chatId){
+                        updateChat(currentChat);
+                    }
                     initializeChatData();
                 });
             }

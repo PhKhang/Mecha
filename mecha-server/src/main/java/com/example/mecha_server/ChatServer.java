@@ -400,10 +400,13 @@ public class ChatServer {
             } else if ("DELETE_MESSAGE".equals(action)){
                 int messageId = (int) in.readObject();
                 int chatId = (int) in.readObject();
-                deleteMessage(messageId, chatId);
+                int userId = (int) in.readObject();
+                deleteMessage(messageId, chatId, userId);
                 
                 out.writeObject("respond_DELETE_MESSAGE");
                 out.writeObject(chatId);
+
+                getUserFriend(chatId);
             } else if ("DELETE_ALL_CHAT_MESSAGE".equals(action)){
                 int chatId = (int) in.readObject();
 
@@ -473,7 +476,7 @@ public class ChatServer {
             stmt.executeUpdate();
         }
 
-        private void deleteMessage(int messageId, int chatId) throws SQLException{
+        private void deleteMessage(int messageId, int chatId, int userId) throws SQLException{
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
                 DELETE FROM messages WHERE message_id = ?
@@ -481,7 +484,24 @@ public class ChatServer {
             );
 
             stmt.setInt(1, messageId);
+            
             stmt.executeUpdate();
+
+            // notify related user to update their chat
+            List <Integer> friendIdList = getUserFriend(userId);
+            for (int friendId : friendIdList){
+                // if there is a friend that is online
+                if (connectedClients.containsKey(friendId)) {
+                    ClientHandler recipient = connectedClients.get(friendId);
+                    try { // sending signal for them to update
+                        recipient.out.writeObject("FRIEND_DELETE_MESSAGE");
+                        recipient.out.writeObject(friendId);
+                        recipient.out.writeObject(chatId);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
 
         private Map<Integer, List<String[]>> searchMessages(int userId, String searchContent) throws SQLException {
@@ -1426,7 +1446,6 @@ public class ChatServer {
                             try { // sending signal for them to update
                                 recipient.out.writeObject("FRIEND_ONLINE");
                                 recipient.out.writeObject(friendId);
-                                System.out.println("sending friend online signal to userid: " + friendId);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
