@@ -1,10 +1,8 @@
 package com.example.mechaclient.controllers;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.UserSession;
@@ -13,16 +11,15 @@ import com.example.mechaclient.utils.NotificationUtil;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import javafx.scene.Node;
 
 public class SignupScreenController implements ServerMessageListener{
     
@@ -31,6 +28,8 @@ public class SignupScreenController implements ServerMessageListener{
     @FXML private TextField fullnameField;
     @FXML private TextField addressField;
     @FXML private TextField emailField;
+    @FXML private ChoiceBox genderChoiceBox;
+    @FXML private DatePicker dobDatePicker;
     @FXML private TextField passwordField;
     @FXML private TextField confirmPasswordField;
 
@@ -47,6 +46,9 @@ public class SignupScreenController implements ServerMessageListener{
             System.out.println("login pressed");
         });
         signInButton.setOnAction(event -> handleEmailSignIn(event));
+
+        genderChoiceBox.setItems(FXCollections.observableArrayList("Male", "Female", "Other"));
+        genderChoiceBox.setValue("Male");
     }
     
     private void handleLogin() {
@@ -73,6 +75,8 @@ public class SignupScreenController implements ServerMessageListener{
         String fullname = fullnameField.getText();
         String address = addressField.getText();
         String email = emailField.getText();
+        String gender = (String) genderChoiceBox.getValue();
+        LocalDate dob = dobDatePicker.getValue();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
 
@@ -100,6 +104,8 @@ public class SignupScreenController implements ServerMessageListener{
             UserSession.out.writeObject("SIGNUP");
             UserSession.out.writeObject(username);
             UserSession.out.writeObject(fullname);
+            UserSession.out.writeObject(gender);
+            UserSession.out.writeObject(dob.format(DateTimeFormatter.ISO_LOCAL_DATE));
             UserSession.out.writeObject(address);
             UserSession.out.writeObject(email);
             UserSession.out.writeObject(passwordHash); 

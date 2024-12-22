@@ -112,6 +112,7 @@ public class UserSession {
     public interface ServerMessageListener {
         void onMessageReceived(String message);
     }
+    
     public void Logout() {
         try {
             if (instance != null) {

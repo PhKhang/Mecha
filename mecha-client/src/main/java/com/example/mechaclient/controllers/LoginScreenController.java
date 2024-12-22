@@ -5,21 +5,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-// import java.io.ObjectInputStream;
-// import java.io.ObjectOutputStream;
-// import java.net.Socket;
-import java.util.List;
 
 import com.example.mechaclient.ChatApplication;
-import com.example.mechaclient.models.ChatBox;
-import com.example.mechaclient.models.ChatBox.ChatType;
 import com.example.mechaclient.models.UserSession;
 import com.example.mechaclient.models.UserSession.ServerMessageListener;
 import com.example.mechaclient.utils.NotificationUtil;
@@ -68,6 +60,7 @@ public class LoginScreenController implements ServerMessageListener {
 
     @FXML
     private void handleForgot() {
+        UserSession.getInstance().removeMessageListener(this);
         System.out.println("from login screen: forgot password pressed");
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(
@@ -80,7 +73,7 @@ public class LoginScreenController implements ServerMessageListener {
             System.out.println("can not load forgot password screen");
             e.printStackTrace();
         }
-        UserSession.getInstance().removeMessageListener(this);
+        
     }
     
 
@@ -118,32 +111,38 @@ public class LoginScreenController implements ServerMessageListener {
     public void onMessageReceived(String serverMessage) {
         try {
             System.out.println("Login Screen receive message: " + serverMessage);
-            if ("SUCCESS".equals(serverMessage)) {
-                int userId = (int) UserSession.in.readObject();
-                String username = (String) UserSession.in.readObject();
-                String fullname = (String) UserSession.in.readObject();
-                int logId = (int) UserSession.in.readObject();
+            if ("respond_LOGIN".equals(serverMessage)) {
+                String status = (String) UserSession.in.readObject();
+                if ("SUCCESS".equals(status)){
+                    int userId = (int) UserSession.in.readObject();
+                    String username = (String) UserSession.in.readObject();
+                    String fullname = (String) UserSession.in.readObject();
+                    int logId = (int) UserSession.in.readObject();
 
-                UserSession.getInstance().setUsername(username);
-                UserSession.getInstance().setUserId(userId);
-                UserSession.getInstance().setFullname(fullname);
-                UserSession.getInstance().logId = logId;
+                    UserSession.getInstance().setUsername(username);
+                    UserSession.getInstance().setUserId(userId);
+                    UserSession.getInstance().setFullname(fullname);
+                    UserSession.getInstance().logId = logId;
 
-                System.out.println("processing login complete!");
-                Platform.runLater(() -> {
-                    try {
-                        loadHomeScreen();
-                    } catch (IOException e) {
-                        System.out.println("can not load home screen");
-                        e.printStackTrace();
-                    }
-                });
-            } else {
-                Platform.runLater(() -> {
-                    NotificationUtil.showNotification("Login failed", "Invalid username or password");
-                    System.out.println("Invalid username or password");
-                });
-            }
+                    System.out.println("processing login complete!");
+                    Platform.runLater(() -> {
+                        try {
+                            loadHomeScreen();
+                        } catch (IOException e) {
+                            System.out.println("can not load home screen");
+                            e.printStackTrace();
+                        }
+                    });
+                } else if ("LOCKED".equals(status)){
+                    Platform.runLater(() -> {
+                        NotificationUtil.showNotification("Account locked", "This account has been locked by the administrator.");
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        NotificationUtil.showNotification("Login failed", "Invalid username or password");
+                    });
+                }
+        }
         } catch (Exception e) {
             System.out.println("error handling response from server in login screen: " + e.getMessage());
         }

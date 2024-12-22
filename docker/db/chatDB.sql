@@ -8,9 +8,10 @@ CREATE TABLE admin_account (
 	admin_id INT PRIMARY KEY,
 	email VARCHAR(100) NOT NULL,
     full_name VARCHAR(100),
-    password_hash VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 -- User Table
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,

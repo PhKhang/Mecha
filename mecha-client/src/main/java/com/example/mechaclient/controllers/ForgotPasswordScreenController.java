@@ -21,14 +21,6 @@ public class ForgotPasswordScreenController implements ServerMessageListener {
 
     public void initialize() {
         UserSession.getInstance().addMessageListener(this);
-        System.out.println("initialize forgot password screen");
-        try {
-            UserSession.getInstance().connectToServer();
-        } catch (IOException e) {
-            System.out.println("error while initialize in forgot password screen: " + e.getMessage());
-            e.printStackTrace();
-        }
-        UserSession.getInstance().startListening();
     }
     
     @FXML
@@ -52,11 +44,17 @@ public class ForgotPasswordScreenController implements ServerMessageListener {
     private void handleLogin() {
         System.out.println("from forgot screen: to login screen pressed");
         try {
+            UserSession.socket.close();
+            UserSession.getInstance().removeMessageListener(this);
             FXMLLoader fxmlLoader = new FXMLLoader(
                     ChatApplication.class.getResource("views/LoginScreen.fxml"));
             Parent homeScreen = fxmlLoader.load();
             Scene scene = new Scene(homeScreen, 800, 600);
             Stage stage = (Stage) emailField.getScene().getWindow();
+            
+            stage.setOnCloseRequest(event -> {
+                UserSession.getInstance().Logout();
+            });
             stage.setScene(scene);
         } catch (IOException e) {
             System.out.println("can not load login screen");
