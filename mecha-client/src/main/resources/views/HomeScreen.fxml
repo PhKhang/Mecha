@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<SplitPane dividerPositions="0.25" prefHeight="600.0" prefWidth="800.0" stylesheets="@../styles/HomeScreenStyle.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaclient.controllers.HomeScreenController">
+    <items>
+        <!-- Sidebar -->
+        <VBox prefWidth="200" style="-fx-background-color: white; -fx-border-color: white;">
+            <HBox alignment="CENTER_LEFT" style="-fx-background-color: #7AB2D3; -fx-border-radius: 10px;">
+                <Label fx:id="fullnameLabel" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10 0 10 10;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <ImageView fx:id="settings" fitHeight="44.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/option-icon.png" />
+                    </image>
+                    <HBox.margin>
+                        <Insets right="5.0" />
+                    </HBox.margin>
+                </ImageView>
+            </HBox>
+            <TextField fx:id="searchField" promptText="Search Chats" style="-fx-padding: 5; -fx-border-color: #78B3CE;">
+                <VBox.margin>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                </VBox.margin>
+            </TextField>
+            <HBox fx:id="searchMessageOption" alignment="CENTER_LEFT" style="-fx-padding: 5 10;" styleClass="search-message-option">
+                <VBox.margin>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="-5.0" />
+                </VBox.margin>
+            </HBox>
+            <Button maxWidth="Infinity" mnemonicParsing="false" onAction="#showCreateGroupPopup" styleClass="create-group-button" text="Create Group">
+                <VBox.margin>
+                    <Insets bottom="3.0" left="15.0" right="15.0" top="3.0" />
+                </VBox.margin>
+            </Button>
+            <HBox alignment="CENTER" style="-fx-background-color: white;">
+                <Button fx:id="allButton" mnemonicParsing="false" onAction="#getAllChat" prefWidth="40.0" styleClass="chat-filter-button" text="All">
+                    <HBox.margin>
+                        <Insets left="3.0" right="3.0" />
+                    </HBox.margin>
+                </Button>
+                <Button fx:id="privateButton" mnemonicParsing="false" onAction="#getPrivateChat" styleClass="chat-filter-button" text="Private">
+                    <HBox.margin>
+                        <Insets left="3.0" right="3.0" />
+                    </HBox.margin>
+                </Button>
+                <Button fx:id="groupsButton" mnemonicParsing="false" onAction="#getGroupChat" styleClass="chat-filter-button" text="Groups">
+                    <HBox.margin>
+                        <Insets left="3.0" right="3.0" />
+                    </HBox.margin>
+                </Button>
+                <VBox.margin>
+                    <Insets bottom="10.0" top="5.0" />
+                </VBox.margin>
+            </HBox>
+            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                <VBox fx:id="friendListVBox" style="-fx-background-color: white;" VBox.vgrow="ALWAYS" />
+            </ScrollPane>
+        </VBox>
+        
+        <!-- Chat View -->
+        <VBox HBox.hgrow="ALWAYS">
+            <HBox fx:id="chatHeader" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #7AB2D3;">
+                <Label fx:id="curChatName" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="chatOption">
+                    <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0">
+                            <image>
+                                <Image url="@../images/three-dots.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Label>
+            </HBox>
+            <ListView fx:id="chatListView" styleClass="chat-list-view" VBox.vgrow="ALWAYS" />
+            <HBox fx:id="messageFieldFrame" alignment="CENTER" spacing="10" style="-fx-padding: 10; -fx-background-color: white;">
+                <TextField fx:id="messageField" promptText="Aa" style="-fx-background-radius: 50;" HBox.hgrow="ALWAYS" />
+                <Button onAction="#handleSendMessage" style="-fx-background-radius: 100;" text="➜" />
+            </HBox>
+        </VBox>
+    </items>
+</SplitPane>

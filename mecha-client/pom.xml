@@ -64,7 +64,7 @@
             <!-- Default configuration for running with: mvn clean javafx:run -->
             <id>default-cli</id>
             <configuration>
-              <mainClass>com.example.mechaclient/com.example.mechaclient.HelloApplication</mainClass>
+              <mainClass>com.example.mechaclient/com.example.mechaclient.Main</mainClass>
               <launcher>app</launcher>
               <jlinkZipName>app</jlinkZipName>
               <jlinkImageName>app</jlinkImageName>
@@ -78,7 +78,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>LATEST VERSION HERE</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <phase>package</phase>
