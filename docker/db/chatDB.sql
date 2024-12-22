@@ -33,7 +33,7 @@ CREATE TABLE log_history (
     section_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     section_end TIMESTAMP,
     
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Friend Requests Table
@@ -43,8 +43,8 @@ CREATE TABLE friend_request (
     status ENUM('pending', 'accepted', 'rejected') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, friend_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (friend_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Friendship Table
@@ -53,8 +53,8 @@ CREATE TABLE friendships (
     user1_id INT NOT NULL,
     user2_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user1_id) REFERENCES users(user_id),
-    FOREIGN KEY (user2_id) REFERENCES users(user_id),
+    FOREIGN KEY (user1_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (user2_id) REFERENCES users(user_id) ON DELETE CASCADE,
     UNIQUE KEY (user1_id, user2_id) -- Prevent duplicate relationships
 );
 
@@ -64,8 +64,8 @@ CREATE TABLE Blocked_List (
     blocker_id INT NOT NULL,
     blocked_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (blocker_id) REFERENCES users(user_id),
-    FOREIGN KEY (blocked_id) REFERENCES users(user_id),
+    FOREIGN KEY (blocker_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (blocked_id) REFERENCES users(user_id) ON DELETE CASCADE,
     UNIQUE KEY unique_block (blocker_id, blocked_id)
 );
 
@@ -76,8 +76,8 @@ CREATE TABLE Report (
     reason VARCHAR(255) NOT NULL,
     status ENUM('pending', 'resolved') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (reporter_id) REFERENCES users(user_id),
-    FOREIGN KEY (reported_id) REFERENCES users(user_id),
+    FOREIGN KEY (reporter_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_id) REFERENCES users(user_id) ON DELETE CASCADE,
     INDEX (reporter_id),
     INDEX (reported_id)
 );
@@ -89,7 +89,7 @@ CREATE TABLE chats (
     chat_type ENUM('private', 'group') NOT NULL,
     admin_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_id) REFERENCES users(user_id)
+    FOREIGN KEY (admin_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Chat Members Table
@@ -99,7 +99,7 @@ CREATE TABLE chat_members (
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (chat_id, user_id),
     FOREIGN KEY (chat_id) REFERENCES chats(chat_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Messages Table
@@ -113,5 +113,5 @@ CREATE TABLE messages (
     
     PRIMARY KEY (message_id, chat_id),
     FOREIGN KEY (chat_id) REFERENCES chats(chat_id),
-    FOREIGN KEY (sender_id) REFERENCES users(user_id)
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
