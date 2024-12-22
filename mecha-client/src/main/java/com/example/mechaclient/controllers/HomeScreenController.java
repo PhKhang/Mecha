@@ -10,35 +10,27 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+
 import javafx.stage.Stage;
 import javafx.stage.Modality;
 import javafx.application.Platform;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -761,8 +753,8 @@ public class HomeScreenController implements ServerMessageListener{
                 UserSession.out.writeObject(currentChat.chatId);
                 UserSession.out.writeObject(message);
                 
-                updateChat(currentChat);
-                initializeChatData();
+                // updateChat(currentChat);
+                // initializeChatData();
                 messageField.clear();
     
             } catch (Exception e) {
@@ -1054,7 +1046,6 @@ public class HomeScreenController implements ServerMessageListener{
                                   .map(friend -> friend.userId)
                                   .collect(Collectors.toList());
                                   userIds.add(UserSession.getInstance().getUserId());
-            // System.out.println("chat " + groupName +" created, member num: " + userIds.size());
             UserSession.out.writeObject(userIds);
         } catch (IOException e){
             e.printStackTrace();
@@ -1193,24 +1184,6 @@ public class HomeScreenController implements ServerMessageListener{
         return messageBox;
     }
     
-    private void redirectToMessage(int chatId, int messageId, String content, String createdAt) {        
-        if (currentChat != null) {     
-            // try{Thread.sleep(1000);} catch (Exception e){e.printStackTrace();}       
-            System.out.println("curr number of message: " + chatListView.getItems().size());
-            Platform.runLater(() -> {
-                Optional<HBox> foundItem = chatListView.getItems().stream()
-                        .filter(item -> (int) item.getUserData() == messageId) // Filter by messageId stored in userData
-                        .findFirst();
-
-                if (foundItem.isPresent()) {
-                    chatListView.scrollTo(foundItem.get());
-                } else {
-                    System.out.println("No message found with the specified messageId.");
-                }
-            });
-            
-        }
-    }
     @Override
     public void onMessageReceived(String serverMessage) {
         try {
@@ -1421,10 +1394,10 @@ public class HomeScreenController implements ServerMessageListener{
                                     // redirectToMessage(chatId, messageId, content, createdAt);
                                 });
 
-                                messagesListView.getItems().add(messageItem);
+                                friendListVBox.getChildren().add(messageItem);
                             }
 
-                            friendListVBox.getChildren().add(messagesListView);
+                            // friendListVBox.getChildren().add(messagesListView);
                         });
                         friendListVBox.getChildren().add(chatItem);
                     }

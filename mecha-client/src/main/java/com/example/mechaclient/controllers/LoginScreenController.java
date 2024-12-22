@@ -5,21 +5,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-// import java.io.ObjectInputStream;
-// import java.io.ObjectOutputStream;
-// import java.net.Socket;
-import java.util.List;
 
 import com.example.mechaclient.ChatApplication;
-import com.example.mechaclient.models.ChatBox;
-import com.example.mechaclient.models.ChatBox.ChatType;
 import com.example.mechaclient.models.UserSession;
 import com.example.mechaclient.models.UserSession.ServerMessageListener;
 import com.example.mechaclient.utils.NotificationUtil;

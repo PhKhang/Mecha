@@ -21,20 +21,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.naming.spi.DirStateFactory.Result;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -866,7 +855,7 @@ public class ChatServer {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
                         UPDATE users
-                        SET password_hash = ?
+                        SET password = ?
                         WHERE user_id = ?
                     """);
             stmt.setString(1, newPassword);
@@ -878,13 +867,13 @@ public class ChatServer {
         private String getPassword(int userId) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                        SELECT password_hash FROM users WHERE user_id = ?
+                        SELECT password FROM users WHERE user_id = ?
                     """);
             stmt.setInt(1, userId);
 
             ResultSet rs = stmt.executeQuery();
             rs.next();
-            return rs.getString("password_hash");
+            return rs.getString("password");
         }
 
         private void updateUserInfo(int userId, String fullname, String gender, String address, String email, Date dob)
@@ -1331,9 +1320,13 @@ public class ChatServer {
             System.out.println("Message stored");
             stmt = conn.prepareStatement(
                 """
-                SELECT LAST_INSERT_ID();
+                SELECT m.*
+                FROM messages m
+                WHERE m.chat_id = ?
+                AND created_at = (SELECT MAX(created_at) FROM messages m2 WHERE m2.chat_id = m.chat_id)
                 """
             );
+            stmt.setInt(1, chatId);
             ResultSet rs = stmt.executeQuery();
             rs.next();
             String messageId = rs.getString("message_id");
@@ -1354,8 +1347,8 @@ public class ChatServer {
 
                 while (rs.next()) {
                     int participantId = rs.getInt("u.user_id");
-                    // if the current chat member(excluding the user) is online
-                    if (participantId != senderId && connectedClients.containsKey(participantId)) {
+                    // if the current chat member(including the user) is online
+                    if (connectedClients.containsKey(participantId)) {
                         ClientHandler recipient = connectedClients.get(participantId);
                         try {
                             recipient.out.writeObject("NEW_MESSAGE");
@@ -1365,8 +1358,8 @@ public class ChatServer {
                             recipient.out.writeObject(senderId);
                             recipient.out.writeObject(senderFullname);
                             recipient.out.writeObject(timeSent);
-                            // System.out.println("send signal to chatid " + chatId + "from userid " +
-                            // senderId);
+                            System.out.println("send signal to chatid " + chatId + "from userid " +
+                            senderId + " to " + participantId);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -1407,7 +1400,7 @@ public class ChatServer {
 
         private String authenticateUser(String username, String password, List<String> userInfo) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE BINARY username = ? AND password_hash = ?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE BINARY username = ? AND password = ?");
             stmt.setString(1, username);
             stmt.setString(2, password);
             ResultSet rs = stmt.executeQuery();
@@ -1473,7 +1466,7 @@ public class ChatServer {
             System.out.println("Registering user: " + username);
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement(
-                            "INSERT INTO users (username, email, address, password_hash, full_name, status, date_of_birth, gender) " +
+                            "INSERT INTO users (username, email, address, password, full_name, status, date_of_birth, gender) " +
                                     "VALUES (?, ?, ?, ?, ?, 'offline', ?, ?)")) {
 
                 stmt.setString(1, username);

@@ -1,12 +1,8 @@
 package com.example.mechaclient.controllers;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.UserSession;
@@ -15,7 +11,6 @@ import com.example.mechaclient.utils.NotificationUtil;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -24,9 +19,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import javafx.scene.Node;
 
 public class SignupScreenController implements ServerMessageListener{
     

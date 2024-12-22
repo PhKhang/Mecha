@@ -5,14 +5,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.image.*;
-import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,8 +21,6 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 
 import com.example.mechaclient.ChatApplication;
-import com.example.mechaclient.models.ChatBox;
-import com.example.mechaclient.models.ChatBox.ChatType;
 import com.example.mechaclient.models.UserSession.ServerMessageListener;
 import com.example.mechaclient.models.UserSession;
 
