@@ -771,7 +771,7 @@ public class ChatServer {
                             chat.admin_id, 
                             COALESCE(m.content, NULL) as last_message, 
                             COALESCE(m.sender_id, NULL) as sender_id, 
-                            COALESCE(u.username, NULL) as sender_fullname
+                            COALESCE(u.full_name, NULL) as sender_fullname
                     FROM chats chat
                     JOIN chat_members cm ON cm.chat_id = chat.chat_id
                     LEFT JOIN messages m ON m.chat_id = chat.chat_id 

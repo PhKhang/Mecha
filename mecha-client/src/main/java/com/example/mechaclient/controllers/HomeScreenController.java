@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
 import com.example.mechaclient.ChatApplication;
 import com.example.mechaclient.models.ChatBox;
 import com.example.mechaclient.models.UserSession;
+import com.example.mechaclient.models.Friend;
+
 import com.example.mechaclient.models.UserSession.ServerMessageListener;
 import com.example.mechaclient.utils.NotificationUtil;
 import com.example.mechaclient.models.ChatBox.ChatType;
@@ -526,12 +528,14 @@ public class HomeScreenController implements ServerMessageListener{
         chatOption.setOnMouseClicked(event -> {
             chatOptionMenu.getItems().clear();
             if (currentChat != null) {
-                if (currentChat.type == ChatBox.ChatType.PRIVATE) {
+                if (currentChat.type == ChatType.PRIVATE) {
                     chatOptionMenu.getItems().addAll(blockUserItem, reportUserItem, deleteAllChatMesssageItem, unfriendItem);
-                } else if (currentChat.type == ChatBox.ChatType.GROUP) {
-                    chatOptionMenu.getItems().addAll(changeChatNameItem, addMemberItem, deleteAllChatMesssageItem);
-                    if (isUserAdmin()) {
-                        chatOptionMenu.getItems().addAll(removeMemberItem, assignAdminItem, deleteAllChatMesssageItem);
+                } else if (currentChat.type == ChatType.GROUP) {
+                    if (!isUserAdmin()){
+                        chatOptionMenu.getItems().addAll(changeChatNameItem, addMemberItem, deleteAllChatMesssageItem);
+                    }
+                    else {
+                        chatOptionMenu.getItems().addAll(changeChatNameItem, addMemberItem, removeMemberItem, assignAdminItem, deleteAllChatMesssageItem);
                     }
                 }
             }
@@ -1027,16 +1031,6 @@ public class HomeScreenController implements ServerMessageListener{
         return addedFriendItem;
     }
 
-    private class Friend {
-        public String fullName;
-        public int userId;
-    
-        Friend(String fullName, int userId) {
-            this.fullName = fullName;
-            this.userId = userId;
-        }
-    }
-
     private void createGroupChat(String groupName, List<Friend> friendList){
         try {
             UserSession.out.writeObject("CREATE_CHAT_GROUP");
@@ -1231,33 +1225,39 @@ public class HomeScreenController implements ServerMessageListener{
                 });
             }
             else if ("respond_GET_CHAT_MESSAGES".equals(serverMessage)) {
-                List<String[]> messages = (List<String[]>) UserSession.in.readObject();
-                Platform.runLater(() -> {
-                    for (String[] msg : messages) {
-                        int messageId = Integer.parseInt(msg[0]);
-                        int senderId = Integer.parseInt(msg[1]);
-                        String senderFullname = msg[2];
-                        String message = msg[3];
-                        String timeSent = msg[4];
-                        
-                        Timestamp timestamp = Timestamp.valueOf(timeSent);
-                        addMessage(messageId, message, senderId, senderFullname, timestamp);
-                    }
-
-                    if (isDirectingMessage){
-                        Optional<HBox> foundItem = chatListView.getItems().stream()
-                        .filter(item -> (int) item.getUserData() == directedmMessageId) // Filter by messageId stored in userData
-                        .findFirst();
-
-                        if (foundItem.isPresent()) {
-                            chatListView.scrollTo(foundItem.get());
-                        } else {
-                            System.out.println("No message found with the specified messageId.");
+                try {
+                    List<String[]> messages = (List<String[]>) UserSession.in.readObject();
+                    Platform.runLater(() -> {
+                        for (String[] msg : messages) {
+                            int messageId = Integer.parseInt(msg[0]);
+                            int senderId = Integer.parseInt(msg[1]);
+                            String senderFullname = msg[2];
+                            String message = msg[3];
+                            String timeSent = msg[4];
+                            
+                            Timestamp timestamp = Timestamp.valueOf(timeSent);
+                            addMessage(messageId, message, senderId, senderFullname, timestamp);
                         }
-                        isDirectingMessage = false;
-                        directedmMessageId = -1;
-                    }
-                });
+
+                        if (isDirectingMessage){
+                            Optional<HBox> foundItem = chatListView.getItems().stream()
+                            .filter(item -> (int) item.getUserData() == directedmMessageId) // Filter by messageId stored in userData
+                            .findFirst();
+
+                            if (foundItem.isPresent()) {
+                                chatListView.scrollTo(foundItem.get());
+                            } else {
+                                System.out.println("No message found with the specified messageId.");
+                            }
+                            isDirectingMessage = false;
+                            directedmMessageId = -1;
+                        }
+                    });
+                } catch (Exception e){
+                    System.out.print("error here");
+                    e.printStackTrace();
+
+                }
             }
             else if ("respond_GET_FRIENDS".equals(serverMessage)){
                 List<String[]> receivedFriendList = (List<String[]>) UserSession.in.readObject();
