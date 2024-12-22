@@ -1314,8 +1314,12 @@ public class HomeScreenController implements ServerMessageListener{
             }
             else if ("REMOVED_MEMBER".equals(serverMessage)){
                 int chatId = (int) UserSession.in.readObject();
-                if (chatId == currentChat.chatId)
+                if (chatId == currentChat.chatId){
                     messageFieldFrame.setVisible(false);
+                    chatOption.setVisible(false);
+                    curChatName.setText("");
+                    chatListView.getItems().clear();
+                }
                     
                 initializeChatData();
             }

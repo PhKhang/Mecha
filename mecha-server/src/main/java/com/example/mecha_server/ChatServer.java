@@ -590,11 +590,12 @@ public class ChatServer {
 
             int userId = getUserIdByEmail(email);
             if (userId == 0) {
-                System.out.println("User not found");
+                System.out.println("User not found");   
                 return false;
             }
-            updatePassword(userId, hashedPassword.toString());
-            sendEmail(email, "New Password", "Your new password is: " + newPassword);
+            updatePassword(userId, newPassword);
+            EmailSender.sendEmail(email, "New Password", "Your new password is: " + newPassword);
+            // EmailSender.sendEmail(email, "Your new password is done", "The password of your account has been reseted. Your new password is  " + newPassword);
             System.out.println("update password complete");
             
             return true;
@@ -653,7 +654,7 @@ public class ChatServer {
                     ClientHandler recipient = connectedClients.get(userId);
                     try {
                         recipient.out.writeObject("REMOVED_MEMBER");
-                        // recipient.out.writeObject(chatId);
+                        recipient.out.writeObject(chatId);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

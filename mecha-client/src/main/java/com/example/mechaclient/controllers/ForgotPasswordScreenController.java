@@ -71,7 +71,9 @@ public class ForgotPasswordScreenController implements ServerMessageListener {
                 String reponse = (String) UserSession.in.readObject();
                 if (reponse.equals("SUCCESS")) {
                     System.out.println("Forgot password success");
-                    handleLogin();
+                    Platform.runLater(() -> {
+                        handleLogin();
+                    });
                     return;
                 }
                 System.out.println("Forgot password success");
