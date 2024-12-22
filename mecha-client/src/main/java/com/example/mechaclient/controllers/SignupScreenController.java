@@ -54,7 +54,7 @@ public class SignupScreenController implements ServerMessageListener{
     private void handleLogin() {
         try {
             UserSession.socket.close();
-            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/LoginScreen.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("/views/LoginScreen.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
     
             // Get the current stage (window)

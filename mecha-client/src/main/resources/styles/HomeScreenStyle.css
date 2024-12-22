@@ -1,0 +1,129 @@
+.chat-filter-button, .create-group-button {
+    -fx-background-color: lightgrey;
+    -fx-background-radius: 20;
+    -fx-padding: 5 10;
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+.chat-filter-button:hover, .create-group-button:hover {
+    -fx-background-color: #d0d0d0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 1);
+}
+
+.chat-filter-button:pressed, .create-group-button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+.chat-filter-button.selected {
+    -fx-background-color: #7AB2D3;
+    -fx-text-fill: white;
+}
+
+.create-group-button {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+}
+
+.create-group-button:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+.chat-list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.chat-list-view .list-cell {
+    -fx-background-color: transparent;
+}
+
+.chat-list-view .list-cell:filled:selected, .chat-list-view .list-cell:filled:focused {
+    -fx-background-color: transparent;
+}
+
+.friend-entry {
+    -fx-background-color: #f0f0f0; 
+    -fx-background-radius: 10px; 
+    -fx-border-color: #ddd; 
+    -fx-border-width: 1px; 
+    -fx-border-radius: 10px;
+}
+
+.friend-entry:hover {
+    -fx-background-color: #e6f7ff; 
+    -fx-background-radius: 10px; 
+    -fx-border-color: #0077cc; 
+    -fx-border-width: 1px; 
+    -fx-border-radius: 10px;
+}
+
+.friend-entry.selected {
+    -fx-background-color: #7bd1e0;
+    -fx-border-width: 1px; 
+    -fx-border-radius: 10px;
+}
+
+/* styling for SplitPane */
+.split-pane:horizontal > .split-pane-divider:pressed {
+    -fx-background-color: #4A8BAF;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: transparent;
+    -fx-padding: 0 1px;
+}
+
+/* for report dialog layout */
+.dialog-layout {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 20px;
+}
+
+.dialog-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-alignment: center-left;
+}
+
+.dialog-button-confirm {
+    -fx-background-color: #50bcff;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-padding: 5 15;
+}
+
+.dialog-button-confirm:hover {
+    -fx-background-color: #2abdf2;
+}
+
+.dialog-button-cancel {
+    -fx-background-color: #787878;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-padding: 5 15;
+}
+
+.dialog-button-cancel:hover {
+    -fx-background-color: #b8b8b8;
+}
+
+
+.search-message-option {
+    -fx-background-color: #f0f0f0;
+    -fx-padding: 5 10;
+    -fx-background-radius: 5;
+    -fx-cursor: hand; 
+}
+
+.search-message-option:hover {
+    -fx-background-color: #e0e0ff;
+}

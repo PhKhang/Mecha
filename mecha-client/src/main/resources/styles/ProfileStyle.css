@@ -1,0 +1,229 @@
+.back-button {
+    -fx-background-color: transparent;
+    -fx-font-size: 23;
+}
+
+.back-button:hover{
+    -fx-background-color: grey;
+    -fx-background-radius: 50;
+}
+
+.profile-container {
+    -fx-background-color: #E6F0FF;
+    -fx-padding: 20;
+}
+
+.header-text {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+
+.display-name {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.display-email {
+    -fx-text-fill: #666666;
+}
+
+.field-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.text-field {
+    -fx-background-radius: 5;
+    -fx-padding: 5 9;
+    -fx-background-color: lightgrey;
+}
+
+.non-editable-field {
+    -fx-background-color: white;
+    -fx-text-fill: #666666;
+}
+
+.editable-field {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+}
+
+.editable-field:hover {
+
+}
+
+.edit-button {
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.confirm-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.cancel-button {
+    -fx-background-color: #666666;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.change-password-button {
+    -fx-background-color: #ff4444;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
+}
+
+.password-field {
+    -fx-background-radius: 5;
+    -fx-padding: 8 12;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
+}
+
+.button:pressed {
+    -fx-opacity: 0.8;
+}
+
+.editable-field {
+    -fx-background-color: white;
+}
+.non-editable-field {
+    -fx-background-color: transparent;
+}
+
+
+.choice-box, .date-picker {
+    -fx-background-color: transparent;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+.choice-box:disabled, .date-picker:disabled {
+    -fx-opacity: 0.7;
+}
+
+.choice-box .label, .date-picker .label {
+    -fx-text-fill: #333333;
+}
+
+.choice-box:hover, .date-picker:hover {
+    -fx-border-color: #999999;
+}
+
+.choice-box:showing, .date-picker:showing {
+    -fx-border-color: #666666;
+}
+
+.date-picker > .text-field {
+    -fx-background-color: transparent;
+}
+
+.date-picker:disabled > .text-field {
+    -fx-opacity: 1.0;
+}
+
+/* for change password popup */
+.dialog-pane {
+    -fx-background-color: #f4f4f4;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+}
+
+.dialog-pane > .content {
+    -fx-padding: 20px;
+}
+
+.dialog-pane:header .header-panel {
+    -fx-background-color: #e0e0e0;
+    -fx-padding: 10px;
+}
+
+.dialog-pane .label {
+    -fx-font-size: 14px;
+}
+
+.dialog-pane .text-field, .dialog-pane .password-field {
+    -fx-pref-width: 200px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+}
+
+.button {
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-transition: all 0.3s ease;
+}
+
+.change-password-dialog {
+    -fx-background-color: #f4f4f4;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+}
+
+.change-password-dialog > .content {
+    -fx-padding: 20px;
+}
+
+.change-password-dialog:header .header-panel {
+    -fx-background-color: #e0e0e0;
+    -fx-padding: 10px;
+}
+
+.change-password-dialog .label {
+    -fx-font-size: 14px;
+}
+
+.change-password-dialog .text-field,
+.change-password-dialog .password-field {
+    -fx-pref-width: 200px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+}
+
+.change-password-dialog .button {
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-transition: all 0.3s ease;
+}
+
+.change-password-dialog .confirm-button {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+}
+
+.change-password-dialog .confirm-button:hover {
+    -fx-background-color: #0056b3;
+}
+
+.change-password-dialog .confirm-button:pressed {
+    -fx-background-color: #004085;
+}
+
+.change-password-dialog .cancel-button {
+    -fx-background-color: #6c757d;
+    -fx-text-fill: white;
+}
+
+.change-password-dialog .cancel-button:hover {
+    -fx-background-color: #5a6268;
+}
+
+.change-password-dialog .cancel-button:pressed {
+    -fx-background-color: #545b62;
+}

@@ -47,7 +47,7 @@ public class ForgotPasswordScreenController implements ServerMessageListener {
             UserSession.socket.close();
             UserSession.getInstance().removeMessageListener(this);
             FXMLLoader fxmlLoader = new FXMLLoader(
-                    ChatApplication.class.getResource("views/LoginScreen.fxml"));
+                    ChatApplication.class.getResource("/views/LoginScreen.fxml"));
             Parent homeScreen = fxmlLoader.load();
             Scene scene = new Scene(homeScreen, 800, 600);
             Stage stage = (Stage) emailField.getScene().getWindow();

@@ -64,7 +64,7 @@ public class LoginScreenController implements ServerMessageListener {
         System.out.println("from login screen: forgot password pressed");
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(
-                    ChatApplication.class.getResource("views/ForgotPasswordScreen.fxml"));
+                    ChatApplication.class.getResource("/views/ForgotPasswordScreen.fxml"));
             Parent homeScreen = fxmlLoader.load();
             Scene scene = new Scene(homeScreen, 800, 600);
             Stage stage = (Stage) usernameField.getScene().getWindow();
@@ -80,7 +80,7 @@ public class LoginScreenController implements ServerMessageListener {
     @FXML
     private void handleSignUp() throws IOException {
 
-        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/SignupScreen.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("/views/SignupScreen.fxml"));
 
         Parent homeScreen = fxmlLoader.load();
         Scene scene = new Scene(homeScreen, 800, 600);
@@ -95,7 +95,7 @@ public class LoginScreenController implements ServerMessageListener {
     private void loadHomeScreen() throws IOException {
         UserSession.getInstance().removeMessageListener(this);
         System.out.println("loading home screen...");
-        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/HomeScreen.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("/views/HomeScreen.fxml"));
         Parent homeScreen = fxmlLoader.load();
         Scene scene = new Scene(homeScreen, 800, 600);
         Stage stage = (Stage) usernameField.getScene().getWindow();

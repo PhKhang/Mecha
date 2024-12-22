@@ -175,7 +175,7 @@ public class FriendManagementController implements ServerMessageListener {
 
     @FXML
     private void returnToHomeScreen(ActionEvent event) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("views/HomeScreen.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(ChatApplication.class.getResource("/views/HomeScreen.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
