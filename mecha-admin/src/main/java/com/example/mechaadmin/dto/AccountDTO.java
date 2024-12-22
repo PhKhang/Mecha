@@ -3,6 +3,7 @@ package com.example.mechaadmin.dto;
 import java.time.LocalDateTime;
 
 public class AccountDTO {
+    Integer id;
     String fullName;
     String username;
     String status;
@@ -10,11 +11,12 @@ public class AccountDTO {
     LocalDateTime recentLogin;
     String address;
     String email;
-    String dob;
+    LocalDateTime dob;
     String gender;
     Integer directFriends;
     Integer indirectFriends;
     String profileUrl = "https://pub-b0a9bdcea1cd4f6ca28d98f878366466.r2.dev/1.png";
+    String adminAction;
     
     public AccountDTO() {
         this.fullName = "";
@@ -26,7 +28,8 @@ public class AccountDTO {
         this.email = "";
     }
     
-    public AccountDTO(String fullName, String username, String status, LocalDateTime createdAt, LocalDateTime recentLogin, String address, String email) {
+    public AccountDTO(int id, String fullName, String username, String status, LocalDateTime createdAt, LocalDateTime recentLogin, String address, String email) {
+        this.id = id;
         this.fullName = fullName;
         this.username = username;
         this.status = status;
@@ -36,6 +39,14 @@ public class AccountDTO {
         this.email = email;
     }
 
+    public Integer getUserId() {
+        return id;
+    }
+    
+    public void setAccountId(int id) {
+        this.id = id;
+    }
+    
     public String getFullName() {
         return fullName;
     }
@@ -92,11 +103,11 @@ public class AccountDTO {
         this.email = email;
     }
 
-	public String getDob() {
+	public LocalDateTime getDob() {
 		return dob;
 	}
 
-	public void setDob(String dob) {
+	public void setDob(LocalDateTime dob) {
 		this.dob = dob;
 	}
 
@@ -131,4 +142,22 @@ public class AccountDTO {
     public void setProfileUrl(String profileUrl) {
         this.profileUrl = profileUrl;
     }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getAdminAction() {
+        return adminAction;
+    }
+
+    public void setAdminAction(String adminAction) {
+        this.adminAction = adminAction;
+    }
+    
+    
 }

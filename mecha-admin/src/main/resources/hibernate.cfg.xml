@@ -29,6 +29,7 @@
         <mapping class="com.example.mechaadmin.dao.LogDAO" />
         <mapping class="com.example.mechaadmin.dao.ChatDAO" />
         <mapping class="com.example.mechaadmin.dao.MemberDAO" />
+        <mapping class="com.example.mechaadmin.dao.FriendshipDAO" />
 
     </session-factory>
 </hibernate-configuration>

@@ -21,6 +21,12 @@
 #xoa {
     -fx-background-color: #b3261e;
 }
+#xoaButt {
+    -fx-background-color: #b3261e;
+}
 #khoa {
+    -fx-background-color: #f4781f;
+}
+#khoaButt {
     -fx-background-color: #f4781f;
 }

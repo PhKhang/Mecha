@@ -23,6 +23,9 @@ public class UserDAO {
     @Column(name = "full_name")
     String fullName;
     String status;
+    @Column(name = "date_of_birth")
+    LocalDateTime dob;
+    String gender;
     @Column(name = "admin_action")
     String adminAction;
     @Column(name = "created_at")
@@ -113,6 +116,22 @@ public class UserDAO {
 
     public void setAdminAction(String adminAction) {
         this.adminAction = adminAction;
+    }
+
+    public LocalDateTime getDob() {
+        return dob;
+    }
+
+    public void setDob(LocalDateTime dob) {
+        this.dob = dob;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }
 

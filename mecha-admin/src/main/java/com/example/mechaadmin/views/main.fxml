@@ -77,7 +77,7 @@
                                                       <Font size="14.0" />
                                                    </font>
                                                 </MenuButton>
-                                                <Button mnemonicParsing="false" onAction="#switchToProfile" text="Thêm người dùng">
+                                                <Button mnemonicParsing="false" onAction="#switchToNewProfile" text="Thêm người dùng">
                                                    <font>
                                                       <Font name="Inter Regular" size="14.0" />
                                                    </font>
@@ -172,12 +172,12 @@
                                                 </Button>
                                                 <HBox spacing="5.0">
                                                    <children>
-                                                      <Button mnemonicParsing="false" prefHeight="42.0" prefWidth="116.0" text="Xóa tài khoản" fx:id="xoa">
+                                                      <Button mnemonicParsing="false" onAction="#removeProfile" prefHeight="42.0" prefWidth="116.0" text="Xóa tài khoản" fx:id="xoaButt">
                                                          <font>
                                                             <Font name="Inter Regular" size="14.0" />
                                                          </font>
                                                       </Button>
-                                                      <Button fx:id="khoa" mnemonicParsing="false" prefHeight="28.0" prefWidth="144.0" text="Khóa người dùng">
+                                                      <Button fx:id="khoaButt" mnemonicParsing="false" onAction="#lockProfile" prefHeight="28.0" prefWidth="144.0" text="Khóa người dùng">
                                                          <font>
                                                             <Font name="Inter Regular" size="14.0" />
                                                          </font>

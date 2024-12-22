@@ -13,6 +13,7 @@ import com.example.mechaadmin.dao.UserDAO;
 import com.example.mechaadmin.dao.ChatDAO;
 import com.example.mechaadmin.dto.AccountDTO;
 import com.example.mechaadmin.dto.GroupChatDTO;
+import com.example.mechaadmin.dto.RecentLoginDTO;
 
 public class UserBUS {
     // Configuration configuration = null;
@@ -50,6 +51,10 @@ public class UserBUS {
             account.setRecentLogin(LocalDateTime.now());
             account.setAddress(((UserDAO) user[0]).getAddress());
             account.setEmail(((UserDAO) user[0]).getEmail());
+            account.setGender(((UserDAO) user[0]).getGender());
+            account.setDob(((UserDAO) user[0]).getDob());
+            account.setAccountId(((UserDAO) user[0]).getUserId());
+            account.setAdminAction(((UserDAO) user[0]).getAdminAction());
             accounts.add(account);
         }
 
@@ -75,6 +80,7 @@ public class UserBUS {
         List<AccountDTO> accounts = new ArrayList<AccountDTO>();
         for (Object[] user : users) {
             AccountDTO account = new AccountDTO();
+            account.setAccountId(((UserDAO) user[0]).getUserId());
             account.setFullName(((UserDAO) user[0]).getFullName());
             account.setUsername(((UserDAO) user[0]).getUsername());
             account.setStatus(((UserDAO) user[0]).getStatus());
@@ -88,7 +94,93 @@ public class UserBUS {
         return accounts;
     }
 
-    public void lockAccount(int userId) {
+    static public List<Object[]> getFriends(int id) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        List<Object[]> users = session
+                .createQuery("select u.username, u.fullName from UserDAO u\r\n" + //
+                        "join FriendshipDAO f on u.userId = f.user1\r\n" + //
+                        "where f.user2 = 1\r\n" + //
+                        "union\r\n" + //
+                        "select u.username, u.fullName from UserDAO u\r\n" + //
+                        "join FriendshipDAO f on u.userId = f.user2\r\n" + //
+                        "where f.user1 = 1", Object[].class)
+                .getResultList();
+
+        session.getTransaction().commit();
+        return users;
+    }
+
+    static public List<RecentLoginDTO> getRecentLogin(Integer id) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+
+        Session session = sessionFactory.openSession();
+
+        session.beginTransaction();
+
+        List<RecentLoginDTO> logs = session
+                .createQuery("select l.sectionStart, u.username, u.fullName from LogDAO l " +
+                        "join UserDAO u on l.userId = u.userId " +
+                        "where u.userId = :id " +
+                        "order by l.sectionStart desc", RecentLoginDTO.class)
+                .setParameter("id", id)
+                .getResultList();
+
+        session.getTransaction().commit();
+
+        return logs;
+    }
+
+    static public void saveAccount(AccountDTO account) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        UserDAO user = new UserDAO();
+        user.setFullName(account.getFullName());
+        user.setUsername(account.getUsername());
+        user.setStatus(account.getStatus());
+        user.setCreatedAt(account.getCreatedAt());
+        user.setAddress(account.getAddress());
+        user.setEmail(account.getEmail());
+        user.setGender(account.getGender());
+        user.setDob(account.getDob());
+        session.persist(user);
+
+        session.getTransaction().commit();
+    }
+
+    static public void updateAccount(AccountDTO account) {
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        UserDAO user = session.get(UserDAO.class, account.getUserId());
+        user.setFullName(account.getFullName());
+        user.setUsername(account.getUsername());
+        user.setStatus(account.getStatus());
+        user.setCreatedAt(account.getCreatedAt());
+        user.setAddress(account.getAddress());
+        user.setEmail(account.getEmail());
+        user.setGender(account.getGender());
+        user.setDob(account.getDob());
+        session.merge(user);
+
+        session.getTransaction().commit();
+    }
+
+    static public void lockAccount(int userId) {
         Configuration configuration = new Configuration();
         configuration.configure("hibernate.cfg.xml");
         SessionFactory sessionFactory = configuration.buildSessionFactory();
@@ -96,12 +188,12 @@ public class UserBUS {
         session.beginTransaction();
 
         UserDAO user = session.get(UserDAO.class, userId);
-        user.setStatus("locked");
+        user.setAdminAction("locked");
 
         session.getTransaction().commit();
     }
 
-    public void warnAccount(int userId) {
+    static public void warnAccount(int userId) {
         Configuration configuration = new Configuration();
         configuration.configure("hibernate.cfg.xml");
         SessionFactory sessionFactory = configuration.buildSessionFactory();
@@ -109,12 +201,12 @@ public class UserBUS {
         session.beginTransaction();
 
         UserDAO user = session.get(UserDAO.class, userId);
-        user.setStatus("warned");
+        user.setAdminAction("warned");
 
         session.getTransaction().commit();
     }
 
-    public void unlockAccount(int userId) {
+    static public void unlockAccount(int userId) {
         Configuration configuration = new Configuration();
         configuration.configure("hibernate.cfg.xml");
         SessionFactory sessionFactory = configuration.buildSessionFactory();
@@ -122,12 +214,12 @@ public class UserBUS {
         session.beginTransaction();
 
         UserDAO user = session.get(UserDAO.class, userId);
-        user.setStatus("active");
+        user.setAdminAction(null);
 
         session.getTransaction().commit();
     }
 
-    public void deleteAccount(int userId) {
+    static public void deleteAccount(int userId) {
         Configuration configuration = new Configuration();
         configuration.configure("hibernate.cfg.xml");
         SessionFactory sessionFactory = configuration.buildSessionFactory();

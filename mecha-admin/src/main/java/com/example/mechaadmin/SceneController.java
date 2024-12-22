@@ -37,6 +37,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.AreaChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.MenuButton;
@@ -528,7 +529,8 @@ public class SceneController implements Initializable {
 
             LocalDateTime endDate = LocalDateTime.now();
             Map<LocalDateTime, Long> dateCountMap = list.stream()
-                    .collect(Collectors.groupingBy(account -> account.getCreatedAt().toLocalDate().atStartOfDay(), Collectors.counting()))
+                    .collect(Collectors.groupingBy(account -> account.getCreatedAt().toLocalDate().atStartOfDay(),
+                            Collectors.counting()))
                     .entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .collect(Collectors.toMap(
@@ -695,6 +697,9 @@ public class SceneController implements Initializable {
     @FXML
     DatePicker reportEnd;
 
+    @FXML
+    Button khoaButt;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         UserBUS userBUS = new UserBUS();
@@ -705,8 +710,13 @@ public class SceneController implements Initializable {
         Thread aThread = new Thread() {
             public void run() {
                 while (true) {
-                    accTable.updateOriginal(userBUS.getAllUsers());
-                    System.out.println("Reload account tabel");
+                    System.out.println(accTable.accountTable.getSelectionModel().getSelectedItem());
+                    if (accTable.accountTable.getSelectionModel().getSelectedItem() == null
+                            || accTable.originalData == null || !accTable.accountTable.isFocused()) {
+                        accTable.updateOriginal(userBUS.getAllUsers());
+                        System.out.println("Reload account tabel");
+                    }
+
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
@@ -1014,6 +1024,47 @@ public class SceneController implements Initializable {
         boxDob.setText(String.valueOf(account.getDob()));
         boxEmail.setText(String.valueOf(account.getEmail()));
         boxGen.setText(String.valueOf(account.getGender()));
+        if (account.getAdminAction() == null) {
+            System.out.println("Khóa người dùng");
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    khoaButt.setText("Khóa người dùng");
+                }
+            });
+        } else if (account.getAdminAction().equals("locked")) {
+            Platform.runLater(new Runnable() {
+                public void run() {
+                    khoaButt.setText("Mở khóa");
+                }
+            });
+            System.out.println("Mở khóa");
+        }
+    }
+
+    public void lockProfile(ActionEvent event) {
+        AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
+        if (account == null)
+            return;
+
+        if (khoaButt.getText().equals("Khóa người dùng")) {
+            UserBUS.lockAccount(account.getUserId());
+            System.out.println("Lock user");
+            System.out.println(account.getUsername() + " is now locked");
+            khoaButt.setText("Mở khóa");
+        } else {
+            UserBUS.unlockAccount(account.getUserId());
+            System.out.println("Unlock user");
+            khoaButt.setText("Khóa người dùng");
+        }
+    }
+
+    public void removeProfile(ActionEvent event) {
+        AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
+        if (account == null)
+            return;
+
+        UserBUS.deleteAccount(account.getUserId());
+        System.out.println("Removed a user");
     }
 
     // Cac nhom
@@ -1096,14 +1147,28 @@ public class SceneController implements Initializable {
 
     public void switchToProfile(ActionEvent event) throws IOException {
         AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
-        
+
         FXMLLoader loader = new FXMLLoader(getClass().getResource("views/profile.fxml"));
         ProfileController profileController = loader.getController();
         profileController.setAccount(account);
         root = loader.load();
-        
+
         System.out.println("Sent account to profile: " + account.getUsername());
-        
+
+        stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    }
+    
+    public void switchToNewProfile(ActionEvent event) throws IOException {
+        AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("views/profile.fxml"));
+        ProfileController profileController = loader.getController();
+        profileController.setAccount(null);
+        root = loader.load();
+
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);
