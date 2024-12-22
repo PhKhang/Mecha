@@ -842,7 +842,7 @@ public class SceneController implements Initializable {
                     }
 
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(7000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -1164,7 +1164,7 @@ public class SceneController implements Initializable {
                     }
 
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(7000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
