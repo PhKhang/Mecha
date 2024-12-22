@@ -1405,7 +1405,7 @@ public class SceneController implements Initializable {
     }
 
     public void switchToMain(ActionEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("views/main.fxml"));
+        root = FXMLLoader.load(getClass().getResource("/views/main.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);
@@ -1415,7 +1415,7 @@ public class SceneController implements Initializable {
     public void switchToProfile(ActionEvent event) throws IOException {
         AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("views/profile.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/profile.fxml"));
         ProfileController profileController = loader.getController();
         profileController.setAccount(account);
         root = loader.load();
@@ -1431,7 +1431,7 @@ public class SceneController implements Initializable {
     public void switchToNewProfile(ActionEvent event) throws IOException {
         AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("views/profile.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/profile.fxml"));
         ProfileController profileController = loader.getController();
         profileController.setAccount(null);
         root = loader.load();
@@ -1449,7 +1449,7 @@ public class SceneController implements Initializable {
 
     @FXML
     public void clickToProfile(MouseEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("views/profile.fxml"));
+        root = FXMLLoader.load(getClass().getResource("/views/profile.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());

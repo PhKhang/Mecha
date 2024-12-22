@@ -1,0 +1,38 @@
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter.ttc');
+}
+
+.root{
+    -fx-font-family: "Inter";
+    /*-fx-background-color: black;*/
+}
+
+.label {
+    /*-fx-background-color: black;*/
+}
+
+.button {
+    -fx-background-radius: 6px;
+    -fx-background-color: #0F172A;
+    -fx-text-fill: white;
+}
+
+#xoa {
+    -fx-background-color: #b3261e;
+}
+#xoaButt {
+    -fx-background-color: #b3261e;
+}
+#xoaButt {
+    -fx-background-color: #b3261e;
+}
+#khoa {
+    -fx-background-color: #f4781f;
+}
+#khoaButt {
+    -fx-background-color: #f4781f;
+}
+#khoaButton {
+    -fx-background-color: #f4781f;
+}

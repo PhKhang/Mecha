@@ -24,9 +24,9 @@ public class Main extends Application {
         
         System.out.println(list.size());
         
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("views/login.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/login.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);   
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles/app.css")).toExternalForm());
         stage.setTitle("Mecha Admin Dashboard");
         stage.setScene(scene);
         stage.show();

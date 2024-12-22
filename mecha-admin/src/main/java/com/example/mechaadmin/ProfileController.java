@@ -176,7 +176,7 @@ public class ProfileController implements Initializable {
     }
 
     public void switchToMain(ActionEvent event) throws IOException {
-        root = FXMLLoader.load(getClass().getResource("views/main.fxml"));
+        root = FXMLLoader.load(getClass().getResource("/views/main.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
         stage.setScene(scene);

@@ -40,10 +40,10 @@ public class LoginController implements Initializable {
             return;
         }
         
-        root = FXMLLoader.load(getClass().getResource("views/main.fxml"));
+        root = FXMLLoader.load(getClass().getResource("/views/main.fxml"));
         stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         scene = new Scene(root);
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("styles/app.css")).toExternalForm());
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles/app.css")).toExternalForm());
         stage.setScene(scene);
         stage.show();
     }

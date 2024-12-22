@@ -12,7 +12,7 @@ public class AdminDAO {
     @Column(name = "admin_id")
     int adminId;
     String email;
-    String password_hash;
+    String password;
     @Column(name = "created_at")
     LocalDateTime createdAt;
     
@@ -22,7 +22,7 @@ public class AdminDAO {
     public AdminDAO(int adminId, String email, String password_hash, LocalDateTime createdAt) {
         this.adminId = adminId;
         this.email = email;
-        this.password_hash = password_hash;
+        this.password = password_hash;
         this.createdAt = createdAt;
     }
 
@@ -43,11 +43,11 @@ public class AdminDAO {
     }
 
     public String getPassword_hash() {
-        return password_hash;
+        return password;
     }
 
     public void setPassword_hash(String password_hash) {
-        this.password_hash = password_hash;
+        this.password = password_hash;
     }
 
     public LocalDateTime getCreatedAt() {

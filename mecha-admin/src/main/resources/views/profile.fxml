@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<ScrollPane stylesheets="@../styles/app.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mechaadmin.ProfileController">
+   <content>
+      <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="947.0" prefWidth="749.0">
+         <children>
+            <VBox layoutX="32.0" layoutY="44.0" prefHeight="263.0" prefWidth="117.0" spacing="5.0">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#switchToMain" text="Về Trang chủ" />
+                  <Text fill="#64748b" strokeType="OUTSIDE" strokeWidth="0.0" text="Thay đổi thông tin ở đây. Chọn Lưu để hoàn thành." />
+                  <Label text="Full name">
+                     <font>
+                        <Font name="Inter Regular" size="14.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="full" />
+                  <Label text="Username">
+                     <font>
+                        <Font name="Inter Regular" size="14.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="username" />
+                  <HBox prefHeight="46.0" prefWidth="342.0" spacing="5.0">
+                     <children>
+                        <VBox>
+                           <children>
+                              <Label text="Giới tính">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <ChoiceBox fx:id="gender" prefWidth="150.0" />
+                           </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0">
+                           <children>
+                              <Label text="Tài khoản tạo lúc">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="creation" editable="false" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <Label text="Địa chỉ">
+                     <font>
+                        <Font name="Inter Regular" size="14.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="address" />
+                  <HBox prefHeight="46.0" prefWidth="342.0" spacing="5.0">
+                     <children>
+                        <VBox prefHeight="46.0" prefWidth="166.0">
+                           <children>
+                              <Label text="Ngày sinh">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <DatePicker fx:id="dob" />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label text="Password">
+                                 <font>
+                                    <Font name="Inter Regular" size="14.0" />
+                                 </font>
+                              </Label>
+                              <Button mnemonicParsing="false" prefHeight="26.0" prefWidth="146.0" text="Gửi mật khẩu mới" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <Label text="Email">
+                     <font>
+                        <Font name="Inter Regular" size="14.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="email" />
+                  <HBox spacing="5.0">
+                     <children>
+                        <Button fx:id="luu" mnemonicParsing="false" onAction="#updateProfile" prefHeight="28.0" prefWidth="58.0" text="Lưu">
+                           <font>
+                              <Font name="Inter Regular" size="14.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="khoa" mnemonicParsing="false" onAction="#lockProfile" text="Khóa người dùng">
+                           <font>
+                              <Font name="Inter Regular" size="14.0" />
+                           </font>
+                        </Button>
+                        <Button mnemonicParsing="false" onAction="#removeProfile" prefHeight="14.0" prefWidth="66.0" text="Xóa" fx:id="xoa">
+                           <font>
+                              <Font name="Inter Regular" size="14.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <TableView fx:id="friendListTable" layoutX="32.0" layoutY="456.0" prefHeight="200.0" prefWidth="322.0">
+              <columns>
+                <TableColumn prefWidth="321.60000076293943" text="Tài khoản" />
+              </columns>
+            </TableView>
+            <Label layoutX="32.0" layoutY="430.0" text="Bạn bè">
+               <font>
+                  <Font name="Inter Regular" size="16.0" />
+               </font>
+            </Label>
+            <TableView fx:id="logHistoryTable" layoutX="32.0" layoutY="698.0" prefHeight="200.0" prefWidth="322.0">
+               <columns>
+                  <TableColumn prefWidth="320.0000114440918" text="Thời gian" />
+               </columns>
+            </TableView>
+            <Label layoutX="32.0" layoutY="672.0" text="Lịch sử đăng nhập">
+               <font>
+                  <Font name="Inter Regular" size="16.0" />
+               </font>
+            </Label>
+         </children>
+      </AnchorPane>
+   </content>
+</ScrollPane>

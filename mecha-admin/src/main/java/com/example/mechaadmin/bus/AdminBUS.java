@@ -21,7 +21,7 @@ public class AdminBUS {
 
         session.beginTransaction();
 
-        List<Object[]> users = session.createQuery("SELECT u.adminId FROM AdminDAO u WHERE u.email = :email AND u.password_hash = :password_hash", Object[].class)
+        List<Object[]> users = session.createQuery("SELECT u.adminId FROM AdminDAO u WHERE u.email = :email AND u.password = :password_hash", Object[].class)
                 .setParameter("email", email)
                 .setParameter("password_hash", password)
                 .getResultList();
