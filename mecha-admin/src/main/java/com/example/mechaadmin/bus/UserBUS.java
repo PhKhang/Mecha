@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -58,6 +59,76 @@ public class UserBUS {
             accounts.add(account);
         }
 
+        return accounts;
+    }
+
+    static public List<AccountDTO> getAllUsersWithFriendCount() {
+        System.out.println("GETTING ALL USERS WITH FRIEND COUNT");
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        List<Object[]> users = session
+                .createQuery("select u from UserDAO u", Object[].class)
+                .getResultList();
+
+        List<AccountDTO> accounts = new ArrayList<AccountDTO>();
+        for (Object[] user : users) {
+            AccountDTO account = new AccountDTO();
+            account.setFullName(((UserDAO) user[0]).getFullName());
+            account.setUsername(((UserDAO) user[0]).getUsername());
+            account.setStatus(((UserDAO) user[0]).getStatus());
+            account.setCreatedAt(((UserDAO) user[0]).getCreatedAt());
+            account.setRecentLogin(LocalDateTime.now());
+            account.setAddress(((UserDAO) user[0]).getAddress());
+            account.setEmail(((UserDAO) user[0]).getEmail());
+            account.setGender(((UserDAO) user[0]).getGender());
+            account.setDob(((UserDAO) user[0]).getDob());
+            account.setAccountId(((UserDAO) user[0]).getUserId());
+            account.setAdminAction(((UserDAO) user[0]).getAdminAction());
+            accounts.add(account);
+        }
+        
+        System.out.println("ACCOUNTS: " + accounts.size());
+
+        for (AccountDTO account : accounts) {
+            List<Object[]> friends = session
+                    .createQuery("select f from FriendshipDAO f where f.user1 = :id or f.user2 = :id", Object[].class)
+                    .setParameter("id", account.getUserId())
+                    .getResultList();
+            account.setDirectFriends(friends.size());
+        }
+
+        for (AccountDTO account : accounts) {
+            List<Object[]> friends = session
+                    .createQuery("WITH DirectFriends AS (select f.user1 as direct_ids\r\n" + //
+                            "                       from FriendshipDAO f\r\n" + //
+                            "                       where f.user2 = :id\r\n" + //
+                            "                       union\r\n" + //
+                            "                       select f.user2\r\n" + //
+                            "                       from FriendshipDAO f\r\n" + //
+                            "                       where f.user1 = :id)\r\n" + //
+                            "select f.user1\r\n" + //
+                            "from FriendshipDAO f\r\n" + //
+                            "         join DirectFriends d on f.user2 = d.direct_ids\r\n" + //
+                            "where f.user1 != :id\r\n" + //
+                            "  and f.user1 not IN (select direct_ids from DirectFriends)\r\n" + //
+                            "\r\n" + //
+                            "union\r\n" + //
+                            "select f.user2\r\n" + //
+                            "from FriendshipDAO f\r\n" + //
+                            "         join DirectFriends d on f.user1 = d.direct_ids\r\n" + //
+                            "where f.user2 != :id\r\n" + //
+                            "  and f.user2 not IN (select direct_ids from DirectFriends)\r\n" + //
+                            "", Object[].class)
+                    .setParameter("id", account.getUserId())
+                    .getResultList();
+            account.setIndirectFriends(friends.size());
+        }
+
+        session.getTransaction().commit();
         return accounts;
     }
 
@@ -148,12 +219,16 @@ public class UserBUS {
         UserDAO user = new UserDAO();
         user.setFullName(account.getFullName());
         user.setUsername(account.getUsername());
-        user.setStatus(account.getStatus());
+        user.setAdminAction(account.getAdminAction());
         user.setCreatedAt(account.getCreatedAt());
         user.setAddress(account.getAddress());
         user.setEmail(account.getEmail());
         user.setGender(account.getGender());
         user.setDob(account.getDob());
+        user.setStatus("offline");
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-_=+[{]}\\|;:\'\",<.>/?";
+        String newPassword = RandomStringUtils.random(15, characters);
+        user.setPasswordHash(newPassword);
         session.persist(user);
 
         session.getTransaction().commit();

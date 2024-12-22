@@ -33,7 +33,7 @@ public class ProfileController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
-    static AccountDTO account;
+    static AccountDTO account = new AccountDTO();
 
     @FXML
     TextField full;
@@ -184,6 +184,9 @@ public class ProfileController implements Initializable {
     }
 
     static void setAccount(AccountDTO a) {
-        account = a;
+        if (a != null)
+            account = a;
+        else 
+            account = new AccountDTO();
     }
 }

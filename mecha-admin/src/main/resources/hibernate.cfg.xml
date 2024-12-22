@@ -30,6 +30,7 @@
         <mapping class="com.example.mechaadmin.dao.ChatDAO" />
         <mapping class="com.example.mechaadmin.dao.MemberDAO" />
         <mapping class="com.example.mechaadmin.dao.FriendshipDAO" />
+        <mapping class="com.example.mechaadmin.dao.MessageDAO" />
 
     </session-factory>
 </hibernate-configuration>

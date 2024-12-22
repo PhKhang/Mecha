@@ -671,9 +671,88 @@ public class SceneController implements Initializable {
         // search(searchKey);
         // }
     }
+    
+    class FriendTable {
+        public TableView<AccountDTO> friendTable;
+        public TableColumn<AccountDTO, String> friendName;
+        public TableColumn<AccountDTO, String> friendUser;
+        public TableColumn<AccountDTO, String> friendCreation;
+        public TableColumn<AccountDTO, Integer> friendDirect;
+        public TableColumn<AccountDTO, Integer> friendIndirect;
+
+        ObservableList<AccountDTO> accounts = FXCollections.observableArrayList();
+        List<AccountDTO> originalData = null;
+
+        Predicate<AccountDTO> filter = account -> false;
+        String searchKey = "";
+
+        @SuppressWarnings("unchecked")
+        FriendTable(TableView<AccountDTO> table) {
+            friendTable = table;
+            friendName = (TableColumn<AccountDTO, String>) friendTable.getColumns().get(0);
+            friendUser = (TableColumn<AccountDTO, String>) friendTable.getColumns().get(1);
+            friendCreation = (TableColumn<AccountDTO, String>) friendTable.getColumns().get(2);
+            friendDirect = (TableColumn<AccountDTO, Integer>) friendTable.getColumns().get(3);
+            friendIndirect = (TableColumn<AccountDTO, Integer>) friendTable.getColumns().get(4);
+
+            friendName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+            friendUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+            friendCreation.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+            friendDirect.setCellValueFactory(new PropertyValueFactory<>("directFriends"));
+            friendIndirect.setCellValueFactory(new PropertyValueFactory<>("indirectFriends"));
+            friendTable.setItems(accounts);
+        }
+
+        public void updateOriginal(List<AccountDTO> list) {
+            originalData = new ArrayList<>(list);
+            accounts.clear();
+            accounts.addAll(list);
+        }
+
+        public void updateOriginal() {
+            accounts.clear();
+            accounts.addAll(originalData);
+        }
+
+        public void updateContent(List<AccountDTO> list) {
+            accounts.clear();
+            accounts.addAll(list);
+        }
+
+        public void search(String s) {
+            searchKey = s.trim().toLowerCase();
+            if (s.trim().equals("")) {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(filter);
+                friendTable.getItems().clear();
+                friendTable.getItems().addAll(filtered);
+            } else {
+                List<AccountDTO> filtered = new ArrayList<>(originalData);
+                filtered.removeIf(account -> !account.getFullName().toLowerCase().contains(searchKey)
+                        && !account.getUsername().toLowerCase().contains(searchKey));
+                filtered.removeIf(filter);
+                friendTable.getItems().clear();
+                friendTable.getItems().addAll(filtered);
+            }
+        }    
+        
+        public void setFilterPredicate(Predicate<AccountDTO> filter) {
+            this.filter = filter;
+            List<AccountDTO> filtered = new ArrayList<>(originalData);
+            filtered.removeIf(filter);
+            accounts.clear();
+            accounts.addAll(filtered);
+            search(searchKey);
+        }
+    }
 
     @FXML
     private ChoiceBox<String> choiceFriend;
+    @FXML
+    private TextField countFriend;
+    @FXML
+    private TextField friendFind;
+    
     @FXML
     private ChoiceBox<String> choiceActiveAct;
     @FXML
@@ -737,8 +816,8 @@ public class SceneController implements Initializable {
         accountSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             accTable.search(newValue);
         });
-        accountMenu.getItems().addAll(new MenuItem("Tất cả"), new MenuItem("Đang hoạt động"),
-                new MenuItem("Không hoạt động"));
+        accountMenu.getItems().addAll(new MenuItem("Tất cả"), new MenuItem("Online"),
+                new MenuItem("Offline"));
         accountMenu.getItems().get(0).setOnAction((e) -> {
             Predicate<AccountDTO> filter = account -> false;
             accTable.setFilterPredicate(filter);
@@ -944,50 +1023,118 @@ public class SceneController implements Initializable {
         });
 
         //
-        // ActivityTable ctivTable = new ActivityTable(activeTable);
-        // ctivTable.updateOriginal(usageBUS.getAllActivity());
+        ActivityTable ctivTable = new ActivityTable(activeTable);
+        ctivTable.updateOriginal(usageBUS.getAllActivity());
 
-        // activeSearch.textProperty().addListener((observable, oldValue, newValue) -> {
-        // ctivTable.search(newValue);
+        activeSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            ctivTable.search(newValue);
+        });
+
+        choiceFriend.getSelectionModel().select(0);
+        choiceActiveAct.getSelectionModel().select(0);
+        choiceActiveCon.getSelectionModel().select(0);
+        choiceStatus.getSelectionModel().select(0);
+
+        activeStart.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDateTime start = activeStart.getValue().atTime(0, 0);
+            LocalDateTime end = activeEnd.getValue().atTime(23, 59);
+            System.out.println("Start: " + start + " End: " + end);
+            if (start != null && end != null) {
+                Predicate<ActivityDTO> filter = activity -> {
+                    LocalDateTime date = activity.getCreationDate();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                ctivTable.setFilterPredicate(filter);
+            } else {
+                Predicate<ActivityDTO> filter = activity -> false;
+                ctivTable.setFilterPredicate(filter);
+            }
+        });
+
+        activeEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
+            LocalDateTime start = activeStart.getValue().atTime(0, 0);
+            LocalDateTime end = activeEnd.getValue().atTime(23, 59);
+            if (start != null && end != null) {
+                Predicate<ActivityDTO> filter = activity -> {
+                    LocalDateTime date = activity.getCreationDate();
+                    return date.isBefore(start) || date.isAfter(end);
+                };
+                ctivTable.setFilterPredicate(filter);
+            } else {
+                Predicate<ActivityDTO> filter = activity -> false;
+                ctivTable.setFilterPredicate(filter);
+            }
+        });
+
+        //
+        
+        FriendTable frndTable = new FriendTable(friendCount);
+        Thread frndThread = new Thread() {
+            public void run() {
+                while (true) {
+                    if (friendFind.isFocused() || choiceFriend.isFocused() || countFriend.isFocused()){}
+                    else if (frndTable.friendTable.getSelectionModel().getSelectedItem() == null
+                            || frndTable.originalData == null || !frndTable.friendTable.isFocused()) {
+                        frndTable.updateOriginal(UserBUS.getAllUsersWithFriendCount());
+                        System.out.println("Reload friend tabel");
+                    }
+
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        frndThread.setDaemon(true);
+        frndThread.start();
+        
+        // friendCount.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+        //     if (newSelection != null) {
+        //         System.out.println("Selected: " + newSelection.getFullName());
+        //     }
         // });
-
-        // choiceFriend.getSelectionModel().select(0);
-        // choiceActiveAct.getSelectionModel().select(0);
-        // choiceActiveCon.getSelectionModel().select(0);
-        // choiceStatus.getSelectionModel().select(0);
-
-        // activeStart.valueProperty().addListener((observable, oldValue, newValue) -> {
-        // LocalDateTime start = activeStart.getValue().atTime(0, 0);
-        // LocalDateTime end = activeEnd.getValue().atTime(23, 59);
-        // System.out.println("Start: " + start + " End: " + end);
-        // if (start != null && end != null) {
-        // Predicate<ActivityDTO> filter = activity -> {
-        // LocalDateTime date = activity.getCreationDate();
-        // return date.isBefore(start) || date.isAfter(end);
-        // };
-        // ctivTable.setFilterPredicate(filter);
-        // } else {
-        // Predicate<ActivityDTO> filter = activity -> false;
-        // ctivTable.setFilterPredicate(filter);
-        // }
-        // });
-
-        // activeEnd.valueProperty().addListener((observable, oldValue, newValue) -> {
-        // LocalDateTime start = activeStart.getValue().atTime(0, 0);
-        // LocalDateTime end = activeEnd.getValue().atTime(23, 59);
-        // if (start != null && end != null) {
-        // Predicate<ActivityDTO> filter = activity -> {
-        // LocalDateTime date = activity.getCreationDate();
-        // return date.isBefore(start) || date.isAfter(end);
-        // };
-        // ctivTable.setFilterPredicate(filter);
-        // } else {
-        // Predicate<ActivityDTO> filter = activity -> false;
-        // ctivTable.setFilterPredicate(filter);
-        // }
-        // });
-
-        // cho
+        
+        friendFind.textProperty().addListener((observable, oldValue, newValue) -> {
+            frndTable.search(newValue);
+        });
+        
+        choiceFriend.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                System.out.println("Selected: " + newSelection);
+                Predicate<AccountDTO> filter = account -> {
+                    int friendCount = account.getDirectFriends();
+                    if (newSelection.equals("lớn hơn")) {
+                        return countFriend.getText().trim().equals("") ? false : friendCount <= Integer.parseInt(countFriend.getText().trim());
+                    } else if (newSelection.equals("nhỏ hơn")) {
+                        return countFriend.getText().trim().equals("") ? false : friendCount >= Integer.parseInt(countFriend.getText().trim());
+                    } else if (newSelection.equals("bằng")) {
+                        return countFriend.getText().trim().equals("") ? false : (friendCount - Integer.parseInt(countFriend.getText().trim())) != 0;
+                    }
+                    return false;
+                };
+                frndTable.setFilterPredicate(filter);
+            }
+        });
+        
+        countFriend.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (choiceFriend.getSelectionModel().getSelectedItem() != null) {
+                Predicate<AccountDTO> filter = account -> {
+                    int friendCount = account.getDirectFriends();
+                    if (choiceFriend.getSelectionModel().getSelectedItem().equals("lớn hơn")) {
+                        return newValue.trim().equals("") ? false : friendCount <= Integer.parseInt(newValue.trim());
+                    } else if (choiceFriend.getSelectionModel().getSelectedItem().equals("nhỏ hơn")) {
+                        return newValue.trim().equals("") ? false : friendCount >= Integer.parseInt(newValue.trim());
+                    } else if (choiceFriend.getSelectionModel().getSelectedItem().equals("bằng")) {
+                        return newValue.trim().equals("") ? false : (friendCount - Integer.parseInt(newValue.trim())) != 0;
+                    }
+                    return false;
+                };
+                frndTable.setFilterPredicate(filter);
+            }
+        });
+        
 
         choiceFriend.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
         choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
@@ -1160,7 +1307,7 @@ public class SceneController implements Initializable {
         stage.setScene(scene);
         stage.show();
     }
-    
+
     public void switchToNewProfile(ActionEvent event) throws IOException {
         AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
 

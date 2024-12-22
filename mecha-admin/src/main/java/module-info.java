@@ -6,6 +6,7 @@ module com.example.mechaadmin {
     requires javafx.base;
     requires jakarta.persistence;
     requires org.hibernate.orm.core;
+    requires commons.lang3;
 
 
     opens com.example.mechaadmin to javafx.fxml;
