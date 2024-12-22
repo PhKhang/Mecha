@@ -80,6 +80,7 @@ public class ReportBUS {
 
         session.beginTransaction();
 
+        System.out.println("reportId: " + reportId);
         ReportDAO report = session.get(ReportDAO.class, reportId);
         report.setStatus(status);
 

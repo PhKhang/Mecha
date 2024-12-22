@@ -7,6 +7,8 @@ module com.example.mechaadmin {
     requires jakarta.persistence;
     requires org.hibernate.orm.core;
     requires commons.lang3;
+    requires io.github.cdimascio.dotenv.java;
+    requires jakarta.mail;
 
 
     opens com.example.mechaadmin to javafx.fxml;

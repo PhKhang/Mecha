@@ -347,8 +347,8 @@
                                     <FlowPane hgap="5.0" layoutX="3.0" layoutY="311.375" prefHeight="35.0" prefWidth="343.0" vgap="5.0">
                                        <children>
                                           <Button mnemonicParsing="false" text="Cảnh báo người dùng" />
-                                          <Button fx:id="khoa" mnemonicParsing="false" text="Khóa người dùng" />
-                                          <Button mnemonicParsing="false" text="Bỏ qua báo cáo" />
+                                          <Button fx:id="khoaButton" mnemonicParsing="false" onAction="#lockProfileReport" text="Khóa người dùng" />
+                                          <Button mnemonicParsing="false" onAction="#warnProfileReport" text="Bỏ qua báo cáo" />
                                        </children>
                                     </FlowPane>
                                     <Label layoutX="3.0" layoutY="371.375" text="Cập nhật tình trạng">
@@ -531,7 +531,7 @@
                      </columns>
                   </TableView>
                   <ChoiceBox fx:id="choiceActiveAct" accessibleText="A" layoutX="1.0" layoutY="144.0" prefWidth="150.0" />
-                  <TextField layoutX="323.0" layoutY="143.0" prefHeight="26.0" prefWidth="64.0" text="0" />
+                  <TextField fx:id="num" layoutX="323.0" layoutY="143.0" prefHeight="26.0" prefWidth="64.0" text="0" />
                   <Group layoutX="1.0" layoutY="71.0">
                      <children>
                         <TextField fx:id="activeSearch" accessibleHelp="Full name or username" accessibleText="Full name or username" layoutY="22.0" prefHeight="26.0" prefWidth="322.0" promptText="Họ tên hoặc username" />

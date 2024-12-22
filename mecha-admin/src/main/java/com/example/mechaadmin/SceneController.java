@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,6 +24,14 @@ import com.example.mechaadmin.dto.RecentLoginDTO;
 import com.example.mechaadmin.dto.ReportInfoDTO;
 import com.example.mechaadmin.dto.UsageDTO;
 
+import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -32,11 +40,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.AreaChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
@@ -57,9 +65,41 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.scene.chart.AreaChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+
+class EmailSender {
+
+    public static void sendEmail(String email, String subject, String content) {
+        Properties prop = new Properties();
+        prop.put("mail.smtp.auth", true);
+        prop.put("mail.smtp.starttls.enable", "true");
+        prop.put("mail.smtp.host", "smtp.gmail.com");
+        prop.put("mail.smtp.port", "587");
+        prop.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+
+        Dotenv dotenv = Dotenv.load();
+        System.out.println(dotenv.get("EMAIL_USERNAME") + " " + dotenv.get("EMAIL_PASSWORD"));
+        Session session = Session.getInstance(prop, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(dotenv.get("EMAIL_USERNAME"), dotenv.get("EMAIL_PASSWORD"));
+            }
+        });
+
+        MimeMessage message = new MimeMessage(session);
+        try {
+            message.setFrom(new InternetAddress(dotenv.get("EMAIL_USERNAME")));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));
+            message.setSubject(subject);
+            // message.setText(content);
+            message.setContent(content, "text/html; charset=utf-8");
+
+            Transport.send(message);
+            System.out.println("Email sent successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
 
 public class SceneController implements Initializable {
     private Stage stage;
@@ -298,6 +338,8 @@ public class SceneController implements Initializable {
         // }
     }
 
+    @FXML
+    private TextField num;
     @FXML
     private TableView<ActivityDTO> activeTable;
     @FXML
@@ -671,7 +713,7 @@ public class SceneController implements Initializable {
         // search(searchKey);
         // }
     }
-    
+
     class FriendTable {
         public TableView<AccountDTO> friendTable;
         public TableColumn<AccountDTO, String> friendName;
@@ -734,8 +776,8 @@ public class SceneController implements Initializable {
                 friendTable.getItems().clear();
                 friendTable.getItems().addAll(filtered);
             }
-        }    
-        
+        }
+
         public void setFilterPredicate(Predicate<AccountDTO> filter) {
             this.filter = filter;
             List<AccountDTO> filtered = new ArrayList<>(originalData);
@@ -752,7 +794,7 @@ public class SceneController implements Initializable {
     private TextField countFriend;
     @FXML
     private TextField friendFind;
-    
+
     @FXML
     private ChoiceBox<String> choiceActiveAct;
     @FXML
@@ -778,6 +820,9 @@ public class SceneController implements Initializable {
 
     @FXML
     Button khoaButt;
+
+    @FXML
+    Button khoaButton;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -864,38 +909,29 @@ public class SceneController implements Initializable {
         // String>("fullName"));
         // loginTable.setItems(accTable.accounts);
 
-        // activeFull.setCellValueFactory(new PropertyValueFactory<AccountDTO,
-        // String>("fullName"));
-        // activeUser.setCellValueFactory(new PropertyValueFactory<AccountDTO,
-        // String>("username"));
-        // activeCreation.setCellValueFactory(new PropertyValueFactory<AccountDTO,
-        // String>("createdAt"));
-        // Random random = new Random(1);
-        // activeOpen.setCellValueFactory(cellData -> {
-        // return new SimpleStringProperty(String.valueOf(random.nextInt(20) + 2));
-        // });
-        // activeChat.setCellValueFactory(cellData -> {
-        // return new SimpleStringProperty(String.valueOf(random.nextInt(10) + 1));
-        // });
-        // activeGroup.setCellValueFactory(cellData -> {
-        // return new SimpleStringProperty(String.valueOf(random.nextInt(5)));
-        // });
-        // activeTable.setItems(accTable.accounts);
 
         // ----------------- Report data -----------------
         ReportBUS reportBUS = new ReportBUS();
         rprtTable = new ReportInfoTable(reportTable);
         new Thread() {
             public void run() {
-                rprtTable.updateOriginal(reportBUS.getAll());
-                List<ReportInfoDTO> reports = reportBUS.getAll();
-                System.out.println(reports);
+                while (true) {
+                    rprtTable.updateOriginal(reportBUS.getAll());
+                    List<ReportInfoDTO> reports = reportBUS.getAll();
+                    System.out.println(reports);
+
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
                 // update ProgressIndicator on FX thread
                 // Platform.runLater(new Runnable() {
                 // public void run() {
                 // pi.setProgress(progress);
                 // }
-                // });
+                // });}
             }
         }.start();
 
@@ -1029,11 +1065,59 @@ public class SceneController implements Initializable {
         activeSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             ctivTable.search(newValue);
         });
+        
+        choiceFriend.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
+        choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
+        choiceActiveCon.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
+        choiceStatus.getItems().addAll("Pending", "Resolved", "Under Review");
 
         choiceFriend.getSelectionModel().select(0);
         choiceActiveAct.getSelectionModel().select(0);
         choiceActiveCon.getSelectionModel().select(0);
         choiceStatus.getSelectionModel().select(0);
+        
+        num.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (choiceActiveAct.getSelectionModel().getSelectedItem() != null) {
+                Predicate<ActivityDTO> filter = activity -> {
+                    if (choiceActiveAct.getSelectionModel().getSelectedItem().equals("Mở ứng dụng")) {
+                        if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("lớn hơn")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getTimeOpened() <= Integer.parseInt(newValue.trim());
+                        } else if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("nhỏ hơn")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getTimeOpened() >= Integer.parseInt(newValue.trim());
+                        } else if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("bằng")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getTimeOpened() != Integer.parseInt(newValue.trim());
+                        }
+                    } else if (choiceActiveAct.getSelectionModel().getSelectedItem().equals("Chat cá nhân")) {
+                        if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("lớn hơn")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getPrivateChat() <= Integer.parseInt(newValue.trim());
+                        } else if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("nhỏ hơn")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getPrivateChat() >= Integer.parseInt(newValue.trim());
+                        } else if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("bằng")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getPrivateChat() != Integer.parseInt(newValue.trim());
+                        }
+                    } else if (choiceActiveAct.getSelectionModel().getSelectedItem().equals("Chat nhóm")) {
+                        if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("lớn hơn")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getGroupChat() <= Integer.parseInt(newValue.trim());
+                        } else if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("nhỏ hơn")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getGroupChat() >= Integer.parseInt(newValue.trim());
+                        } else if (choiceActiveCon.getSelectionModel().getSelectedItem().equals("bằng")) {
+                            return newValue.trim().equals("") ? false
+                                    : activity.getGroupChat() != Integer.parseInt(newValue.trim());
+                        }
+                    }
+                    return false;
+                };
+                ctivTable.setFilterPredicate(filter);
+            }
+        });
 
         activeStart.valueProperty().addListener((observable, oldValue, newValue) -> {
             LocalDateTime start = activeStart.getValue().atTime(0, 0);
@@ -1067,13 +1151,13 @@ public class SceneController implements Initializable {
         });
 
         //
-        
+
         FriendTable frndTable = new FriendTable(friendCount);
         Thread frndThread = new Thread() {
             public void run() {
                 while (true) {
-                    if (friendFind.isFocused() || choiceFriend.isFocused() || countFriend.isFocused()){}
-                    else if (frndTable.friendTable.getSelectionModel().getSelectedItem() == null
+                    if (friendFind.isFocused() || choiceFriend.isFocused() || countFriend.isFocused()) {
+                    } else if (frndTable.friendTable.getSelectionModel().getSelectedItem() == null
                             || frndTable.originalData == null || !frndTable.friendTable.isFocused()) {
                         frndTable.updateOriginal(UserBUS.getAllUsersWithFriendCount());
                         System.out.println("Reload friend tabel");
@@ -1089,35 +1173,39 @@ public class SceneController implements Initializable {
         };
         frndThread.setDaemon(true);
         frndThread.start();
-        
-        // friendCount.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-        //     if (newSelection != null) {
-        //         System.out.println("Selected: " + newSelection.getFullName());
-        //     }
+
+        // friendCount.getSelectionModel().selectedItemProperty().addListener((obs,
+        // oldSelection, newSelection) -> {
+        // if (newSelection != null) {
+        // System.out.println("Selected: " + newSelection.getFullName());
+        // }
         // });
-        
+
         friendFind.textProperty().addListener((observable, oldValue, newValue) -> {
             frndTable.search(newValue);
         });
-        
+
         choiceFriend.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 System.out.println("Selected: " + newSelection);
                 Predicate<AccountDTO> filter = account -> {
                     int friendCount = account.getDirectFriends();
                     if (newSelection.equals("lớn hơn")) {
-                        return countFriend.getText().trim().equals("") ? false : friendCount <= Integer.parseInt(countFriend.getText().trim());
+                        return countFriend.getText().trim().equals("") ? false
+                                : friendCount <= Integer.parseInt(countFriend.getText().trim());
                     } else if (newSelection.equals("nhỏ hơn")) {
-                        return countFriend.getText().trim().equals("") ? false : friendCount >= Integer.parseInt(countFriend.getText().trim());
+                        return countFriend.getText().trim().equals("") ? false
+                                : friendCount >= Integer.parseInt(countFriend.getText().trim());
                     } else if (newSelection.equals("bằng")) {
-                        return countFriend.getText().trim().equals("") ? false : (friendCount - Integer.parseInt(countFriend.getText().trim())) != 0;
+                        return countFriend.getText().trim().equals("") ? false
+                                : (friendCount - Integer.parseInt(countFriend.getText().trim())) != 0;
                     }
                     return false;
                 };
                 frndTable.setFilterPredicate(filter);
             }
         });
-        
+
         countFriend.textProperty().addListener((observable, oldValue, newValue) -> {
             if (choiceFriend.getSelectionModel().getSelectedItem() != null) {
                 Predicate<AccountDTO> filter = account -> {
@@ -1127,19 +1215,14 @@ public class SceneController implements Initializable {
                     } else if (choiceFriend.getSelectionModel().getSelectedItem().equals("nhỏ hơn")) {
                         return newValue.trim().equals("") ? false : friendCount >= Integer.parseInt(newValue.trim());
                     } else if (choiceFriend.getSelectionModel().getSelectedItem().equals("bằng")) {
-                        return newValue.trim().equals("") ? false : (friendCount - Integer.parseInt(newValue.trim())) != 0;
+                        return newValue.trim().equals("") ? false
+                                : (friendCount - Integer.parseInt(newValue.trim())) != 0;
                     }
                     return false;
                 };
                 frndTable.setFilterPredicate(filter);
             }
         });
-        
-
-        choiceFriend.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
-        choiceActiveAct.getItems().addAll("Mở ứng dụng", "Chat cá nhân", "Chat nhóm");
-        choiceActiveCon.getItems().addAll("lớn hơn", "nhỏ hơn", "bằng");
-        choiceStatus.getItems().addAll("Pending", "Resolved", "Under Review");
 
     }
 
@@ -1188,6 +1271,39 @@ public class SceneController implements Initializable {
         }
     }
 
+    public void skip(ActionEvent event){
+        ReportInfoDTO thing = rprtTable.reportTable.getSelectionModel().getSelectedItem();
+        ReportBUS a = new ReportBUS();
+        a.setStatus(thing.getReportId(), "resolved");
+        System.out.println("Skip report");
+    }
+    
+    public void warnProfileReport(ActionEvent event){
+        ReportInfoDTO thing = rprtTable.reportTable.getSelectionModel().getSelectedItem();
+        ReportBUS a = new ReportBUS();
+        a.setStatus(thing.getReportId(), "resolved");
+        // EmailSender.sendEmail(null, null, null);
+    }
+    
+    public void lockProfileReport(ActionEvent event) {
+        ReportInfoDTO account = rprtTable.reportTable.getSelectionModel().getSelectedItem();
+        if (account == null)
+            return;
+
+        if (khoaButt.getText().equals("Khóa người dùng")) {
+            UserBUS.lockAccount(account.getReportedId());
+            ReportBUS a = new ReportBUS();
+            a.setStatus(account.getReportId(), "resolved");
+            System.out.println("Lock user");
+            System.out.println(account.getReportedId() + " is now locked");
+        } else {
+            UserBUS.unlockAccount(account.getReportedId());
+            ReportBUS a = new ReportBUS();
+            a.setStatus(account.getReportId(), "Resolved");
+            System.out.println("Unlock user");
+        }
+    }
+
     public void lockProfile(ActionEvent event) {
         AccountDTO account = accTable.accountTable.getSelectionModel().getSelectedItem();
         if (account == null)
@@ -1233,6 +1349,10 @@ public class SceneController implements Initializable {
             profile.setFitWidth(40);
             profile.setFitHeight(40);
             Text username = new Text(mem);
+            System.out.println("hfoiheoi" + group.getMembers().indexOf(mem));
+            if (group.getMembers().indexOf(mem) == 0) {
+                username = new Text("👑 " + mem);
+            }
             username.setFont(new Font(14));
             username.setTextAlignment(TextAlignment.CENTER);
             HBox memberBox = new HBox(profile, username);
