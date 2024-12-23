@@ -1082,6 +1082,17 @@ public class ChatServer {
 
             // remove the chat
             removeChat(chatId);
+
+            if (connectedClients.containsKey(blockedId)){
+                ClientHandler blocked = connectedClients.get(blockedId);
+                try {
+                    blocked.out.writeObject("YOU_HAVE_BEEN_BLOCKED");
+                    blocked.out.writeObject(chatId);
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            
+            }
         }
 
         private void removeChat(int chatId) throws SQLException {
@@ -1095,6 +1106,12 @@ public class ChatServer {
 
             stmt.executeUpdate();
             System.out.println("remove chat mem complete");
+            // remove the messages
+            stmt = conn.prepareStatement("""
+                        DELETE FROM messages WHERE chat_id = ?
+                    """);
+            stmt.setInt(1, chatId);
+            stmt.executeUpdate();
             // then remove the chat itself
             stmt = conn.prepareStatement("""
                         DELETE FROM chats WHERE chat_id = ?
@@ -1302,6 +1319,8 @@ public class ChatServer {
                         UNION
                         SELECT user_id FROM friend_request WHERE friend_id = ?
                         UNION
+                        SELECT blocker_id FROM Blocked_List WHERE blocked_id = ?
+                        UNION
                         SELECT blocked_id FROM Blocked_List WHERE blocker_id = ?
                     )
                     AND user_id != ?;
@@ -1314,6 +1333,7 @@ public class ChatServer {
             stmt.setInt(4, userId);
             stmt.setInt(5, userId);
             stmt.setInt(6, userId);
+            stmt.setInt(7, userId);
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -1379,8 +1399,6 @@ public class ChatServer {
                             recipient.out.writeObject(senderId);
                             recipient.out.writeObject(senderFullname);
                             recipient.out.writeObject(timeSent);
-                            System.out.println("send signal to chatid " + chatId + "from userid " +
-                            senderId + " to " + participantId);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

@@ -125,6 +125,7 @@ public class HomeScreenController implements ServerMessageListener{
                     initializeChatData();
                     chatListView.getItems().clear();
                     messageFieldFrame.setVisible(false);
+                    curChatName.setText("");
                 }
             } catch (IOException ex){
                 ex.printStackTrace();
@@ -1220,7 +1221,7 @@ public class HomeScreenController implements ServerMessageListener{
                 String senderFullname = (String) UserSession.in.readObject();
                 Timestamp timeSent = (Timestamp) UserSession.in.readObject();
                 Platform.runLater(() -> {
-                    if (chatId == currentChat.chatId) {
+                    if (currentChat != null && chatId == currentChat.chatId) {
                         addMessage(messageId, message, senderId, senderFullname, timeSent);
                     }
                     initializeChatData();
@@ -1314,11 +1315,13 @@ public class HomeScreenController implements ServerMessageListener{
             }
             else if ("REMOVED_MEMBER".equals(serverMessage)){
                 int chatId = (int) UserSession.in.readObject();
-                if (chatId == currentChat.chatId){
-                    messageFieldFrame.setVisible(false);
-                    chatOption.setVisible(false);
-                    curChatName.setText("");
-                    chatListView.getItems().clear();
+                if (currentChat != null && chatId == currentChat.chatId){
+                    Platform.runLater(() -> {
+                        messageFieldFrame.setVisible(false);
+                        chatOption.setVisible(false);
+                        curChatName.setText("");
+                        chatListView.getItems().clear();
+                    });   
                 }
                     
                 initializeChatData();
@@ -1329,7 +1332,7 @@ public class HomeScreenController implements ServerMessageListener{
                 int chatId = (int) UserSession.in.readObject();
                 int newAdminId = (int) UserSession.in.readObject();
                 initializeChatData();
-                if (chatId == currentChat.chatId)
+                if (currentChat != null && chatId == currentChat.chatId)
                     currentChat.adminId = newAdminId;
             } else if ("respond_SEARCH_MESSAGE".equals(serverMessage)){
                 Map<Integer, List<String[]>> chatData = (Map<Integer, List<String[]>>) UserSession.in.readObject();
@@ -1431,6 +1434,17 @@ public class HomeScreenController implements ServerMessageListener{
                 Platform.runLater(() -> {
                     if (currentChat.chatId == chatId){
                         updateChat(currentChat);
+                    }
+                    initializeChatData();
+                });
+            } else if ("YOU_HAVE_BEEN_BLOCKED".equals(serverMessage)){
+                int chatId = (int) UserSession.in.readObject();
+                Platform.runLater(() -> {
+                    if (currentChat.chatId == chatId){
+                        messageFieldFrame.setVisible(false);
+                        chatOption.setVisible(false);
+                        curChatName.setText("");
+                        chatListView.getItems().clear();
                     }
                     initializeChatData();
                 });
