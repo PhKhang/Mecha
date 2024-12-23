@@ -1192,7 +1192,11 @@ public class HomeScreenController implements ServerMessageListener{
                         String fullname = friend[1];
                         String status = friend[2];
                         String chatType = friend[3];
-                        int adminId = Integer.parseInt(friend[4]);
+                        int adminId;
+                        if (friend[4] != null)
+                            adminId = Integer.parseInt(friend[4]);
+                        else 
+                            adminId = -1;
                         String lastMessage = friend[5];
                         String senderId_string = friend[6];
                         int senderId;

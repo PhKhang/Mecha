@@ -82,7 +82,7 @@ public class ChatServer {
 
     public static void main(String[] args) {
         // EmailSender.sendEmail(
-        // "tnpkhang22@clc.fitus.edu.vn",
+        // "tnpkhang22@clc.fitus.edu.vn",   
         // "Test email",
         // "<!doctype html>\r\n" + //
         // "<html>\r\n" + //
@@ -876,7 +876,7 @@ public class ChatServer {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
                         UPDATE users
-                        SET password = ?
+                        SET password_hash = ?
                         WHERE user_id = ?
                     """);
             stmt.setString(1, newPassword);
@@ -888,13 +888,13 @@ public class ChatServer {
         private String getPassword(int userId) throws SQLException {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             PreparedStatement stmt = conn.prepareStatement("""
-                        SELECT password FROM users WHERE user_id = ?
+                        SELECT password_hash FROM users WHERE user_id = ?
                     """);
             stmt.setInt(1, userId);
 
             ResultSet rs = stmt.executeQuery();
             rs.next();
-            return rs.getString("password");
+            return rs.getString("password_hash");
         }
 
         private void updateUserInfo(int userId, String fullname, String gender, String address, String email, Date dob)
@@ -1504,7 +1504,7 @@ public class ChatServer {
             System.out.println("Registering user: " + username);
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                     PreparedStatement stmt = conn.prepareStatement(
-                            "INSERT INTO users (username, email, address, password, full_name, status, date_of_birth, gender) " +
+                            "INSERT INTO users (username, email, address, password_hash, full_name, status, date_of_birth, gender) " +
                                     "VALUES (?, ?, ?, ?, ?, 'offline', ?, ?)")) {
 
                 stmt.setString(1, username);
